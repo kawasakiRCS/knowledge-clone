@@ -24,6 +24,14 @@ class User extends Authenticatable
     ];
 
     /**
+     * Get the user_id attribute (legacy compatibility)
+     */
+    public function getUserIdAttribute()
+    {
+        return $this->id;
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>

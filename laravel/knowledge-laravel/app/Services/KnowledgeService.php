@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Knowledge\Knowledge;
 use App\Models\Knowledge\Tag;
-use App\Models\Web\User;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -80,7 +80,7 @@ class KnowledgeService
     /**
      * ナレッジを削除
      */
-    public function deleteKnowledge(Knowledge $knowledge, User $user): void
+    public function deleteKnowledge(Knowledge $knowledge, User $user): vouser_id
     {
         if (!$knowledge->isEditableBy($user->user_id)) {
             throw new \Exception('このナレッジの削除権限がありません。');
@@ -124,7 +124,7 @@ class KnowledgeService
     /**
      * 閲覧履歴を記録
      */
-    public function recordView(Knowledge $knowledge, User $user): void
+    public function recordView(Knowledge $knowledge, User $user): vouser_id
     {
         if (!$knowledge->isAccessibleBy($user->user_id)) {
             return;
@@ -150,7 +150,7 @@ class KnowledgeService
      */
     public function getRelatedKnowledges(Knowledge $knowledge, User $user, int $limit = 5): Collection
     {
-        $tagIds = $knowledge->tags->pluck('tag_id')->toArray();
+        $tagIds = $knowledge->tags->pluck('tag_user_id')->toArray();
         
         if (empty($tagIds)) {
             return collect();
@@ -158,9 +158,9 @@ class KnowledgeService
 
         return Knowledge::with(['creator', 'tags'])
                        ->accessibleBy($user->user_id)
-                       ->where('knowledge_id', '!=', $knowledge->knowledge_id)
+                       ->where('knowledge_user_id', '!=', $knowledge->knowledge_user_id)
                        ->whereHas('tags', function ($query) use ($tagIds) {
-                           $query->whereIn('tag_id', $tagIds);
+                           $query->whereIn('tag_user_id', $tagIds);
                        })
                        ->orderBy('like_count', 'desc')
                        ->orderBy('view_count', 'desc')
@@ -171,7 +171,7 @@ class KnowledgeService
     /**
      * フィルターを適用
      */
-    protected function applyFilters(Builder $query, array $filters): void
+    protected function applyFilters(Builder $query, array $filters): vouser_id
     {
         if (!empty($filters['search'])) {
             $searchTerm = $filters['search'];
@@ -189,7 +189,7 @@ class KnowledgeService
         }
 
         if (!empty($filters['template'])) {
-            $query->where('type_id', $filters['template']);
+            $query->where('type_user_id', $filters['template']);
         }
 
         if (isset($filters['public_flag'])) {
@@ -215,7 +215,7 @@ class KnowledgeService
     /**
      * ソートを適用
      */
-    protected function applySorting(Builder $query, string $sort): void
+    protected function applySorting(Builder $query, string $sort): vouser_id
     {
         switch ($sort) {
             case 'title':
@@ -241,7 +241,7 @@ class KnowledgeService
     /**
      * タグを同期
      */
-    protected function syncTags(Knowledge $knowledge, array $tagNames): void
+    protected function syncTags(Knowledge $knowledge, array $tagNames): vouser_id
     {
         $tagIds = [];
         $tagNamesForStorage = [];
@@ -253,7 +253,7 @@ class KnowledgeService
             }
 
             $tag = Tag::firstOrCreate(['tag_name' => $tagName]);
-            $tagIds[] = $tag->tag_id;
+            $tagIds[] = $tag->tag_user_id;
             $tagNamesForStorage[] = $tag->tag_name;
         }
 
@@ -269,7 +269,7 @@ class KnowledgeService
     /**
      * アクセス権限を同期
      */
-    protected function syncPermissions(Knowledge $knowledge, array $data): void
+    protected function syncPermissions(Knowledge $knowledge, array $data): vouser_id
     {
         // アクセス権限
         if (array_key_exists('allowed_users', $data)) {

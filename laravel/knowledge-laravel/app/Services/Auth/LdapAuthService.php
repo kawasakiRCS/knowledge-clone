@@ -2,7 +2,7 @@
 
 namespace App\Services\Auth;
 
-use App\Models\Web\User;
+use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Log;
 

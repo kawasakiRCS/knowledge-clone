@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Knowledge\Comment;
 use App\Models\Knowledge\Knowledge;
-use App\Models\Web\User;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 

@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Knowledge\Knowledge;
 use App\Models\Knowledge\Comment;
 use App\Models\Knowledge\LikeComment;
-use App\Models\Web\User;
+use App\Models\User;
 use App\Services\FileService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;

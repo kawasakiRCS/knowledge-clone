@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Knowledge\KnowledgeFile;
-use App\Models\Web\User;
+use App\Models\User;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;

@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libldap2-dev \
     libicu-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libwebp-dev \
     zip \
     unzip \
     nginx \
@@ -25,7 +28,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # PHP拡張をインストール
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu \
     && docker-php-ext-install \
     pdo_pgsql \

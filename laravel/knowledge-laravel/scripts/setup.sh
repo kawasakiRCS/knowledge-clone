@@ -76,23 +76,20 @@ else
     show_info ".env ファイルは既に存在します"
 fi
 
-echo "📋 ステップ 3: 依存関係のインストール"
-echo "=========================================="
-
-run_step "Composer依存関係のインストール" "docker-compose --profile setup run --rm composer"
-
-run_step "NPM依存関係のインストールとビルド" "docker-compose --profile setup run --rm npm"
-
-echo "📋 ステップ 4: Docker環境の起動"
+echo "📋 ステップ 3: Docker環境の起動"
 echo "=========================================="
 
 run_step "Dockerコンテナの起動" "docker-compose up -d --build"
 
 # サービスの起動を待機
 show_info "サービスの起動を待機中..."
-sleep 10
+sleep 15
 
-echo "📋 ステップ 5: Laravel初期化"
+run_step "Composer依存関係のインストール" "docker-compose exec app composer install --optimize-autoloader --no-dev"
+
+run_step "NPM依存関係のインストールとビルド" "docker-compose exec app npm ci && docker-compose exec app npm run build"
+
+echo "📋 ステップ 4: Laravel初期化"
 echo "=========================================="
 
 run_step "アプリケーションキーの生成" "docker-compose exec app php artisan key:generate"
@@ -103,12 +100,12 @@ run_step "データベースマイグレーション" "docker-compose exec app p
 
 run_step "サンプルデータの投入" "docker-compose exec app php artisan db:seed"
 
-echo "📋 ステップ 6: 検索機能の初期化"
+echo "📋 ステップ 5: 検索機能の初期化"
 echo "=========================================="
 
 run_step "Meilisearch検索インデックスの作成" "docker-compose exec app php artisan scout:import \"App\\Models\\Knowledge\\Knowledge\""
 
-echo "📋 ステップ 7: 権限の設定"
+echo "📋 ステップ 6: 権限の設定"
 echo "=========================================="
 
 run_step "ストレージディレクトリの権限設定" "docker-compose exec app chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache"

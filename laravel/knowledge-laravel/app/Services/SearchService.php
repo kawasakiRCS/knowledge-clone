@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Knowledge\Knowledge;
 use App\Models\Knowledge\Tag;
-use App\Models\Web\User;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;

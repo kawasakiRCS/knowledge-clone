@@ -2,7 +2,7 @@
 
 namespace App\Services\Auth;
 
-use App\Models\Web\User;
+use App\Models\User;
 use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Hash;

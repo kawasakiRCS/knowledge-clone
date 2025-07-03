@@ -104,7 +104,7 @@ services:
     volumes:
       - ./:/app
     working_dir: /app
-    command: install --optimize-autoloader --no-dev
+    command: install --optimize-autoloader --no-dev --ignore-platform-req=ext-ldap --ignore-platform-req=ext-exif
     networks:
       - knowledge-network
     profiles:
