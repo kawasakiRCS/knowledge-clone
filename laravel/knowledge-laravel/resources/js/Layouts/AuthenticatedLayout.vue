@@ -37,7 +37,19 @@ const showingNavigationDropdown = ref(false);
                                     :href="route('dashboard')"
                                     :active="route().current('dashboard')"
                                 >
-                                    Dashboard
+                                    ダッシュボード
+                                </NavLink>
+                                <NavLink
+                                    :href="route('knowledge.index')"
+                                    :active="route().current('knowledge.*')"
+                                >
+                                    ナレッジ
+                                </NavLink>
+                                <NavLink
+                                    :href="route('search')"
+                                    :active="route().current('search')"
+                                >
+                                    検索
                                 </NavLink>
                             </div>
                         </div>
@@ -52,7 +64,7 @@ const showingNavigationDropdown = ref(false);
                                                 type="button"
                                                 class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
                                             >
-                                                {{ $page.props.auth.user.name }}
+                                                {{ $page.props.auth.user.user_name || $page.props.auth.user.name }}
 
                                                 <svg
                                                     class="-me-0.5 ms-2 h-4 w-4"
@@ -144,7 +156,19 @@ const showingNavigationDropdown = ref(false);
                             :href="route('dashboard')"
                             :active="route().current('dashboard')"
                         >
-                            Dashboard
+                            ダッシュボード
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('knowledge.index')"
+                            :active="route().current('knowledge.*')"
+                        >
+                            ナレッジ
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('search')"
+                            :active="route().current('search')"
+                        >
+                            検索
                         </ResponsiveNavLink>
                     </div>
 
@@ -156,10 +180,10 @@ const showingNavigationDropdown = ref(false);
                             <div
                                 class="text-base font-medium text-gray-800"
                             >
-                                {{ $page.props.auth.user.name }}
+                                {{ $page.props.auth.user.user_name || $page.props.auth.user.name }}
                             </div>
                             <div class="text-sm font-medium text-gray-500">
-                                {{ $page.props.auth.user.email }}
+                                {{ $page.props.auth.user.mail_address || $page.props.auth.user.email }}
                             </div>
                         </div>
 
