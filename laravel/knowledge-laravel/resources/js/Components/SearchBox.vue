@@ -87,7 +87,7 @@ const emit = defineEmits<Emits>();
 const query = ref(props.modelValue);
 const suggestions = ref<string[]>([]);
 const showSuggestions = ref(false);
-const suggestionsTimeout = ref<NodeJS.Timeout | null>(null);
+const suggestionsTimeout = ref<number | null>(null);
 
 // モデル値が変更されたら内部の値も更新
 watch(() => props.modelValue, (newValue) => {
@@ -105,7 +105,7 @@ const onInput = () => {
     }
 
     if (query.value.length >= 2) {
-        suggestionsTimeout.value = setTimeout(() => {
+        suggestionsTimeout.value = window.setTimeout(() => {
             fetchSuggestions();
         }, 300);
     } else {
@@ -152,7 +152,7 @@ const clearSearch = () => {
 
 const onBlur = () => {
     // 少し遅延してサジェストを非表示にする（クリックイベントが先に実行されるように）
-    setTimeout(() => {
+    window.setTimeout(() => {
         showSuggestions.value = false;
     }, 150);
 };

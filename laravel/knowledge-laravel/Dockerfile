@@ -11,16 +11,23 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
+    libpq-dev \
+    libldap2-dev \
+    libicu-dev \
     zip \
     unzip \
     nginx \
     supervisor \
     postgresql-client \
     nodejs \
-    npm
+    npm \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # PHP拡張をインストール
-RUN docker-php-ext-install \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu \
+    && docker-php-ext-install \
     pdo_pgsql \
     pgsql \
     mbstring \
@@ -29,7 +36,8 @@ RUN docker-php-ext-install \
     bcmath \
     gd \
     zip \
-    intl
+    intl \
+    ldap
 
 # Redisサポート
 RUN pecl install redis && docker-php-ext-enable redis

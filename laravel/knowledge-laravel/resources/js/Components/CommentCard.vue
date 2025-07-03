@@ -242,18 +242,25 @@ const formatComment = (content: string): string => {
         .replace(/\n/g, '<br>');
 };
 
+// HTMLElement拡張型を定義
+interface HTMLElementWithClickOutside extends HTMLElement {
+    clickOutsideEvent: (event: Event) => void;
+}
+
 // クリック外しのディレクティブ（簡単な実装）
 const vClickOutside = {
     beforeMount(el: HTMLElement, binding: any) {
-        el.clickOutsideEvent = (event: Event) => {
+        const extendedEl = el as HTMLElementWithClickOutside;
+        extendedEl.clickOutsideEvent = (event: Event) => {
             if (!(el === event.target || el.contains(event.target as Node))) {
                 binding.value();
             }
         };
-        document.addEventListener('click', el.clickOutsideEvent);
+        document.addEventListener('click', extendedEl.clickOutsideEvent);
     },
     unmounted(el: HTMLElement) {
-        document.removeEventListener('click', el.clickOutsideEvent);
+        const extendedEl = el as HTMLElementWithClickOutside;
+        document.removeEventListener('click', extendedEl.clickOutsideEvent);
     },
 };
 </script>

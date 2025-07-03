@@ -107,7 +107,7 @@ const inputValue = ref('');
 const showSuggestions = ref(false);
 const highlightedIndex = ref(-1);
 const availableTags = ref<Tag[]>([]);
-const suggestionsTimeout = ref<NodeJS.Timeout | null>(null);
+const suggestionsTimeout = ref<number | null>(null);
 
 const selectedTags = computed({
     get: () => props.modelValue,
@@ -149,7 +149,7 @@ watch(inputValue, (newValue) => {
     }
 
     if (newValue.length >= 1) {
-        suggestionsTimeout.value = setTimeout(() => {
+        suggestionsTimeout.value = window.setTimeout(() => {
             fetchTagSuggestions();
         }, 300);
     }
@@ -246,7 +246,7 @@ const onArrowUp = (event: KeyboardEvent) => {
 
 const onBlur = () => {
     // 少し遅延してサジェストを非表示にする
-    setTimeout(() => {
+    window.setTimeout(() => {
         showSuggestions.value = false;
         highlightedIndex.value = -1;
     }, 150);

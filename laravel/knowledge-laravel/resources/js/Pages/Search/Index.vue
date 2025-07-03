@@ -454,10 +454,10 @@ const formatDate = (dateString: string): string => {
 
 // 検索実行
 const performSearch = async (query?: string) => {
-    const searchQuery = query || searchQuery.value;
-    if (!searchQuery.trim()) return;
+    const currentSearchQuery = query || searchQuery.value;
+    if (!currentSearchQuery.trim()) return;
     
-    currentQuery.value = searchQuery;
+    currentQuery.value = currentSearchQuery;
     hasSearched.value = true;
     
     const startTime = performance.now();
@@ -465,7 +465,7 @@ const performSearch = async (query?: string) => {
     try {
         const response = await axios.get('/api/search', {
             params: {
-                q: searchQuery,
+                q: currentSearchQuery,
                 ...Object.fromEntries(
                     Object.entries(filters).filter(([_, value]) => 
                         value !== undefined && value !== null && value !== ''

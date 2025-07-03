@@ -7,6 +7,11 @@ export interface User {
     locale_key?: string;
     insert_datetime: string;
     update_datetime: string;
+    
+    // Additional properties for compatibility
+    name?: string;
+    email?: string;
+    email_verified_at?: string;
 }
 
 export interface Knowledge {
