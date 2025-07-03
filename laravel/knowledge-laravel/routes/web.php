@@ -41,6 +41,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/search', [SearchController::class, 'index'])->name('search.index');
     Route::get('/search/advanced', [SearchController::class, 'advanced'])->name('search.advanced');
     Route::get('/api/search/suggest', [SearchController::class, 'suggest'])->name('search.suggest');
+    
+    // ファイル管理
+    Route::post('/files/upload', [\App\Http\Controllers\FileController::class, 'upload'])->middleware('file.upload')->name('files.upload');
+    Route::get('/files/{file}/download', [\App\Http\Controllers\FileController::class, 'download'])->name('files.download');
+    Route::get('/files/{file}/show', [\App\Http\Controllers\FileController::class, 'show'])->name('files.show');
+    Route::get('/files/{file}/thumbnail', [\App\Http\Controllers\FileController::class, 'thumbnail'])->name('files.thumbnail');
+    Route::delete('/files/{file}', [\App\Http\Controllers\FileController::class, 'destroy'])->name('files.destroy');
+    Route::get('/knowledge/{knowledge}/files', [\App\Http\Controllers\FileController::class, 'knowledgeFiles'])->name('knowledge.files');
+    
+    // 一時ファイル管理
+    Route::post('/files/temp/upload', [\App\Http\Controllers\FileController::class, 'uploadTemporary'])->middleware('file.upload')->name('files.temp.upload');
+    Route::post('/files/temp/convert', [\App\Http\Controllers\FileController::class, 'convertTemporary'])->name('files.temp.convert');
 });
 
 require __DIR__.'/auth.php';

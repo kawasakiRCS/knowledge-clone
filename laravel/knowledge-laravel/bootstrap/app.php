@@ -16,9 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        // カスタム認証ミドルウェアを登録
+        // カスタムミドルウェアを登録
         $middleware->alias([
             'knowledge.auth' => \App\Http\Middleware\KnowledgeAuth::class,
+            'file.upload' => \App\Http\Middleware\FileUploadMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

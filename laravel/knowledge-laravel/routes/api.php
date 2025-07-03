@@ -15,6 +15,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/knowledge/{knowledge}/like-status', [KnowledgeController::class, 'likeStatus']);
     Route::post('/knowledge/{knowledge}/toggle-like', [KnowledgeController::class, 'toggleLike']);
     
+    // ファイルAPI
+    Route::post('/files/upload', [\App\Http\Controllers\FileController::class, 'upload']);
+    Route::get('/knowledge/{knowledge}/files', [\App\Http\Controllers\FileController::class, 'knowledgeFiles']);
+    Route::delete('/files/{file}', [\App\Http\Controllers\FileController::class, 'destroy']);
+    
     // その他のAPI
     Route::get('/tags', [KnowledgeController::class, 'tags']);
     Route::get('/knowledge/recent', [KnowledgeController::class, 'recent']);
