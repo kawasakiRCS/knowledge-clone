@@ -37,6 +37,17 @@ Route::middleware('auth')->group(function () {
     Route::resource('knowledge', KnowledgeController::class);
     Route::post('/knowledge/{knowledge}/like', [KnowledgeController::class, 'like'])->name('knowledge.like');
     
+    // コメント管理
+    Route::get('/knowledge/{knowledge}/comments', [\App\Http\Controllers\CommentController::class, 'index'])->name('comments.index');
+    Route::post('/comments', [\App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
+    Route::get('/comments/{comment}', [\App\Http\Controllers\CommentController::class, 'show'])->name('comments.show');
+    Route::get('/comments/{comment}/edit', [\App\Http\Controllers\CommentController::class, 'edit'])->name('comments.edit');
+    Route::put('/comments/{comment}', [\App\Http\Controllers\CommentController::class, 'update'])->name('comments.update');
+    Route::delete('/comments/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('comments.destroy');
+    Route::post('/comments/{comment}/like', [\App\Http\Controllers\CommentController::class, 'like'])->name('comments.like');
+    Route::post('/comments/{comment}/toggle-status', [\App\Http\Controllers\CommentController::class, 'toggleStatus'])->name('comments.toggle-status');
+    Route::get('/my/comments', [\App\Http\Controllers\CommentController::class, 'userComments'])->name('my.comments');
+    
     // 検索機能
     Route::get('/search', [SearchController::class, 'index'])->name('search.index');
     Route::get('/search/advanced', [SearchController::class, 'advanced'])->name('search.advanced');

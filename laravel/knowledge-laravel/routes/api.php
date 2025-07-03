@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\KnowledgeController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\CommentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('knowledge', KnowledgeController::class)->only(['index', 'show']);
     Route::get('/knowledge/{knowledge}/like-status', [KnowledgeController::class, 'likeStatus']);
     Route::post('/knowledge/{knowledge}/toggle-like', [KnowledgeController::class, 'toggleLike']);
+    
+    // コメントAPI
+    Route::get('/knowledge/{knowledge}/comments', [CommentController::class, 'index']);
+    Route::apiResource('comments', CommentController::class);
+    Route::post('/comments/{comment}/like', [CommentController::class, 'like']);
+    Route::post('/comments/{comment}/toggle-status', [CommentController::class, 'toggleStatus']);
+    Route::get('/my/comments', [CommentController::class, 'userComments']);
+    Route::get('/comments/recent', [CommentController::class, 'recent']);
+    Route::get('/comments/stats', [CommentController::class, 'stats']);
     
     // ファイルAPI
     Route::post('/files/upload', [\App\Http\Controllers\FileController::class, 'upload']);

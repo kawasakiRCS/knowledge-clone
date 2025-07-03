@@ -141,6 +141,17 @@ class Comment extends BaseModel
         static::created(function ($comment) {
             // ナレッジのコメント数を更新
             $comment->knowledge?->updateCommentCount();
+
+            // 通知送信（非同期で実行することを推奨）
+            try {
+                $notificationService = app(\App\Services\CommentNotificationService::class);
+                $notificationService->sendCommentNotification($comment);
+            } catch (\Exception $e) {
+                logger()->error('Comment notification failed', [
+                    'comment_id' => $comment->comment_no,
+                    'error' => $e->getMessage()
+                ]);
+            }
         });
 
         static::deleted(function ($comment) {
