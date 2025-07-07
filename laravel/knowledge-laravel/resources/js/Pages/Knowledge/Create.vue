@@ -245,18 +245,15 @@
                                 </h3>
                                 
                                 <div>
-                                    <textarea
+                                    <MarkdownEditor
                                         v-model="form.content"
-                                        required
-                                        rows="15"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                        placeholder="ナレッジの内容を入力してください..."
-                                    ></textarea>
+                                        placeholder="ナレッジの内容をマークダウンで入力してください..."
+                                    />
                                     <div v-if="errors.content" class="mt-1 text-sm text-red-600">
                                         {{ errors.content }}
                                     </div>
                                     <p class="mt-2 text-xs text-gray-500">
-                                        Markdown記法をサポートしています。HTMLタグも使用できます。
+                                        Markdown記法をサポートしています。編集・プレビュー・分割表示を切り替えできます。
                                     </p>
                                 </div>
                             </div>
@@ -322,6 +319,7 @@ import { ref, reactive, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import FileUpload from '@/Components/FileUpload.vue';
 import TagInput from '@/Components/TagInput.vue';
+import MarkdownEditor from '@/Components/MarkdownEditor.vue';
 import type { TemplateMaster, Group, KnowledgeFormData } from '@/types';
 import { PUBLIC_FLAGS } from '@/types';
 

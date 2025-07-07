@@ -141,7 +141,8 @@ class Knowledge extends BaseModel
      */
     public function tags(): BelongsToMany
     {
-        return $this->belongsToMany(Tag::class, 'knowledge_tags', 'knowledge_id', 'tag_id');
+        return $this->belongsToMany(Tag::class, 'knowledge_tags', 'knowledge_id', 'tag_id')
+                    ->withPivot(['insert_user', 'insert_datetime', 'update_user', 'update_datetime']);
     }
 
     /**
@@ -222,10 +223,10 @@ class Knowledge extends BaseModel
             $q->where('public_flag', self::PUBLIC_FLAG_PUBLIC)
               ->orWhere('insert_user', $userId)
               ->orWhereHas('allowedUsers', function ($userQuery) use ($userId) {
-                  $userQuery->where('user_id', $userId);
+                  $userQuery->where('knowledge_users.user_id', $userId);
               })
               ->orWhereHas('allowedGroups.users', function ($groupUserQuery) use ($userId) {
-                  $groupUserQuery->where('user_id', $userId);
+                  $groupUserQuery->where('users.user_id', $userId);
               });
         });
     }
@@ -269,14 +270,14 @@ class Knowledge extends BaseModel
             return true;
         }
 
-        if ($this->allowedUsers()->where('user_id', $userId)->exists()) {
+        if ($this->allowedUsers()->where('knowledge_users.user_id', $userId)->exists()) {
             return true;
         }
 
         // グループアクセス権限のチェック
         return $this->allowedGroups()
             ->whereHas('users', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
+                $query->where('users.user_id', $userId);
             })->exists();
     }
 
@@ -289,14 +290,14 @@ class Knowledge extends BaseModel
             return true;
         }
 
-        if ($this->editUsers()->where('user_id', $userId)->exists()) {
+        if ($this->editUsers()->where('knowledge_edit_users.user_id', $userId)->exists()) {
             return true;
         }
 
         // グループ編集権限のチェック
         return $this->editGroups()
             ->whereHas('users', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
+                $query->where('users.user_id', $userId);
             })->exists();
     }
 }

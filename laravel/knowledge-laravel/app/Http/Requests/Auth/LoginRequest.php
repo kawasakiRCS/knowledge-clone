@@ -41,10 +41,16 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // emailでの認証を試行
-        $credentials = $this->only('email', 'password');
+        // mail_addressでの認証を試行
+        $credentials = [
+            'mail_address' => $this->input('email'),
+            'password' => $this->input('password')
+        ];
+        
+        \Log::info('Login attempt with credentials', ['email' => $this->input('email')]);
         
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
+            \Log::error('Login failed for user', ['email' => $this->input('email')]);
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -52,6 +58,7 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        \Log::info('Login successful for user', ['email' => $this->input('email'), 'user_id' => Auth::id()]);
         RateLimiter::clear($this->throttleKey());
     }
 

@@ -9,6 +9,7 @@
         "php": "^8.2",
         "directorytree/ldaprecord-laravel": "^3.0",
         "inertiajs/inertia-laravel": "^2.0",
+        "intervention/image": "^3.11",
         "laravel/breeze": "^2.0",
         "laravel/fortify": "^1.27",
         "laravel/framework": "^12.0",

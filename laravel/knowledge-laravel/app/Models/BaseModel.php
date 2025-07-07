@@ -73,14 +73,15 @@ abstract class BaseModel extends Model
         // 作成時に自動的にユーザーIDをセット
         static::creating(function ($model) {
             if (auth()->check()) {
-                $model->insert_user = auth()->id();
+                $model->insert_user = auth()->user()->user_id;
+                $model->update_user = auth()->user()->user_id;
             }
         });
 
         // 更新時に自動的にユーザーIDをセット
         static::updating(function ($model) {
             if (auth()->check()) {
-                $model->update_user = auth()->id();
+                $model->update_user = auth()->user()->user_id;
             }
         });
 
@@ -99,9 +100,10 @@ abstract class BaseModel extends Model
      */
     public function scopeNotDeleted($query)
     {
-        return $query->where(function ($q) {
-            $q->whereNull('delete_flag')
-              ->orWhere('delete_flag', '!=', 1);
+        $table = $query->getModel()->getTable();
+        return $query->where(function ($q) use ($table) {
+            $q->whereNull($table . '.delete_flag')
+              ->orWhere($table . '.delete_flag', '!=', 1);
         });
     }
 
@@ -118,7 +120,8 @@ abstract class BaseModel extends Model
      */
     public function scopeOnlyDeleted($query)
     {
-        return $query->where('delete_flag', 1);
+        $table = $query->getModel()->getTable();
+        return $query->where($table . '.delete_flag', 1);
     }
 
     /**

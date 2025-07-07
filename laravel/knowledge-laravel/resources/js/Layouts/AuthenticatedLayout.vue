@@ -46,8 +46,8 @@ const showingNavigationDropdown = ref(false);
                                     ナレッジ
                                 </NavLink>
                                 <NavLink
-                                    :href="route('search')"
-                                    :active="route().current('search')"
+                                    :href="route('search.index')"
+                                    :active="route().current('search.*')"
                                 >
                                     検索
                                 </NavLink>
@@ -165,8 +165,8 @@ const showingNavigationDropdown = ref(false);
                             ナレッジ
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
-                            :href="route('search')"
-                            :active="route().current('search')"
+                            :href="route('search.index')"
+                            :active="route().current('search.*')"
                         >
                             検索
                         </ResponsiveNavLink>

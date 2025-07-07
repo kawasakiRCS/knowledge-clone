@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vue-tsc && vite build && vite build --ssr",
+        "build": "vite build && vite build --ssr",
         "dev": "vite"
     },
     "devDependencies": {
@@ -22,5 +22,11 @@
         "vite": "^6.2.4",
         "vue": "^3.4.0",
         "vue-tsc": "^2.0.24"
+    },
+    "dependencies": {
+        "@types/highlight.js": "^10.1.0",
+        "@types/marked": "^6.0.0",
+        "highlight.js": "^11.11.1",
+        "marked": "^16.0.0"
     }
 }

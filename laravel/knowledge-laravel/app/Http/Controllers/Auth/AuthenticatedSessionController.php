@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Providers\RouteServiceProvider;
 use App\Services\Auth\LdapAuthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,7 +46,7 @@ class AuthenticatedSessionController extends Controller
             if ($user) {
                 Auth::login($user, $request->boolean('remember'));
                 $request->session()->regenerate();
-                return redirect()->intended('/');
+                return redirect()->intended(RouteServiceProvider::HOME);
             }
         }
 
@@ -53,8 +54,11 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        
+        \Log::info('Authentication successful, redirecting to: ' . RouteServiceProvider::HOME);
+        \Log::info('Authenticated user: ' . Auth::id());
 
-        return redirect()->intended('/');
+        return redirect()->intended(RouteServiceProvider::HOME);
     }
 
     /**

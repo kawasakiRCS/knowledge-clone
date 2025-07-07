@@ -241,18 +241,15 @@
                                 </h3>
                                 
                                 <div>
-                                    <textarea
+                                    <MarkdownEditor
                                         v-model="form.content"
-                                        required
-                                        rows="15"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                        placeholder="ナレッジの内容を入力してください..."
-                                    ></textarea>
+                                        placeholder="ナレッジの内容をマークダウンで入力してください..."
+                                    />
                                     <div v-if="errors.content" class="mt-1 text-sm text-red-600">
                                         {{ errors.content }}
                                     </div>
                                     <p class="mt-2 text-xs text-gray-500">
-                                        Markdown記法をサポートしています。HTMLタグも使用できます。
+                                        Markdown記法をサポートしています。編集・プレビュー・分割表示を切り替えできます。
                                     </p>
                                 </div>
                             </div>
@@ -300,13 +297,15 @@
                                 <!-- 新しいファイルアップロード -->
                                 <div>
                                     <h4 class="text-sm font-medium text-gray-700 mb-2">新しいファイルを追加</h4>
-                                    <FileUpload
-                                        v-model="form.temp_file_ids"
-                                        :max-file-size="10 * 1024 * 1024"
-                                        :max-files="10"
+                                    <FileUploader
+                                        :knowledge-id="knowledge.knowledge_id"
+                                        :can-delete="true"
+                                        @uploaded="handleFilesUploaded"
+                                        @deleted="handleFileDeleted"
+                                        @error="handleFileError"
                                     />
-                                    <div v-if="errors.temp_file_ids" class="mt-1 text-sm text-red-600">
-                                        {{ errors.temp_file_ids }}
+                                    <div v-if="errors.files" class="mt-1 text-sm text-red-600">
+                                        {{ errors.files }}
                                     </div>
                                 </div>
                             </div>
@@ -347,8 +346,9 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, reactive, computed } from 'vue';
 import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import FileUpload from '@/Components/FileUpload.vue';
+import FileUploader from '@/Components/FileUploader.vue';
 import TagInput from '@/Components/TagInput.vue';
+import MarkdownEditor from '@/Components/MarkdownEditor.vue';
 import type { Knowledge, TemplateMaster, Group, KnowledgeFormData } from '@/types';
 import { PUBLIC_FLAGS } from '@/types';
 
@@ -434,6 +434,22 @@ const removeExistingFile = (fileNo: number) => {
             props.knowledge.files.splice(index, 1);
         }
     }
+};
+
+// ファイルアップロードハンドラー
+const handleFilesUploaded = (files: any[]) => {
+    // ファイルがアップロードされたときの処理
+    console.log('Files uploaded:', files);
+};
+
+const handleFileDeleted = (file: any) => {
+    // ファイルが削除されたときの処理
+    console.log('File deleted:', file);
+};
+
+const handleFileError = (message: string) => {
+    // エラーが発生したときの処理
+    alert(message);
 };
 
 // フォーム送信

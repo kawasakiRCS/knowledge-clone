@@ -13,23 +13,39 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * The primary key associated with the table.
+     */
+    protected $primaryKey = 'user_id';
+
+    /**
+     * Get the name of the unique identifier for the user.
+     */
+    public function getAuthIdentifierName()
+    {
+        return $this->getKeyName();
+    }
+
+    /**
+     * Get the unique identifier for the user.
+     */
+    public function getAuthIdentifier()
+    {
+        return $this->user_id;
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
+        'user_key',
+        'user_name',
+        'mail_address',
         'password',
+        'salt',
+        'auth_ldap',
     ];
-
-    /**
-     * Get the user_id attribute (legacy compatibility)
-     */
-    public function getUserIdAttribute()
-    {
-        return $this->id;
-    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -39,6 +55,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'salt',
     ];
 
     /**
@@ -52,5 +69,21 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get the name attribute (Laravel compatibility)
+     */
+    public function getNameAttribute()
+    {
+        return $this->user_name;
+    }
+
+    /**
+     * Get the email attribute (Laravel compatibility)
+     */
+    public function getEmailAttribute()
+    {
+        return $this->mail_address;
     }
 }

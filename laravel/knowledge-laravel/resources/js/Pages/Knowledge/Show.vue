@@ -14,15 +14,15 @@
                         </svg>
                     </Link>
                     <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                        {{ knowledge.title }}
+                        {{ props.knowledge.title }}
                     </h2>
                 </div>
                 
                 <div class="flex items-center space-x-2">
                     <!-- 編集ボタン -->
                     <Link
-                        v-if="knowledge.can_edit"
-                        :href="route('knowledge.edit', knowledge.knowledge_id)"
+                        v-if="props.canEdit"
+                        :href="route('knowledge.edit', props.knowledge.knowledge_id)"
                         class="inline-flex items-center px-3 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150"
                     >
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +163,7 @@
                     <div class="p-6">
                         <div 
                             class="prose max-w-none text-gray-900"
-                            v-html="knowledge.content"
+                            v-html="renderedContent"
                         ></div>
                     </div>
                 </div>
@@ -246,7 +246,7 @@
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-lg font-medium text-gray-900">
-                                コメント ({{ comments.length }})
+                                コメント ({{ knowledge.comments?.length || 0 }})
                             </h3>
                             <button
                                 @click="showCommentForm = !showCommentForm"
@@ -303,9 +303,9 @@
                         </div>
 
                         <!-- コメント一覧 -->
-                        <div v-if="comments.length > 0" class="space-y-4">
+                        <div v-if="knowledge.comments && knowledge.comments.length > 0" class="space-y-4">
                             <CommentCard
-                                v-for="comment in comments"
+                                v-for="comment in knowledge.comments"
                                 :key="comment.comment_no"
                                 :comment="comment"
                                 @edit="editComment"
@@ -331,10 +331,74 @@
     </AuthenticatedLayout>
 </template>
 
+<style>
+/* Highlight.js のスタイル */
+@import 'highlight.js/styles/github.css';
+
+/* プロースタイル調整 */
+.prose {
+    @apply text-gray-900;
+}
+
+.prose h1 {
+    @apply text-2xl font-bold mb-4 mt-6;
+}
+
+.prose h2 {
+    @apply text-xl font-bold mb-3 mt-5;
+}
+
+.prose h3 {
+    @apply text-lg font-bold mb-2 mt-4;
+}
+
+.prose p {
+    @apply mb-4;
+}
+
+.prose ul, .prose ol {
+    @apply mb-4 pl-6;
+}
+
+.prose li {
+    @apply mb-1;
+}
+
+.prose blockquote {
+    @apply border-l-4 border-gray-300 pl-4 py-2 bg-gray-50 mb-4;
+}
+
+.prose code {
+    @apply bg-gray-100 px-1 py-0.5 rounded text-sm font-mono;
+}
+
+.prose pre {
+    @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
+}
+
+.prose pre code {
+    @apply bg-transparent p-0;
+}
+
+.prose table {
+    @apply w-full border-collapse border border-gray-300 mb-4;
+}
+
+.prose th, .prose td {
+    @apply border border-gray-300 px-4 py-2;
+}
+
+.prose th {
+    @apply bg-gray-50 font-bold;
+}
+</style>
+
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import axios from 'axios';
+import { marked } from 'marked';
+import hljs from 'highlight.js';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CommentCard from '@/Components/CommentCard.vue';
 import type { Knowledge, Comment, CommentFormData } from '@/types';
@@ -342,10 +406,43 @@ import { PUBLIC_FLAGS } from '@/types';
 
 interface Props {
     knowledge: Knowledge;
-    comments: Comment[];
+    userLiked: boolean;
+    canEdit: boolean;
+    relatedKnowledges: Knowledge[];
 }
 
 const props = defineProps<Props>();
+
+// デバッグ: propsの内容を確認
+console.log('Knowledge Show Props:', props);
+console.log('canEdit value:', props.canEdit);
+
+// マークダウンレンダリング設定
+marked.setOptions({
+    highlight: function(code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                return hljs.highlight(code, { language: lang }).value;
+            } catch (err) {
+                console.error('Highlight.js error:', err);
+            }
+        }
+        return hljs.highlightAuto(code).value;
+    },
+    breaks: true,
+    gfm: true
+});
+
+// マークダウンレンダリング
+const renderedContent = computed(() => {
+    if (!props.knowledge.content) return '';
+    try {
+        return marked(props.knowledge.content);
+    } catch (error) {
+        console.error('Markdown rendering error:', error);
+        return props.knowledge.content; // フォールバック
+    }
+});
 
 // リアクティブな状態
 const showCommentForm = ref(false);

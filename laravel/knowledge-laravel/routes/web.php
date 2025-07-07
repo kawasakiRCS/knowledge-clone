@@ -23,7 +23,18 @@ Route::get('/', function () {
 
 // ダッシュボード（ナレッジ一覧）
 Route::get('/dashboard', function () {
-    return redirect()->route('knowledge.index');
+    try {
+        \Log::info('Dashboard accessed by user: ' . (Auth::check() ? Auth::id() : 'guest'));
+        if (!Auth::check()) {
+            \Log::error('User not authenticated on dashboard access');
+            return redirect('/login');
+        }
+        \Log::info('Redirecting to knowledge.index');
+        return redirect()->route('knowledge.index');
+    } catch (\Exception $e) {
+        \Log::error('Dashboard redirect error: ' . $e->getMessage());
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
 })->middleware(['auth'])->name('dashboard');
 
 // 認証が必要なルート
@@ -64,6 +75,17 @@ Route::middleware('auth')->group(function () {
     // 一時ファイル管理
     Route::post('/files/temp/upload', [\App\Http\Controllers\FileController::class, 'uploadTemporary'])->middleware('file.upload')->name('files.temp.upload');
     Route::post('/files/temp/convert', [\App\Http\Controllers\FileController::class, 'convertTemporary'])->name('files.temp.convert');
+});
+
+// Test login route
+Route::get('/test-login', function () {
+    return view('test-login');
+})->name('test.login');
+
+// 画像アップロードAPI（認証必要）
+Route::middleware('auth')->group(function () {
+    Route::post('/api/images/upload', [\App\Http\Controllers\ImageController::class, 'upload'])->name('api.images.upload');
+    Route::get('/api/images/{filename}', [\App\Http\Controllers\ImageController::class, 'show'])->name('api.images.show');
 });
 
 require __DIR__.'/auth.php';

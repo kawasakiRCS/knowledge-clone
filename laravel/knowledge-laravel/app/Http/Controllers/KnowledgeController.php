@@ -24,22 +24,31 @@ class KnowledgeController extends Controller
      */
     public function index(Request $request): Response
     {
-        $user = Auth::user();
-        $filters = $request->only(['search', 'tag', 'template', 'public_flag', 'creator', 'date_from', 'date_to']);
-        $sort = $request->get('sort', 'updated');
-        
-        $knowledges = $this->knowledgeService->getAccessibleKnowledges($user, $filters, $sort, 20);
-        
-        // フィルター用データ
-        $tags = Tag::popular(50)->get();
-        $templates = TemplateMaster::active()->get();
+        try {
+            $user = Auth::user();
+            \Log::info('Knowledge index accessed by user: ' . $user->user_id);
+            
+            $filters = $request->only(['search', 'tag', 'template', 'public_flag', 'creator', 'date_from', 'date_to']);
+            $sort = $request->get('sort', 'updated');
+            
+            $knowledges = $this->knowledgeService->getAccessibleKnowledges($user, $filters, $sort, 20);
+            \Log::info('Knowledge count: ' . $knowledges->count());
+            
+            // フィルター用データ
+            $tags = Tag::popular(50)->get();
+            $templates = TemplateMaster::active()->get();
 
-        return Inertia::render('Knowledge/Index', [
-            'knowledges' => $knowledges,
-            'tags' => $tags,
-            'templates' => $templates,
-            'filters' => array_merge($filters, ['sort' => $sort]),
-        ]);
+            return Inertia::render('Knowledge/Index', [
+                'knowledges' => $knowledges,
+                'tags' => $tags,
+                'templates' => $templates,
+                'filters' => array_merge($filters, ['sort' => $sort]),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Knowledge index error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            throw $e;
+        }
     }
 
     /**
@@ -47,42 +56,62 @@ class KnowledgeController extends Controller
      */
     public function show(Knowledge $knowledge): Response
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
+            \Log::info('Knowledge show accessed: ' . $knowledge->knowledge_id);
 
-        // アクセス権限チェック
-        if (!$knowledge->isAccessibleBy($user->user_id)) {
-            abort(403, 'このナレッジへのアクセス権限がありません。');
+            // アクセス権限チェック
+            if (!$knowledge->isAccessibleBy($user->user_id)) {
+                abort(403, 'このナレッジへのアクセス権限がありません。');
+            }
+
+            // 閲覧履歴を記録
+            $this->knowledgeService->recordView($knowledge, $user);
+
+            $knowledge->load([
+                'creator',
+                'updater',
+                'tags',
+                'templateMaster',
+                'comments.creator',
+                'comments.likes',
+                'files',
+                'likes.user'
+            ]);
+
+            // ユーザーがいいねしているかチェック
+            $userLiked = $knowledge->likes()->where('insert_user', $user->user_id)->exists();
+
+            // 編集権限チェック
+            $canEdit = $knowledge->isEditableBy($user->user_id);
+            \Log::info('Edit permission check', [
+                'knowledge_id' => $knowledge->knowledge_id,
+                'user_id' => $user->user_id,
+                'insert_user' => $knowledge->insert_user,
+                'canEdit' => $canEdit ? 'true' : 'false'
+            ]);
+
+            // 関連ナレッジ
+            $relatedKnowledges = $this->knowledgeService->getRelatedKnowledges($knowledge, $user);
+            
+            \Log::info('Knowledge show data prepared', [
+                'tags_count' => $knowledge->tags ? $knowledge->tags->count() : 'null',
+                'comments_count' => $knowledge->comments ? $knowledge->comments->count() : 'null',
+                'files_count' => $knowledge->files ? $knowledge->files->count() : 'null',
+                'related_count' => $relatedKnowledges ? $relatedKnowledges->count() : 'null'
+            ]);
+
+            return Inertia::render('Knowledge/Show', [
+                'knowledge' => $knowledge,
+                'userLiked' => $userLiked,
+                'canEdit' => $canEdit,
+                'relatedKnowledges' => $relatedKnowledges,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Knowledge show error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            throw $e;
         }
-
-        // 閲覧履歴を記録
-        $this->knowledgeService->recordView($knowledge, $user);
-
-        $knowledge->load([
-            'creator',
-            'updater',
-            'tags',
-            'templateMaster',
-            'comments.creator',
-            'comments.likes',
-            'files',
-            'likes.user'
-        ]);
-
-        // ユーザーがいいねしているかチェック
-        $userLiked = $knowledge->likes()->where('insert_user', $user->user_id)->exists();
-
-        // 編集権限チェック
-        $canEdit = $knowledge->isEditableBy($user->user_id);
-
-        // 関連ナレッジ
-        $relatedKnowledges = $this->knowledgeService->getRelatedKnowledges($knowledge, $user);
-
-        return Inertia::render('Knowledge/Show', [
-            'knowledge' => $knowledge,
-            'userLiked' => $userLiked,
-            'canEdit' => $canEdit,
-            'relatedKnowledges' => $relatedKnowledges,
-        ]);
     }
 
     /**

@@ -80,7 +80,7 @@ class KnowledgeService
     /**
      * ナレッジを削除
      */
-    public function deleteKnowledge(Knowledge $knowledge, User $user): vouser_id
+    public function deleteKnowledge(Knowledge $knowledge, User $user): void
     {
         if (!$knowledge->isEditableBy($user->user_id)) {
             throw new \Exception('このナレッジの削除権限がありません。');
@@ -124,7 +124,7 @@ class KnowledgeService
     /**
      * 閲覧履歴を記録
      */
-    public function recordView(Knowledge $knowledge, User $user): vouser_id
+    public function recordView(Knowledge $knowledge, User $user): void
     {
         if (!$knowledge->isAccessibleBy($user->user_id)) {
             return;
@@ -150,7 +150,7 @@ class KnowledgeService
      */
     public function getRelatedKnowledges(Knowledge $knowledge, User $user, int $limit = 5): Collection
     {
-        $tagIds = $knowledge->tags->pluck('tag_user_id')->toArray();
+        $tagIds = $knowledge->tags->pluck('tag_id')->toArray();
         
         if (empty($tagIds)) {
             return collect();
@@ -158,9 +158,9 @@ class KnowledgeService
 
         return Knowledge::with(['creator', 'tags'])
                        ->accessibleBy($user->user_id)
-                       ->where('knowledge_user_id', '!=', $knowledge->knowledge_user_id)
+                       ->where('knowledge_id', '!=', $knowledge->knowledge_id)
                        ->whereHas('tags', function ($query) use ($tagIds) {
-                           $query->whereIn('tag_user_id', $tagIds);
+                           $query->whereIn('tags.tag_id', $tagIds);
                        })
                        ->orderBy('like_count', 'desc')
                        ->orderBy('view_count', 'desc')
@@ -171,7 +171,7 @@ class KnowledgeService
     /**
      * フィルターを適用
      */
-    protected function applyFilters(Builder $query, array $filters): vouser_id
+    protected function applyFilters(Builder $query, array $filters): void
     {
         if (!empty($filters['search'])) {
             $searchTerm = $filters['search'];
@@ -189,7 +189,7 @@ class KnowledgeService
         }
 
         if (!empty($filters['template'])) {
-            $query->where('type_user_id', $filters['template']);
+            $query->where('type_id', $filters['template']);
         }
 
         if (isset($filters['public_flag'])) {
@@ -215,7 +215,7 @@ class KnowledgeService
     /**
      * ソートを適用
      */
-    protected function applySorting(Builder $query, string $sort): vouser_id
+    protected function applySorting(Builder $query, string $sort): void
     {
         switch ($sort) {
             case 'title':
@@ -241,7 +241,7 @@ class KnowledgeService
     /**
      * タグを同期
      */
-    protected function syncTags(Knowledge $knowledge, array $tagNames): vouser_id
+    protected function syncTags(Knowledge $knowledge, array $tagNames): void
     {
         $tagIds = [];
         $tagNamesForStorage = [];
@@ -253,12 +253,25 @@ class KnowledgeService
             }
 
             $tag = Tag::firstOrCreate(['tag_name' => $tagName]);
-            $tagIds[] = $tag->tag_user_id;
+            $tagIds[] = $tag->tag_id;
             $tagNamesForStorage[] = $tag->tag_name;
         }
 
-        // 多対多リレーションを同期
-        $knowledge->tags()->sync($tagIds);
+        // 多対多リレーションを同期（insert_userとタイムスタンプを含む）
+        $syncData = [];
+        $now = now();
+        $userId = auth()->id() ?? $knowledge->insert_user;
+        
+        foreach ($tagIds as $tagId) {
+            $syncData[$tagId] = [
+                'insert_user' => $userId,
+                'insert_datetime' => $now,
+                'update_user' => $userId,
+                'update_datetime' => $now,
+            ];
+        }
+        
+        $knowledge->tags()->sync($syncData);
 
         // tag_namesフィールドも更新（既存システムとの互換性）
         $knowledge->update([
@@ -269,7 +282,7 @@ class KnowledgeService
     /**
      * アクセス権限を同期
      */
-    protected function syncPermissions(Knowledge $knowledge, array $data): vouser_id
+    protected function syncPermissions(Knowledge $knowledge, array $data): void
     {
         // アクセス権限
         if (array_key_exists('allowed_users', $data)) {
