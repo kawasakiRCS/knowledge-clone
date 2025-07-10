@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users table
+model User {
+  userNo         Int       @id @default(autoincrement()) @map("user_no")
+  userId         String    @unique @map("user_id") @db.VarChar(256)
+  password       String    @db.VarChar(1024)
+  userName       String    @map("user_name") @db.VarChar(256)
+  mailAddress    String?   @map("mail_address") @db.VarChar(256)
+  insertUser     Int       @map("insert_user")
+  insertDatetime DateTime  @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int       @map("update_user")
+  updateDatetime DateTime  @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int       @map("delete_flag")
+
+  // Relations
+  createdKnowledges Knowledge[] @relation("KnowledgeAuthor")
+  
+  @@map("users")
+}
+
+// Knowledges table
+model Knowledge {
+  knowledgeId    String    @id @map("knowledge_id") @db.VarChar(10)
+  title          String    @db.VarChar(1024)
+  content        String?
+  publicFlag     Int       @map("public_flag")
+  tagIds         String?   @map("tag_ids") @db.VarChar(1024)
+  tagNames       String?   @map("tag_names") @db.VarChar(1024)
+  likeCount      Int       @default(0) @map("like_count")
+  commentCount   Int       @default(0) @map("comment_count")
+  viewCount      Int       @default(0) @map("view_count")
+  typeId         Int?      @map("type_id")
+  notifyStatus   Int       @default(0) @map("notify_status")
+  point          Int?
+  anonymous      Int       @default(0)
+  insertUser     Int       @map("insert_user")
+  insertDatetime DateTime  @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int       @map("update_user")
+  updateDatetime DateTime  @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int       @default(0) @map("delete_flag")
+
+  // Relations
+  author User @relation("KnowledgeAuthor", fields: [insertUser], references: [userNo])
+  
+  @@map("knowledges")
+}
+
+// Tags table
+model Tag {
+  tagId          Int       @id @default(autoincrement()) @map("tag_id")
+  tagName        String    @unique @map("tag_name") @db.VarChar(128)
+  insertUser     Int       @map("insert_user")
+  insertDatetime DateTime  @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int       @map("update_user")
+  updateDatetime DateTime  @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int       @default(0) @map("delete_flag")
+  
+  @@map("tags")
+}
