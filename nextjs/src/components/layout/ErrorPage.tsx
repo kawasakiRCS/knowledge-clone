@@ -4,6 +4,8 @@
  * @description 各種HTTPエラーに対応した統一エラーページ
  * 旧システムのerror.jsp、not_found.jsp、server_error.jsp等に対応
  */
+'use client';
+
 import React, { useState } from 'react';
 
 interface ErrorPageProps {
