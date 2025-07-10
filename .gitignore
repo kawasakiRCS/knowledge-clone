@@ -19,3 +19,4 @@ out.txt
 .vscode
 laravel_old/
 laravel/
+.claude/logs/
