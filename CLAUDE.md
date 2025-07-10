@@ -13,6 +13,46 @@ This is my global Claude Code configuration directory (`~/.claude`) that sets up
 
 ## 🧠 Proactive AI Assistance
 
+### 🔴 YOU MUST: Test-Driven Development (TDD) - 最優先ルール
+**すべての実装はテスト駆動開発で行う。実装コードを書く前に必ずテストを先に書く。**
+
+#### TDD必須手順
+1. **Red**: 失敗するテストを先に書く
+2. **Green**: テストを通すために最小限の実装を行う  
+3. **Refactor**: 実装とテストを改善する
+
+#### TDDが見逃される原因と対策
+❌ **見逃された原因（Issue #28での反省）**
+- ✗ 実装を急いでテストを後回しにした
+- ✗ 「動くものを先に作る」という思考パターン
+- ✗ テスト環境の未整備
+- ✗ プランニング段階でテスト作成が含まれていなかった
+
+✅ **改善策**
+- ✅ **必須チェックリスト**: TodoWrite で「テスト作成」を実装前の最優先タスクにする
+- ✅ **ルール強化**: 実装コード1行書く前に、対応するテストファイルが存在することを確認
+- ✅ **テンプレート化**: 新コンポーネント作成時は自動的に`__tests__/ComponentName.test.tsx`も作成
+- ✅ **品質ゲート**: `npm test`が通らない場合はコミット禁止
+
+#### TDD強制フロー
+```
+新機能実装・バグ修正 → 
+  ↓
+1. テストファイル作成（*.test.tsx）→
+  ↓  
+2. 失敗するテスト記述 →
+  ↓
+3. npm test実行（Red確認）→
+  ↓
+4. 最小実装でテスト通過（Green）→
+  ↓
+5. リファクタリング →
+  ↓
+6. 最終テスト実行（全Green確認）→
+  ↓
+7. コミット許可
+```
+
 ### YOU MUST: Always Suggest Improvements
 **Every interaction should include proactive suggestions to save engineer time**
 
@@ -152,6 +192,62 @@ export function functionName(paramName: ParamType): ReturnType {
 - **Generics**: Use for reusable components
 - **Union Types**: Prefer over enums for string literals
 - **Utility Types**: Use built-in types (Partial, Pick, Omit)
+
+### Testing Standards
+- **Framework**: Jest + React Testing Library + TypeScript
+- **Test Location**: `__tests__/ComponentName.test.tsx` (コンポーネントと同階層)
+- **Coverage**: 最低80%、重要コンポーネントは90%以上
+- **Test Types**: Unit + Integration + E2E (必要に応じて)
+
+#### Testing Setup Commands
+```bash
+# テスト環境セットアップ
+npm install --save-dev jest @testing-library/react @testing-library/jest-dom @testing-library/user-event jest-environment-jsdom @types/jest
+
+# テスト実行
+npm test              # 全テスト実行
+npm run test:watch    # ファイル変更監視
+npm run test:coverage # カバレッジ付き実行
+```
+
+#### Test File Template
+```typescript
+/**
+ * コンポーネント名テスト
+ * 
+ * @description 旧システムとの互換性テストを含む
+ */
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { ComponentName } from '../ComponentName';
+
+describe('ComponentName', () => {
+  describe('基本レンダリング', () => {
+    test('コンポーネントが表示される', () => {
+      render(<ComponentName />);
+      expect(screen.getByRole('...')).toBeInTheDocument();
+    });
+  });
+
+  describe('ユーザー操作', () => {
+    test('クリック時の動作', async () => {
+      const user = userEvent.setup();
+      render(<ComponentName />);
+      
+      await user.click(screen.getByRole('button'));
+      
+      expect(...).toBe(...);
+    });
+  });
+
+  describe('旧システム互換性', () => {
+    test('CSSクラス構造が同等', () => {
+      render(<ComponentName />);
+      expect(screen.getByRole('...')).toHaveClass('expected-class');
+    });
+  });
+});
+```
 
 ## 🐍 Python Development
 
