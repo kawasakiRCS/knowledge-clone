@@ -487,9 +487,11 @@ Remember: **Engineer time is gold** - Automate everything, document comprehensiv
 #### Issue完了時の自動実行項目
 1. **進捗記録更新**: `PROGRESS.md`に実装詳細を記録
 2. **コミット実行**: 統一フォーマットでコミットメッセージ作成
-3. **Issue更新**: 完了報告コメント追加
-4. **Issue クローズ**: 自動的にIssueをクローズ
+3. **Issue更新**: 完了報告コメント追加（実装方針：GitHub API経由またはgh CLI）
+4. **Issue クローズ**: 自動的にIssueをクローズ（実装方針：gh issue close）
 5. **次Issue特定**: `PAGE_MIGRATION_PLAN.md`から次のIssueを特定
+
+**⚠️ 重要**: これらの手順を実行しないと、コンテキストクリア後の継続作業ができません。
 
 #### 継続セッション用情報
 - **現在の進捗**: `PROGRESS.md`に全記録
