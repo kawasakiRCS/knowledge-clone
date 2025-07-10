@@ -472,6 +472,7 @@ Remember: **Engineer time is gold** - Automate everything, document comprehensiv
 - **旧システム**: Javaナレッジベースシステム（ルートディレクトリ）
 - **新システム**: Next.js + TypeScript（`/nextjs`ディレクトリ） 
 - **計画書**: `MIGRATION_ANALYSIS.md`, `MIGRATION_PLAN.md`
+- **進捗記録**: `PROGRESS.md`
 
 ### 重要なルール
 - **分析レポート優先**: 必ず`MIGRATION_ANALYSIS.md`で全体を把握すること
@@ -481,9 +482,23 @@ Remember: **Engineer time is gold** - Automate everything, document comprehensiv
 - **スクリーンショット比較**: 移植前後の画面比較を必須とすること
 - **テスト駆動**: 各ページ実装時にテストを含めること
 
+### 🤖 自動化された作業完了プロセス
+
+#### Issue完了時の自動実行項目
+1. **進捗記録更新**: `PROGRESS.md`に実装詳細を記録
+2. **コミット実行**: 統一フォーマットでコミットメッセージ作成
+3. **Issue更新**: 完了報告コメント追加
+4. **Issue クローズ**: 自動的にIssueをクローズ
+5. **次Issue特定**: `PAGE_MIGRATION_PLAN.md`から次のIssueを特定
+
+#### 継続セッション用情報
+- **現在の進捗**: `PROGRESS.md`に全記録
+- **次のIssue**: Issue番号と詳細をPROGRESS.mdに明記
+- **完了確認**: GitHub Issue状態で確認可能
+
 ### 作業開始時の必須確認事項
-1. **`PAGE_MIGRATION_PLAN.md`**で具体的な移植対象ページを確認
-2. **GitHub Issue**で担当する具体的なJSPページを確認
+1. **`PROGRESS.md`**で現在の進捗状況を確認
+2. **GitHub Issue**で次に着手すべきIssueを確認
 3. **旧システムファイル**（Controller + JSP + CSS + JS）を詳細確認
 4. **移植前スクリーンショット**を取得して比較準備
 
@@ -496,4 +511,10 @@ Remember: **Engineer time is gold** - Automate everything, document comprehensiv
 ### ファイル管理
 - **スキーマ情報**: `knowledge_schema.sql`, `knowledge_tables.txt`, `knowledge_columns.txt`
 - **Java旧システム**: ルートディレクトリ（将来`/old_java`へ移動予定）
-- **Next.js新システム**: `/nextjs`ディレクトリ（作成予定）
+- **Next.js新システム**: `/nextjs`ディレクトリ（構築済み）
+- **進捗記録**: `PROGRESS.md`（リアルタイム更新）
+
+### 継続セッション開始方法
+```
+PROGRESS.mdを確認してください。現在の進捗状況と次のIssueが記載されています。
+```
