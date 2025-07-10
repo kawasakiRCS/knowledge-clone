@@ -366,3 +366,38 @@ git commit --trailer "Github-Issue: #123"
 ---
 
 Remember: **Engineer time is gold** - Automate everything, document comprehensively, and proactively suggest improvements. Every interaction should save time and improve code quality.
+
+---
+
+## 🚀 Java to Next.js移植プロジェクト
+
+### プロジェクト概要
+当リポジトリは以下の構成で移植作業を実施中：
+- **旧システム**: Javaナレッジベースシステム（ルートディレクトリ）
+- **新システム**: Next.js + TypeScript（`/nextjs`ディレクトリ） 
+- **計画書**: `MIGRATION_ANALYSIS.md`, `MIGRATION_PLAN.md`
+
+### 重要なルール
+- **分析レポート優先**: 必ず`MIGRATION_ANALYSIS.md`で全体を把握すること
+- **ページ単位移植計画**: **`PAGE_MIGRATION_PLAN.md`を必ず最初に参照**し、110ページの詳細移植計画に従うこと
+- **完全移行原則**: 1 Issue = 1 JSPページで、見た目・機能・動作を100%同等にすること
+- **Issue連携必須**: すべてのコミットはGitHub Issue番号と紐づけること
+- **スクリーンショット比較**: 移植前後の画面比較を必須とすること
+- **テスト駆動**: 各ページ実装時にテストを含めること
+
+### 作業開始時の必須確認事項
+1. **`PAGE_MIGRATION_PLAN.md`**で具体的な移植対象ページを確認
+2. **GitHub Issue**で担当する具体的なJSPページを確認
+3. **旧システムファイル**（Controller + JSP + CSS + JS）を詳細確認
+4. **移植前スクリーンショット**を取得して比較準備
+
+### 移植時の注意点
+- **見た目の同等性**: 既存のCSSクラス・レイアウトを参考にする
+- **機能の同等性**: エッジケースも含めて同じ動作を実現する
+- **データ互換性**: 既存DBデータとの整合性を保つ
+- **段階的実装**: フェーズ計画を守り、完了後に次フェーズに進む
+
+### ファイル管理
+- **スキーマ情報**: `knowledge_schema.sql`, `knowledge_tables.txt`, `knowledge_columns.txt`
+- **Java旧システム**: ルートディレクトリ（将来`/old_java`へ移動予定）
+- **Next.js新システム**: `/nextjs`ディレクトリ（作成予定）
