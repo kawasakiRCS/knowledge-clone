@@ -7,6 +7,9 @@ LOG_FILE="$LOG_DIR/chat-$(date '+%Y%m%d').log"
 # Ensure log directory exists
 mkdir -p "$LOG_DIR"
 
+# Exit gracefully on any error to prevent blocking Claude Code
+set -e
+
 # Get the current timestamp
 TIMESTAMP="[$(date '+%Y-%m-%d %H:%M:%S')]"
 
@@ -15,7 +18,7 @@ case "$1" in
   "tool")
     echo "$TIMESTAMP Tool: $TOOL_NAME" >> "$LOG_FILE"
     if [ -n "$TOOL_INPUT" ]; then
-      echo "$TOOL_INPUT" | jq -r '.' >> "$LOG_FILE" 2>/dev/null || echo "$TOOL_INPUT" >> "$LOG_FILE"
+      echo "$TOOL_INPUT" | jq -r '.' >> "$LOG_FILE" 2>/dev/null || echo "TOOL_INPUT: $TOOL_INPUT" >> "$LOG_FILE"
     fi
     ;;
   "result")

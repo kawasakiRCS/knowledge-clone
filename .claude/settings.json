@@ -1,36 +1,3 @@
 {
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/log-chat.sh tool"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/log-chat.sh result"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/log-chat.sh stop"
-          }
-        ]
-      }
-    ]
-  }
+  "hooks": {}
 }
