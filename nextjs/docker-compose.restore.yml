@@ -1,0 +1,12 @@
+# データリストア専用のDocker Compose設定
+# 使用法: docker-compose -f docker-compose.yml -f docker-compose.restore.yml up -d
+
+version: '3.8'
+
+services:
+  postgres:
+    volumes:
+      # 初期化スクリプト（既存ダンプをリストア）
+      # 環境変数で指定されたパスまたはデフォルトパスを使用
+      - ${KNOWLEDGE_SCHEMA_PATH:-../knowledge_schema.sql}:/docker-entrypoint-initdb.d/01_schema.sql
+      - ${KNOWLEDGE_DUMP_PATH:-/path/to/backup-file.sql}:/docker-entrypoint-initdb.d/02_data.sql

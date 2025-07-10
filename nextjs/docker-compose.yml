@@ -16,9 +16,6 @@ services:
     volumes:
       # データ永続化
       - postgres_data:/var/lib/postgresql/data
-      # 初期化スクリプト（既存ダンプをリストア）
-      - ../knowledge_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
-      - /home/ubuntu01/java_knowledge_dump_backup.sql:/docker-entrypoint-initdb.d/02_data.sql
       # 設定ファイル
       - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
       - ./docker/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf
