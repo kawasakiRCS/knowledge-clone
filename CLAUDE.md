@@ -493,6 +493,11 @@ Remember: **Engineer time is gold** - Automate everything, document comprehensiv
 
 **⚠️ 重要**: これらの手順を実行しないと、コンテキストクリア後の継続作業ができません。
 
+#### 手順漏れ防止策
+- **TodoWriteに必須追加**: Issue実装開始時に「Issue完了手続き実行」をタスクリストに追加
+- **完了判定基準**: 「テスト成功 = Issue完了」ではなく「GitHub Issue クローズ = Issue完了」
+- **定期確認**: コンテキスト長期化時（50メッセージ超）にCLAUDE.md再確認
+
 #### 継続セッション用情報
 - **現在の進捗**: `PROGRESS.md`に全記録
 - **次のIssue**: Issue番号と詳細をPROGRESS.mdに明記
