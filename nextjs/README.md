@@ -54,11 +54,12 @@ NEXTAUTH_URL="http://localhost:3000"
 
 ### 3. データベースセットアップ
 ```bash
-# Prismaマイグレーション
-npx prisma migrate dev
+# 初回セットアップ（Docker Compose + 既存データリストア）
+npm run db:setup
 
-# Prismaクライアント生成
-npx prisma generate
+# または手動セットアップ
+docker-compose up -d postgres
+npm run prisma:generate
 ```
 
 ### 4. 開発サーバー起動
@@ -89,6 +90,33 @@ npm run test:e2e
 # テストカバレッジ
 npm run test:coverage
 ```
+
+## 🗄️ データベース管理
+
+```bash
+# データベース起動
+npm run db:start
+
+# データベース停止
+npm run db:stop
+
+# データベースリセット（全データ削除・再構築）
+npm run db:reset
+
+# データベースログ確認
+npm run db:logs
+
+# データベースに直接接続
+npm run db:shell
+
+# Prisma Studio（データベースGUI）
+npm run prisma:studio
+```
+
+### pgAdmin
+- URL: http://localhost:8080
+- Email: admin@knowledge.local  
+- Password: admin
 
 ## 📝 開発ルール
 
