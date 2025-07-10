@@ -133,6 +133,7 @@ return new class extends Migration
             $table->integer('update_user');
             $table->timestamp('update_datetime')->useCurrent();
             $table->integer('delete_flag')->nullable();
+            $table->integer('draft_id')->nullable(); // Java版との互換性のため追加
             
             $table->index('knowledge_id');
         });

@@ -11,9 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * 
  * @property int $history_no
  * @property int $knowledge_id
- * @property int $view_user_id
- * @property \Carbon\Carbon $view_date_time
- * @property int $insert_user
+ * @property string $view_date_time
+ * @property int $insert_user （閲覧ユーザーID）
  * @property \Carbon\Carbon $insert_datetime
  * @property int $update_user
  * @property \Carbon\Carbon $update_datetime
@@ -41,7 +40,6 @@ class ViewHistory extends BaseModel
      */
     protected $fillable = [
         'knowledge_id',
-        'view_user_id',
         'view_date_time'
     ];
 
@@ -51,8 +49,7 @@ class ViewHistory extends BaseModel
     protected $casts = [
         'history_no' => 'integer',
         'knowledge_id' => 'integer',
-        'view_user_id' => 'integer',
-        'view_date_time' => 'datetime',
+        'view_date_time' => 'string', // 実際のテーブルでは文字列型
         'insert_user' => 'integer',
         'update_user' => 'integer',
         'delete_flag' => 'integer',
@@ -71,7 +68,7 @@ class ViewHistory extends BaseModel
      */
     public function viewer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'view_user_id', 'user_id');
+        return $this->belongsTo(User::class, 'insert_user', 'user_id');
     }
 
     /**
@@ -79,7 +76,7 @@ class ViewHistory extends BaseModel
      */
     public function scopeByUser($query, $userId)
     {
-        return $query->where('view_user_id', $userId);
+        return $query->where('insert_user', $userId);
     }
 
     /**

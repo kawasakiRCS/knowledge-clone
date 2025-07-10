@@ -133,14 +133,13 @@ class KnowledgeService
         // 同じユーザーの同じナレッジの閲覧は1日1回まで記録
         $today = now()->toDateString();
         $existingView = $knowledge->viewHistories()
-                                 ->where('view_user_id', $user->user_id)
+                                 ->where('insert_user', $user->user_id)
                                  ->whereDate('view_date_time', $today)
                                  ->first();
 
         if (!$existingView) {
             $knowledge->viewHistories()->create([
-                'view_user_id' => $user->user_id,
-                'view_date_time' => now(),
+                'view_date_time' => $today,
             ]);
         }
     }

@@ -123,8 +123,35 @@ const textareaRef = ref<HTMLTextAreaElement>();
 const textareaRef2 = ref<HTMLTextAreaElement>();
 const isUploading = ref(false);
 
+// カスタムレンダラーを作成
+const renderer = new marked.Renderer();
+
+// リストアイテムのレンダリングをカスタマイズ
+renderer.listitem = function(text, task, checked) {
+    // タスクリストの場合はそのまま返す
+    if (task) {
+        return '<li class="task-list-item">' + text + '</li>\n';
+    }
+    
+    // 既に「・」で始まる場合はそのまま返す（ネストされたリストの重複を防ぐ）
+    if (text.trim().startsWith('・')) {
+        return '<li>' + text + '</li>\n';
+    }
+    
+    // 日本語の箇条書きに「・」を追加
+    return '<li>・' + text + '</li>\n';
+};
+
+// 番号付きリストはデフォルトの動作を維持
+renderer.list = function(body, ordered, start) {
+    const type = ordered ? 'ol' : 'ul';
+    const startAttr = (ordered && start !== 1) ? (' start="' + start + '"') : '';
+    return '<' + type + startAttr + '>\n' + body + '</' + type + '>\n';
+};
+
 // マークダウンレンダリング設定
 marked.setOptions({
+    renderer: renderer,
     highlight: function(code, lang) {
         if (lang && hljs.getLanguage(lang)) {
             try {

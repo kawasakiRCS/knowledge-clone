@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * ベースモデルクラス
@@ -11,12 +10,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 abstract class BaseModel extends Model
 {
-    use SoftDeletes;
-
-    /**
-     * 削除フラグによるソフトデリート
-     */
-    protected $deletedAt = null;
 
     /**
      * 作成日時のカラム名

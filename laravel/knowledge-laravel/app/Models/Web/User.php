@@ -156,7 +156,7 @@ class User extends BaseModel implements
      */
     public function viewHistories(): HasMany
     {
-        return $this->hasMany(ViewHistory::class, 'view_user_id', 'user_id');
+        return $this->hasMany(ViewHistory::class, 'insert_user', 'user_id');
     }
 
     /**

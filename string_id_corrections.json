@@ -1,0 +1,14 @@
+{
+  "t_jyumin": "$table->string('{}')->primary();",
+  "ldap_configs": "$table->string('{}')->primary();",
+  "locales": "$table->string('{}')->primary();",
+  "mail_configs": "$table->string('{}')->primary();",
+  "mail_locale_templates": "$table->string('{}')->primary();",
+  "mails": "$table->string('{}', 255)->primary();",
+  "notify_queues": "$table->string('{}')->primary();",
+  "service_configs": "$table->string('{}')->primary();",
+  "system_configs": "$table->string('{}')->primary();",
+  "systems": "$table->string('{}')->primary();",
+  "user_configs": "$table->string('{}')->primary();",
+  "webhooks": "$table->string('{}', 255)->primary();"
+}
