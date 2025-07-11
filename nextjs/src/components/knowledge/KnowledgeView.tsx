@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { formatDate } from '@/lib/utils';
 import '@/styles/knowledge-view.css';
 
 interface Tag {
@@ -67,14 +68,7 @@ const KnowledgeView: React.FC<Props> = ({ knowledge }) => {
   const { user } = useAuth();
   const [showToc, setShowToc] = useState(false);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    }).replace(/\//g, '/');
-  };
+  // formatDate関数は@/lib/utilsから使用
 
   const handleEdit = () => {
     router.push(`/protect/knowledge/edit/${knowledge.knowledgeId}`);

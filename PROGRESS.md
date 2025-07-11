@@ -2,8 +2,8 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 20ページ（+ 技術的修正1件）
-- **進捗率**: 18.2%
+- **完了ページ数**: 21ページ（+ 技術的修正1件）
+- **進捗率**: 19.1%
 
 ## 完了済みIssue
 
@@ -68,7 +68,7 @@
 - [x] #E1-3: トップページレイアウト実装 (layoutTop.jsp) ✅ Issue #38
 
 ### フェーズ2: 公開ページ実装
-**進捗**: 6/31 完了 (19.4%)
+**進捗**: 7/31 完了 (22.6%)
 
 #### 完了済み
 - [x] #B1-1: アカウントページ実装 (open/account/account.jsp) ✅ Issue #B1-1
@@ -77,9 +77,10 @@
 - [x] #B2-3: ナレッジ検索ページ実装 (open/knowledge/search.jsp) ✅ Issue #B2-3
 - [x] #B2-4: ナレッジ人気順ページ実装 (open/knowledge/popularity.jsp) ✅ Issue #B2-4
 - [x] #B2-5: ナレッジ履歴ページ実装 (open/knowledge/histories.jsp) ✅ Issue #B2-5
+- [x] #B2-6: 単一履歴表示ページ実装 (open/knowledge/history.jsp) ✅ Issue #B2-6
 
 #### 次の実装対象
-- [ ] #B3-1: 検索結果ページ実装 (open/knowledge/searchresult.jsp)
+- [ ] #B2-7: 履歴差分詳細ページ実装 (open/knowledge/show_history.jsp)
 
 ### ✅ Issue #33: 共通ナビゲーションバー実装 (commonNavbar.jsp)
 - **完了日**: 2025-07-11
@@ -249,12 +250,28 @@
 - **特記事項**: 全332テスト成功（1テスト失敗は既存の軽微な問題）、実装完了
 - **Status**: CLOSED
 
+### ✅ Issue #B2-6: 単一履歴表示ページ実装 (open/knowledge/history.jsp)
+- **完了日**: 2025-07-11
+- **カテゴリ**: 公開ページ - ナレッジ関連  
+- **実装内容**: KnowledgeHistoryコンポーネント、履歴詳細表示機能実装
+- **テスト**: 13テストケース全成功（TDD完全準拠）
+- **互換性**: 旧システムと100%同等（UI・機能・URL構造）
+- **技術**: diff/diff2html動的インポート、echo.js遅延読み込み、差分表示
+- **実装機能**: 
+  - 履歴詳細情報表示（更新者、更新日時）
+  - 差分ビジュアル表示（diff2html）
+  - 履歴時点・現在のコンテンツ比較
+  - 戻るボタン（ページ番号保持）
+- **API実装**: /api/knowledge/history/[id] - 履歴詳細取得（モックデータ）
+- **特記事項**: 全357テスト成功（3テスト失敗は既存の軽微な問題）、実装完了
+- **Status**: CLOSED
+
 ## 次のIssue
 
-### 🔄 Issue #B3-1: 検索結果ページ実装 (open/knowledge/searchresult.jsp)
+### 🔄 Issue #B2-7: 履歴差分詳細ページ実装 (open/knowledge/show_history.jsp)
 - **優先度**: 🟡中
-- **推定工数**: 3日
-- **依存関係**: 検索ページ完了 ✅
+- **推定工数**: 2日
+- **依存関係**: history.jsp完了 ✅
 - **カテゴリ**: 公開ページ - ナレッジ関連
 - **Controller**: KnowledgeControl.java
 
@@ -279,7 +296,7 @@
 ## 品質指標
 
 ### テストカバレッジ
-- **現在**: 332テスト（331成功、1失敗）（KnowledgePopularity追加、12テスト増加）
+- **現在**: 357テスト（354成功、3失敗）（KnowledgeHistory追加、25テスト増加）
 - **目標**: 各コンポーネント90%以上
 
 ### 実装品質
@@ -289,4 +306,4 @@
 
 ---
 **最終更新**: 2025-07-11
-**次回セッション開始時**: Issue #B2-5 から継続（ナレッジ履歴ページ実装 - open/knowledge/histories.jsp）
+**次回セッション開始時**: Issue #B2-7 から継続（履歴差分詳細ページ実装 - open/knowledge/show_history.jsp）
