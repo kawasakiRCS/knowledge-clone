@@ -6,6 +6,23 @@
 import { render, screen } from '@testing-library/react';
 import { NotFoundPage } from '../NotFoundPage';
 
+// Next.js関連のmock
+jest.mock('next/router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    pathname: '/test',
+  }),
+}));
+
+jest.mock('@/lib/hooks/useAuth', () => ({
+  useAuth: () => ({
+    isLoggedIn: false,
+    user: null,
+    unreadCount: 0,
+    loading: false,
+  }),
+}));
+
 describe('NotFoundPage', () => {
   describe('基本レンダリング', () => {
     test('404エラーページが表示される', () => {

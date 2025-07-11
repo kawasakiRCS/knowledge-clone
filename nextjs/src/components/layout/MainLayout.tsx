@@ -12,7 +12,7 @@
 import { ReactNode } from 'react';
 import Head from 'next/head';
 import { cn } from '@/lib/utils';
-import { SimpleNavbar } from './SimpleNavbar';
+import { CommonNavbar } from './CommonNavbar';
 import { Footer } from './Footer';
 
 interface MainLayoutProps {
@@ -39,7 +39,7 @@ export function MainLayout({
       
       <div className="min-h-screen flex flex-col">
         {/* ナビゲーションバー - Bootstrap固定ナビバーを再現 */}
-        <SimpleNavbar />
+        <CommonNavbar />
         
         {/* メインコンテンツ - 旧システムのcontainerクラスを再現 */}
         <main 

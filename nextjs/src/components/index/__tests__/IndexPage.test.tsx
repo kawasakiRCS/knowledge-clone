@@ -13,6 +13,15 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
+jest.mock('@/lib/hooks/useAuth', () => ({
+  useAuth: () => ({
+    isLoggedIn: false,
+    user: null,
+    unreadCount: 0,
+    loading: false,
+  }),
+}));
+
 describe('IndexPage', () => {
   const mockPush = jest.fn();
 

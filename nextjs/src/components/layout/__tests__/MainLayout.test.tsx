@@ -9,12 +9,28 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MainLayout } from '../MainLayout';
 
-// Jest環境でのHead mock
+// Jest環境でのNext.js mocks
 jest.mock('next/head', () => {
   return function Head({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   };
 });
+
+jest.mock('next/router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    pathname: '/test',
+  }),
+}));
+
+jest.mock('@/lib/hooks/useAuth', () => ({
+  useAuth: () => ({
+    isLoggedIn: false,
+    user: null,
+    unreadCount: 0,
+    loading: false,
+  }),
+}));
 
 describe('MainLayout', () => {
   const defaultProps = {
@@ -81,12 +97,12 @@ describe('MainLayout', () => {
     test('ナビゲーションバーが表示される', () => {
       render(<MainLayout {...defaultProps} />);
       
-      // SimpleNavbarがレンダリングされることを確認（最初のnavigation要素）
+      // CommonNavbarがレンダリングされることを確認（最初のnavigation要素）
       const navbars = screen.getAllByRole('navigation');
       expect(navbars).toHaveLength(2); // ナビバーとフッターナビ
       const navbar = navbars[0]; // 最初がナビバー
       expect(navbar).toBeInTheDocument();
-      expect(navbar).toHaveClass('fixed', 'top-0');
+      expect(navbar).toHaveClass('navbar', 'navbar-default', 'navbar-fixed-top');
     });
 
     test('ブランドロゴが表示される', () => {
@@ -94,13 +110,13 @@ describe('MainLayout', () => {
       
       const brandLink = screen.getByRole('link', { name: /knowledge/i });
       expect(brandLink).toBeInTheDocument();
-      expect(brandLink).toHaveAttribute('href', '/knowledge/list');
+      expect(brandLink).toHaveAttribute('href', '/open.knowledge/list');
     });
 
     test('検索フォームが表示される', () => {
       render(<MainLayout {...defaultProps} />);
       
-      const searchInput = screen.getByPlaceholderText('ナレッジを検索...');
+      const searchInput = screen.getByPlaceholderText('検索キーワードを入力');
       expect(searchInput).toBeInTheDocument();
     });
   });
@@ -197,7 +213,7 @@ describe('MainLayout', () => {
       
       const navbars = screen.getAllByRole('navigation');
       const navbar = navbars[0]; // 最初がナビバー
-      expect(navbar).toHaveClass('fixed', 'top-0', 'left-0', 'right-0', 'z-50');
+      expect(navbar).toHaveClass('navbar', 'navbar-default', 'navbar-fixed-top');
     });
 
     test('フッターの構造が旧システムと同等', () => {

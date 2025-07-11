@@ -6,6 +6,23 @@
 import { render, screen } from '@testing-library/react';
 import { UnauthorizedPage } from '../UnauthorizedPage';
 
+// Next.js関連のmock
+jest.mock('next/router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    pathname: '/test',
+  }),
+}));
+
+jest.mock('@/lib/hooks/useAuth', () => ({
+  useAuth: () => ({
+    isLoggedIn: false,
+    user: null,
+    unreadCount: 0,
+    loading: false,
+  }),
+}));
+
 describe('UnauthorizedPage', () => {
   describe('基本レンダリング', () => {
     test('401エラーページが表示される', () => {

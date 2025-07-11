@@ -6,6 +6,23 @@
 import { render, screen } from '@testing-library/react';
 import { ForbiddenPage } from '../ForbiddenPage';
 
+// Next.js関連のmock
+jest.mock('next/router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    pathname: '/test',
+  }),
+}));
+
+jest.mock('@/lib/hooks/useAuth', () => ({
+  useAuth: () => ({
+    isLoggedIn: false,
+    user: null,
+    unreadCount: 0,
+    loading: false,
+  }),
+}));
+
 describe('ForbiddenPage', () => {
   describe('基本レンダリング', () => {
     test('403エラーページが表示される', () => {

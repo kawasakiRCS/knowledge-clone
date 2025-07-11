@@ -8,5 +8,6 @@
 export { MainLayout } from './MainLayout';
 export { Header } from './Header';
 export { Navbar } from './Navbar';
+export { CommonNavbar } from './CommonNavbar';
 export { Footer } from './Footer';
 export { ErrorPage } from './ErrorPage';
