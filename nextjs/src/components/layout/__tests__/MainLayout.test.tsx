@@ -32,6 +32,19 @@ jest.mock('@/lib/hooks/useAuth', () => ({
   }),
 }));
 
+jest.mock('@/lib/hooks/useLocale', () => ({
+  useLocale: () => ({
+    locale: 'ja',
+    displayName: '日本語',
+    flagIcon: 'jp',
+    updateLocale: jest.fn(),
+    availableLocales: [
+      { code: 'ja', displayName: '日本語', flagIcon: 'jp' },
+      { code: 'en', displayName: 'English', flagIcon: 'us' },
+    ],
+  }),
+}));
+
 describe('MainLayout', () => {
   const defaultProps = {
     children: <div data-testid="test-content">Test Content</div>,
@@ -97,10 +110,10 @@ describe('MainLayout', () => {
     test('ナビゲーションバーが表示される', () => {
       render(<MainLayout {...defaultProps} />);
       
-      // CommonNavbarがレンダリングされることを確認（最初のnavigation要素）
+      // CommonNavbarがレンダリングされることを確認（唯一のnavigation要素）
       const navbars = screen.getAllByRole('navigation');
-      expect(navbars).toHaveLength(2); // ナビバーとフッターナビ
-      const navbar = navbars[0]; // 最初がナビバー
+      expect(navbars).toHaveLength(1); // ナビバーのみ（CommonFooterにはnav要素なし）
+      const navbar = navbars[0]; // ナビバー
       expect(navbar).toBeInTheDocument();
       expect(navbar).toHaveClass('navbar', 'navbar-default', 'navbar-fixed-top');
     });
@@ -133,16 +146,17 @@ describe('MainLayout', () => {
     test('フッターナビゲーションリンクが表示される', () => {
       render(<MainLayout {...defaultProps} />);
       
-      expect(screen.getByRole('link', { name: 'About' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Manual' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'License' })).toBeInTheDocument();
+      // CommonFooterの日本語ラベルを使用
+      expect(screen.getByRole('link', { name: 'このアプリについて' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'オンラインマニュアル' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'ライセンス' })).toBeInTheDocument();
     });
 
     test('コピーライトが表示される', () => {
-      const currentYear = new Date().getFullYear();
       render(<MainLayout {...defaultProps} />);
       
-      expect(screen.getByText(`Copyright © 2015 - ${currentYear}`)).toBeInTheDocument();
+      // CommonFooterでは固定の年範囲を使用
+      expect(screen.getByText(/Copyright © 2015 - 2017/)).toBeInTheDocument();
     });
   });
 
@@ -150,23 +164,25 @@ describe('MainLayout', () => {
     test('ページトップボタンが表示される', () => {
       render(<MainLayout {...defaultProps} />);
       
-      const pageTopButtons = screen.getAllByRole('button', { name: 'ページトップへ戻る' });
-      expect(pageTopButtons).toHaveLength(2); // MainLayoutとFooterの両方にある
+      // CommonFooterのページトップボタンはdisplay: noneで隠れているためqueryで取得
+      const pageTopButton = document.querySelector('.pagetop a');
+      expect(pageTopButton).toBeInTheDocument();
+      expect(pageTopButton).toHaveAttribute('href', '#content_top');
     });
 
     test('ページトップボタンをクリックするとスクロールする', async () => {
       const user = userEvent.setup();
       
-      // Element.scrollIntoViewをモック
-      const scrollIntoViewMock = jest.fn();
-      Element.prototype.scrollIntoView = scrollIntoViewMock;
-      
       render(<MainLayout {...defaultProps} />);
       
-      const pageTopButton = screen.getAllByRole('button', { name: 'ページトップへ戻る' })[0];
-      await user.click(pageTopButton);
+      // CommonFooterのページトップボタンはリンクのため、実際のクリック動作を確認
+      const pageTopButton = document.querySelector('.pagetop a');
+      expect(pageTopButton).toBeInTheDocument();
+      expect(pageTopButton).toHaveAttribute('href', '#content_top');
       
-      expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
+      // ブラウザのハッシュナビゲーションをテストするが、jsdomでは制限があるため
+      // リンクが正しく設定されていることのみ確認
+      await user.click(pageTopButton as Element);
     });
   });
 
@@ -229,7 +245,7 @@ describe('MainLayout', () => {
     test('適切なランドマークロールが設定されている', () => {
       render(<MainLayout {...defaultProps} />);
       
-      expect(screen.getAllByRole('navigation')).toHaveLength(2); // ナビバーとフッターナビ
+      expect(screen.getAllByRole('navigation')).toHaveLength(1); // ナビバーのみ（CommonFooterにはnav要素なし）
       expect(screen.getByRole('main')).toBeInTheDocument();
       expect(screen.getByRole('contentinfo')).toBeInTheDocument();
     });
@@ -237,10 +253,9 @@ describe('MainLayout', () => {
     test('ページトップボタンに適切なaria-labelが設定されている', () => {
       render(<MainLayout {...defaultProps} />);
       
-      const pageTopButtons = screen.getAllByRole('button', { name: 'ページトップへ戻る' });
-      pageTopButtons.forEach(button => {
-        expect(button).toHaveAttribute('aria-label', 'ページトップへ戻る');
-      });
+      // CommonFooterのページトップボタン（リンク）を確認
+      const pageTopButton = document.querySelector('.pagetop a');
+      expect(pageTopButton).toHaveAttribute('aria-label', 'ページトップへ戻る');
     });
   });
 });

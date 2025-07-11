@@ -10,4 +10,5 @@ export { Header } from './Header';
 export { Navbar } from './Navbar';
 export { CommonNavbar } from './CommonNavbar';
 export { Footer } from './Footer';
+export { CommonFooter } from './CommonFooter';
 export { ErrorPage } from './ErrorPage';
