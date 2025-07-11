@@ -1,0 +1,72 @@
+/**
+ * アカウントページ用スタイル
+ * 
+ * @description 旧システムのデザインを維持
+ */
+
+/* タイトル部分 */
+.title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.title img {
+  margin-right: 0.5rem;
+}
+
+/* 統計情報行 */
+.statsRow {
+  margin-bottom: 0.5rem;
+}
+
+.statsRow i {
+  margin-right: 0.25rem;
+}
+
+/* チャートコンテナ */
+.chartContainer {
+  min-height: 200px;
+  position: relative;
+}
+
+/* タブエリア */
+.tabArea {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+/* アクティビティリスト */
+.activityList {
+  margin-top: 2rem;
+}
+
+.activityList .list-group-item {
+  cursor: default;
+}
+
+.activityList .list-group-item-heading {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.activityList .list-group-item-text {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* ナレッジエリア */
+.knowledgesArea {
+  min-height: 300px;
+}
+
+.sub_title {
+  margin-bottom: 1rem;
+}
+
+/* ページネーション */
+.pager {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
