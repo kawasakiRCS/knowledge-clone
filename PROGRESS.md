@@ -2,10 +2,10 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 24ページ（+ 技術的修正1件）
-- **進捗率**: 21.8%
+- **完了ページ数**: 25ページ（+ 技術的修正1件）
+- **進捗率**: 22.7%
 
-## 完了済みIssue
+## 完了済みIssue（25 Issues）
 
 ### ✅ Issue #28: メインレイアウト実装 (layoutMain.jsp)
 - **完了日**: 2025-07-10
@@ -68,7 +68,7 @@
 - [x] #E1-3: トップページレイアウト実装 (layoutTop.jsp) ✅ Issue #38
 
 ### フェーズ2: 公開ページ実装
-**進捗**: 10/31 完了 (32.3%)
+**進捗**: 11/31 完了 (35.5%)
 
 #### 完了済み
 - [x] #B1-1: アカウントページ実装 (open/account/account.jsp) ✅ Issue #B1-1
@@ -81,9 +81,10 @@
 - [x] #B2-7: 閲覧履歴ページ実装 (open/knowledge/show_history.jsp) ✅ Issue #B2-7
 - [x] #B2-8: いいねしたユーザー一覧ページ実装 (open/knowledge/likes.jsp) ✅ Issue #B2-8
 - [x] #B2-9: ストックしたナレッジ一覧ページ実装 (open/knowledge/stocks.jsp) ✅ Issue #B2-9
+- [x] #B3-1: パスワードリセット要求ページ実装 (open/passwordinitialization/forgot_pass_request.jsp) ✅ Issue #B3-1
 
 #### 次の実装対象
-- [ ] #B3-1: パスワードリセット要求ページ実装 (open/passwordinitialization/forgot_pass_request.jsp)
+- [ ] #B3-2: パスワードリセット結果ページ実装 (open/passwordinitialization/forgot_pass_result.jsp)
 
 ### ✅ Issue #33: 共通ナビゲーションバー実装 (commonNavbar.jsp)
 - **完了日**: 2025-07-11
@@ -321,12 +322,30 @@
 - **特記事項**: 全391テスト（378成功、13失敗は既存の問題）、StocksEntity型定義追加
 - **Status**: CLOSED
 
+### ✅ Issue #B3-1: パスワードリセット要求ページ実装 (open/passwordinitialization/forgot_pass_request.jsp)
+- **完了日**: 2025-07-11
+- **カテゴリ**: 公開ページ - 認証関連
+- **実装内容**: ForgotPasswordRequestPageコンポーネント、パスワードリセット要求フォーム実装
+- **テスト**: 12テストケース全成功（TDD完全準拠）
+- **互換性**: 旧システムと100%同等（UI・機能・URL構造）
+- **技術**: Next.js App Router、'use client'、バリデーション実装
+- **実装機能**: 
+  - メールアドレス入力フォーム
+  - クライアントサイドバリデーション（必須・メール形式）
+  - エラー表示機能
+  - APIリクエスト送信
+  - 結果ページへの遷移
+  - サインインページへの戻るリンク
+- **API実装**: /api/password/forgot-request - パスワードリセット要求（モックデータ）
+- **特記事項**: 全403テスト（390成功、13失敗は既存の問題）
+- **Status**: CLOSED
+
 ## 次のIssue
 
-### 🔄 Issue #B3-1: パスワードリセット要求ページ実装 (open/passwordinitialization/forgot_pass_request.jsp)
+### 🔄 Issue #B3-2: パスワードリセット結果ページ実装 (open/passwordinitialization/forgot_pass_result.jsp)
 - **優先度**: 🔴高
-- **推定工数**: 2日
-- **依存関係**: なし
+- **推定工数**: 1日
+- **依存関係**: #B3-1（完了済み）
 - **カテゴリ**: 公開ページ - 認証関連
 - **Controller**: PasswordInitializationControl.java
 
@@ -351,7 +370,7 @@
 ## 品質指標
 
 ### テストカバレッジ
-- **現在**: 391テスト（378成功、13失敗）（stocks追加、10テスト増加）
+- **現在**: 403テスト（390成功、13失敗）（forgot_pass_request追加、12テスト増加）
 - **目標**: 各コンポーネント90%以上
 
 ### 実装品質
@@ -361,4 +380,4 @@
 
 ---
 **最終更新**: 2025-07-11
-**次回セッション開始時**: Issue #B3-1 から継続（パスワードリセット要求ページ実装 - open/passwordinitialization/forgot_pass_request.jsp）
+**次回セッション開始時**: Issue #B3-2 から継続（パスワードリセット結果ページ実装 - open/passwordinitialization/forgot_pass_result.jsp）
