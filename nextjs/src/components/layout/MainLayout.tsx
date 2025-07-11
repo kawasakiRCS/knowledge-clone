@@ -14,6 +14,7 @@ import Head from 'next/head';
 import { cn } from '@/lib/utils';
 import { CommonNavbar } from './CommonNavbar';
 import { CommonFooter } from './CommonFooter';
+import { CommonHeader } from './CommonHeader';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -21,6 +22,12 @@ interface MainLayoutProps {
   customHead?: ReactNode;
   customScripts?: ReactNode;
   className?: string;
+  /** テーマ名（デフォルト: flatly） */
+  thema?: string;
+  /** ハイライトテーマ名（デフォルト: darkula） */
+  highlight?: string;
+  /** ページ説明 */
+  description?: string;
 }
 
 export function MainLayout({
@@ -28,14 +35,26 @@ export function MainLayout({
   pageTitle = "Knowledge",
   customHead,
   customScripts,
-  className
+  className,
+  thema,
+  highlight,
+  description
 }: MainLayoutProps) {
   return (
     <>
-      <Head>
-        <title>{pageTitle}</title>
-        {customHead}
-      </Head>
+      {/* 共通ヘッダー（メタタグ、CSS読み込み等） */}
+      <CommonHeader 
+        title={pageTitle}
+        description={description}
+        thema={thema}
+        highlight={highlight}
+      />
+      
+      {customHead && (
+        <Head>
+          {customHead}
+        </Head>
+      )}
       
       <div className="min-h-screen flex flex-col">
         {/* ナビゲーションバー - Bootstrap固定ナビバーを再現 */}
