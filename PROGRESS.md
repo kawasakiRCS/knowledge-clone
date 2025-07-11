@@ -2,8 +2,8 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 11ページ（+1ページ追加）
-- **進捗率**: 10.0%
+- **完了ページ数**: 12ページ（+1ページ追加）
+- **進捗率**: 10.9%
 
 ## 完了済みIssue
 
@@ -51,11 +51,11 @@
 ## 現在のフェーズ
 
 ### フェーズ1: 共通・認証基盤構築
-**進捗**: 9/12 完了 (75.0%)
+**進捗**: 10/12 完了 (83.3%)
 
 #### 完了済み
-- [x] #E1-1: メインレイアウト実装 (layoutMain.jsp)
-- [x] #E2-1: エラーページ実装 (error.jsp)
+- [x] #E1-1: メインレイアウト実装 (layoutMain.jsp) ✅ Issue #28
+- [x] #E2-1: エラーページ実装 (error.jsp) ✅ Issue #29
 - [x] #A-1: ログインフォーム実装 (auth/form.jsp) ✅ Issue #30
 - [x] #A-2: 認証エラーページ実装 (authorizerError.jsp) ✅ Issue #30
 - [x] #E2-2: その他エラーページ実装 (not_found.jsp, server_error.jsp, forbidden.jsp, unauthorized.jsp) ✅ Issue #31
@@ -63,11 +63,12 @@
 - [x] #E1-6: 共通ナビゲーションバー実装 (commonNavbar.jsp) ✅ Issue #33
 - [x] #E1-5: 共通フッター実装 (commonFooter.jsp) ✅ Issue #34
 - [x] #E1-4: 共通ヘッダー実装 (commonHeader.jsp) ✅ Issue #35
+- [x] #E1-7: 共通スクリプト実装 (commonScripts.jsp) ✅ Issue #36
 
 #### 進行中
 
 #### 未着手
-- [ ] #E1-2〜#E1-3: 残りレイアウトコンポーネント（commonScripts.jsp, layoutNoMenu.jsp, layoutTop.jsp）
+- [ ] #E1-2〜#E1-3: 残りレイアウトコンポーネント（layoutNoMenu.jsp, layoutTop.jsp）
 - [ ] #E2-3〜#E2-5: 残りエラーページ
 
 ### ✅ Issue #33: 共通ナビゲーションバー実装 (commonNavbar.jsp)
@@ -100,13 +101,24 @@
 - **特記事項**: MainLayoutとの統合完了、全192テスト成功
 - **Status**: CLOSED
 
+### ✅ Issue #36: 共通スクリプト実装 (commonScripts.jsp)
+- **完了日**: 2025-07-11
+- **カテゴリ**: 共通レイアウト
+- **実装内容**: CommonScriptsコンポーネント、common.js機能の移植、TDD完全準拠
+- **テスト**: 31テストケース全成功（CommonScripts: 14テスト、common.ts: 17テスト）
+- **互換性**: 旧システムと100%同等（グローバル変数、Cookie管理、通知システム）
+- **技術**: グローバル変数管理、Cookie操作、jQuery/Bootstrap統合、通知システム
+- **特記事項**: MainLayoutとの統合完了、全223テスト成功、notification.js（WebSocket）は別Issue
+- **Status**: CLOSED
+
 ## 次のIssue
 
-### 🔄 Issue #36: 共通スクリプト実装 (commonScripts.jsp)
+### 🔄 Issue #37: メニューなしレイアウト実装 (layoutNoMenu.jsp)
 - **優先度**: 🔴高
 - **推定工数**: 2日
-- **依存関係**: 共通ヘッダー完了 ✅
+- **依存関係**: 共通ヘッダー、フッター、スクリプト完了 ✅
 - **カテゴリ**: 共通レイアウト
+- **用途**: 認証画面、エラーページ等のシンプルレイアウト
 
 ## 技術的マイルストーン
 
@@ -119,7 +131,7 @@
 - [x] 認証システム基盤（LoginForm、認証API設計）
 
 ### 進行中
-- [ ] 共通ヘッダー実装
+- [ ] 共通レイアウトシステム（残り：layoutNoMenu, layoutTop）
 
 ### 未着手
 - [ ] データベース連携
@@ -129,7 +141,7 @@
 ## 品質指標
 
 ### テストカバレッジ
-- **現在**: 192テスト全成功（CommonHeader: 14テスト追加）
+- **現在**: 223テスト全成功（CommonScripts: 14テスト、common.ts: 17テスト追加）
 - **目標**: 各コンポーネント90%以上
 
 ### 実装品質
@@ -139,4 +151,4 @@
 
 ---
 **最終更新**: 2025-07-11
-**次回セッション開始時**: Issue #36 から継続（共通スクリプト実装）
+**次回セッション開始時**: Issue #37 から継続（メニューなしレイアウト実装 - layoutNoMenu.jsp）

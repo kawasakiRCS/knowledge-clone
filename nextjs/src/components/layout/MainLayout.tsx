@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { CommonNavbar } from './CommonNavbar';
 import { CommonFooter } from './CommonFooter';
 import { CommonHeader } from './CommonHeader';
+import { CommonScripts } from './CommonScripts';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -28,6 +29,15 @@ interface MainLayoutProps {
   highlight?: string;
   /** ページ説明 */
   description?: string;
+  /** デスクトップ通知を有効にするか */
+  desktopNotify?: boolean;
+  /** 通知メッセージ */
+  messages?: {
+    success: string[];
+    info: string[];
+    warn: string[];
+    error: string[];
+  };
 }
 
 export function MainLayout({
@@ -38,7 +48,9 @@ export function MainLayout({
   className,
   thema,
   highlight,
-  description
+  description,
+  desktopNotify = false,
+  messages
 }: MainLayoutProps) {
   return (
     <>
@@ -75,6 +87,15 @@ export function MainLayout({
         {/* フッター - 旧システムのcommonFooter.jspを移植 */}
         <CommonFooter />
       </div>
+      
+      {/* 共通スクリプト（グローバル変数、外部ライブラリ、通知システム） */}
+      <CommonScripts
+        contextPath=""
+        loginUserId={null} // TODO: 認証システム実装後に連携
+        lang="ja"
+        desktopNotify={desktopNotify}
+        messages={messages}
+      />
       
       {/* 追加スクリプト */}
       {customScripts}
