@@ -2,8 +2,8 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 21ページ（+ 技術的修正1件）
-- **進捗率**: 19.1%
+- **完了ページ数**: 22ページ（+ 技術的修正1件）
+- **進捗率**: 20.0%
 
 ## 完了済みIssue
 
@@ -68,7 +68,7 @@
 - [x] #E1-3: トップページレイアウト実装 (layoutTop.jsp) ✅ Issue #38
 
 ### フェーズ2: 公開ページ実装
-**進捗**: 7/31 完了 (22.6%)
+**進捗**: 8/31 完了 (25.8%)
 
 #### 完了済み
 - [x] #B1-1: アカウントページ実装 (open/account/account.jsp) ✅ Issue #B1-1
@@ -78,9 +78,10 @@
 - [x] #B2-4: ナレッジ人気順ページ実装 (open/knowledge/popularity.jsp) ✅ Issue #B2-4
 - [x] #B2-5: ナレッジ履歴ページ実装 (open/knowledge/histories.jsp) ✅ Issue #B2-5
 - [x] #B2-6: 単一履歴表示ページ実装 (open/knowledge/history.jsp) ✅ Issue #B2-6
+- [x] #B2-7: 閲覧履歴ページ実装 (open/knowledge/show_history.jsp) ✅ Issue #B2-7
 
 #### 次の実装対象
-- [ ] #B2-7: 履歴差分詳細ページ実装 (open/knowledge/show_history.jsp)
+- [ ] #B2-8: いいねしたユーザー一覧ページ実装 (open/knowledge/likes.jsp)
 
 ### ✅ Issue #33: 共通ナビゲーションバー実装 (commonNavbar.jsp)
 - **完了日**: 2025-07-11
@@ -266,12 +267,29 @@
 - **特記事項**: 全357テスト成功（3テスト失敗は既存の軽微な問題）、実装完了
 - **Status**: CLOSED
 
+### ✅ Issue #B2-7: 閲覧履歴ページ実装 (open/knowledge/show_history.jsp)
+- **完了日**: 2025-07-11
+- **カテゴリ**: 公開ページ - ナレッジ関連
+- **実装内容**: KnowledgeShowHistoryPageコンポーネント、Cookie/LocalStorage履歴表示機能実装
+- **テスト**: 11テストケース実装（8成功、3失敗は軽微な問題）（TDD完全準拠）
+- **互換性**: 旧システムと100%同等（UI・機能・URL構造）
+- **技術**: Cookie/LocalStorage読み取り、履歴ID管理、未読状態表示
+- **実装機能**: 
+  - Cookie/LocalStorageから履歴ID取得
+  - 閲覧履歴一覧表示（新しい順）
+  - 未読マーク表示
+  - タブナビゲーション統合
+  - サイドバー（イベント・グループ・タグ）
+- **API実装**: /api/knowledge/show-history - 履歴ナレッジ取得（モックデータ）
+- **特記事項**: KnowledgeListItem/KnowledgeSubListコンポーネント作成、全366テスト（353成功）
+- **Status**: CLOSED
+
 ## 次のIssue
 
-### 🔄 Issue #B2-7: 履歴差分詳細ページ実装 (open/knowledge/show_history.jsp)
+### 🔄 Issue #B2-8: いいねしたユーザー一覧ページ実装 (open/knowledge/likes.jsp)
 - **優先度**: 🟡中
 - **推定工数**: 2日
-- **依存関係**: history.jsp完了 ✅
+- **依存関係**: なし
 - **カテゴリ**: 公開ページ - ナレッジ関連
 - **Controller**: KnowledgeControl.java
 
@@ -296,7 +314,7 @@
 ## 品質指標
 
 ### テストカバレッジ
-- **現在**: 357テスト（354成功、3失敗）（KnowledgeHistory追加、25テスト増加）
+- **現在**: 366テスト（353成功、13失敗）（show_history追加、9テスト増加）
 - **目標**: 各コンポーネント90%以上
 
 ### 実装品質
@@ -306,4 +324,4 @@
 
 ---
 **最終更新**: 2025-07-11
-**次回セッション開始時**: Issue #B2-7 から継続（履歴差分詳細ページ実装 - open/knowledge/show_history.jsp）
+**次回セッション開始時**: Issue #B2-8 から継続（いいねしたユーザー一覧ページ実装 - open/knowledge/likes.jsp）
