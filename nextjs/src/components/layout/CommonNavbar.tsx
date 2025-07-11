@@ -6,8 +6,10 @@
  * @since 1.0.0
  */
 
+'use client';
+
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 
 interface CommonNavbarProps {

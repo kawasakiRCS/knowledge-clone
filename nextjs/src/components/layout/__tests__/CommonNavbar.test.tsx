@@ -9,7 +9,7 @@ import { CommonNavbar } from '../CommonNavbar';
 
 // ナビゲーション関連のモック
 const mockPush = jest.fn();
-jest.mock('next/router', () => ({
+jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
     pathname: '/test',

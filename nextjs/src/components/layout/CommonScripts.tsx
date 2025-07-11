@@ -4,6 +4,9 @@
  * @description 旧システムのcommonScripts.jspを移植
  * グローバル変数の設定、外部ライブラリの読み込み、通知システムの初期化を行う
  */
+
+'use client';
+
 import React, { useEffect } from 'react';
 import Script from 'next/script';
 

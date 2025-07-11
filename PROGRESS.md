@@ -2,7 +2,7 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 16ページ
+- **完了ページ数**: 16ページ（+ 技術的修正1件）
 - **進捗率**: 14.5%
 
 ## 完了済みIssue
@@ -157,6 +157,17 @@
 - **特記事項**: APIエンドポイント実装（/api/knowledge/list）、モックデータ5件、旧システムCSS完全再現
 - **Status**: CLOSED
 
+### ✅ Issue #35: Next.js App Router Client Components対応
+- **完了日**: 2025-07-11
+- **カテゴリ**: 技術的修正 - 基盤システム
+- **実装内容**: CommonNavbar、AccountPage、CommonScriptsに'use client';ディレクティブ追加
+- **問題**: Next.js 15.3.5 App RouterでReact Hooks使用時のServer Component エラー
+- **修正**: 3コンポーネントにClient Componentディレクティブ追加
+- **検証**: 開発サーバー正常起動、全266テスト成功、全ページ正常表示
+- **技術**: Next.js App Router、Server/Client Components分離、React Hooks対応
+- **特記事項**: 既存実装の技術的修正、機能変更なし、TDD継続可能
+- **Status**: CLOSED
+
 ## 次のIssue
 
 ### 🔄 Issue #B2-2: ナレッジ詳細ページ実装 (open/knowledge/view.jsp)
@@ -187,7 +198,7 @@
 ## 品質指標
 
 ### テストカバレッジ
-- **現在**: 266テスト全成功（KnowledgeListPage: 8テスト追加）
+- **現在**: 266テスト全成功（技術的修正後も継続、Client Components対応完了）
 - **目標**: 各コンポーネント90%以上
 
 ### 実装品質

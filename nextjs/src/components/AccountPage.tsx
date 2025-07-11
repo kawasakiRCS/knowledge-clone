@@ -3,6 +3,9 @@
  * 
  * @description 旧システムのopen/account/account.jspを移植
  */
+
+'use client';
+
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
