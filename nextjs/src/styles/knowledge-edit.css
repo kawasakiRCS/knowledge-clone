@@ -1,0 +1,64 @@
+.preview {
+    word-break: normal;
+    margin-top: 50px;
+    padding: 5px;
+}
+
+.bootstrap-tagsinput { width: 100%; }
+.bootstrap-tagsinput input {
+    min-width: 300px;
+}
+
+.file-group {
+    margin-bottom: 6px;
+}
+.filediv {
+    margin: 10px;
+    border-bottom: 1px dotted #cccccc;
+    padding-bottom: 2px;
+}
+
+#drop_target {
+    border: 1px solid gray;
+    padding: 5px;
+    border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+}
+
+@media only screen and (max-width:767px){
+    .radio-inline { 
+        margin-left: 10px;
+    }
+}
+
+.emoji {
+    width: 24px;
+    height: 24px;
+}
+.emojis li {
+    list-style-type: none;
+}
+.emojis li .name {
+    cursor: pointer;
+    border-bottom: 1px solid gray;
+}
+.helpMarkdownLabel {
+    font-size: small;
+    font-weight: normal;
+}
+
+/* タグ入力 */
+.tags {
+    padding: 0;
+}
+
+/* グループ入力 */
+.groups {
+    padding: 0;
+}
+
+/* 作成者入力 */
+.creators {
+    padding: 0;
+}
