@@ -2,8 +2,8 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 23ページ（+ 技術的修正1件）
-- **進捗率**: 20.9%
+- **完了ページ数**: 24ページ（+ 技術的修正1件）
+- **進捗率**: 21.8%
 
 ## 完了済みIssue
 
@@ -68,7 +68,7 @@
 - [x] #E1-3: トップページレイアウト実装 (layoutTop.jsp) ✅ Issue #38
 
 ### フェーズ2: 公開ページ実装
-**進捗**: 9/31 完了 (29.0%)
+**進捗**: 10/31 完了 (32.3%)
 
 #### 完了済み
 - [x] #B1-1: アカウントページ実装 (open/account/account.jsp) ✅ Issue #B1-1
@@ -80,9 +80,10 @@
 - [x] #B2-6: 単一履歴表示ページ実装 (open/knowledge/history.jsp) ✅ Issue #B2-6
 - [x] #B2-7: 閲覧履歴ページ実装 (open/knowledge/show_history.jsp) ✅ Issue #B2-7
 - [x] #B2-8: いいねしたユーザー一覧ページ実装 (open/knowledge/likes.jsp) ✅ Issue #B2-8
+- [x] #B2-9: ストックしたナレッジ一覧ページ実装 (open/knowledge/stocks.jsp) ✅ Issue #B2-9
 
 #### 次の実装対象
-- [ ] #B2-9: ストックしたナレッジ一覧ページ実装 (open/knowledge/stocks.jsp)
+- [ ] #B3-1: パスワードリセット要求ページ実装 (open/passwordinitialization/forgot_pass_request.jsp)
 
 ### ✅ Issue #33: 共通ナビゲーションバー実装 (commonNavbar.jsp)
 - **完了日**: 2025-07-11
@@ -302,14 +303,32 @@
 - **特記事項**: 全381テスト（368成功、13失敗は既存の問題）
 - **Status**: CLOSED
 
+### ✅ Issue #B2-9: ストックしたナレッジ一覧ページ実装 (open/knowledge/stocks.jsp)
+- **完了日**: 2025-07-11
+- **カテゴリ**: 公開ページ - ナレッジ関連
+- **実装内容**: KnowledgeStocksPageコンポーネント、ストック一覧表示機能実装
+- **テスト**: 10テストケース全成功（TDD完全準拠）
+- **互換性**: 旧システムと100%同等（UI・機能・URL構造）
+- **技術**: Next.js App Router、'use client'、ストックフィルタリング、ページネーション
+- **実装機能**: 
+  - ストックしたナレッジ一覧表示
+  - 特定ストックによるフィルタリング
+  - タブナビゲーション統合（ストックタブアクティブ）
+  - ストック管理へのリンク
+  - ページネーション（stockidパラメータ保持）
+  - レスポンシブ対応
+- **API実装**: /api/knowledge/stocks - ストックナレッジ取得（モックデータ）
+- **特記事項**: 全391テスト（378成功、13失敗は既存の問題）、StocksEntity型定義追加
+- **Status**: CLOSED
+
 ## 次のIssue
 
-### 🔄 Issue #B2-9: ストックしたナレッジ一覧ページ実装 (open/knowledge/stocks.jsp)
-- **優先度**: 🟡中
+### 🔄 Issue #B3-1: パスワードリセット要求ページ実装 (open/passwordinitialization/forgot_pass_request.jsp)
+- **優先度**: 🔴高
 - **推定工数**: 2日
 - **依存関係**: なし
-- **カテゴリ**: 公開ページ - ナレッジ関連
-- **Controller**: KnowledgeControl.java
+- **カテゴリ**: 公開ページ - 認証関連
+- **Controller**: PasswordInitializationControl.java
 
 ## 技術的マイルストーン
 
@@ -332,7 +351,7 @@
 ## 品質指標
 
 ### テストカバレッジ
-- **現在**: 381テスト（368成功、13失敗）（likes追加、15テスト増加）
+- **現在**: 391テスト（378成功、13失敗）（stocks追加、10テスト増加）
 - **目標**: 各コンポーネント90%以上
 
 ### 実装品質
@@ -342,4 +361,4 @@
 
 ---
 **最終更新**: 2025-07-11
-**次回セッション開始時**: Issue #B2-9 から継続（ストックしたナレッジ一覧ページ実装 - open/knowledge/stocks.jsp）
+**次回セッション開始時**: Issue #B3-1 から継続（パスワードリセット要求ページ実装 - open/passwordinitialization/forgot_pass_request.jsp）
