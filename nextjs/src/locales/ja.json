@@ -1,0 +1,48 @@
+{
+  "label": {
+    "previous": "前へ",
+    "next": "次へ",
+    "add": "追加",
+    "edit": "編集",
+    "search": "検索",
+    "delete": "削除",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "filter": "絞込み"
+  },
+  "knowledge": {
+    "list": {
+      "title": "ナレッジ一覧",
+      "empty": "条件に該当する情報は存在しませんでした。条件（検索キーワード、タグ、ページきりかえ）の変更をお試しください。",
+      "kind": {
+        "list": "一覧",
+        "stock": "ストック",
+        "history": "履歴", 
+        "popular": "人気"
+      },
+      "popular": {
+        "tags": "人気のタグ"
+      },
+      "info": {
+        "group": "グループ機能はサインインする必要があります"
+      },
+      "events": "イベント",
+      "sort": "ソート",
+      "sort": {
+        "score": "スコア順",
+        "time": "更新順"
+      }
+    },
+    "view": {
+      "info": {
+        "insert": "が投稿"
+      }
+    },
+    "navbar": {
+      "config": {
+        "group": "グループ"
+      }
+    }
+  }
+}

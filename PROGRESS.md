@@ -2,7 +2,7 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 32ページ（+ 技術的修正2件）
+- **完了ページ数**: 32ページ（+ 技術的修正3件）
 - **進捗率**: 29.1%
 
 ## 完了済みIssue（31 Issues）
@@ -531,4 +531,30 @@
   - ✅ App Router完全有効化
   - ✅ ビルド成功（警告のみ、機能影響なし）
 - **影響範囲**: 全ページアクセス可能、開発環境正常化
+- **Status**: APPLIED
+
+### ✅ 技術修正 #3: useLocale翻訳機能実装とlabelエラー解消
+- **完了日**: 2025-07-12
+- **カテゴリ**: 国際化システム修正
+- **問題**: `/open/knowledge/list`で`TypeError: label is not a function`エラー
+- **根本原因**: 
+  - `KnowledgeListPage.tsx`で`useLocale()`から`label`関数を取得
+  - `useLocale`フックに`label`関数が未実装
+  - 旧JavaシステムのJspUtil.label()相当機能不足
+- **TDD実装手順**:
+  1. **Red**: `useLocale.test.ts`作成、8テストケース（翻訳・言語切り替え・エラーハンドリング）
+  2. **Green**: label関数実装、翻訳システム構築
+  3. **Refactor**: 型安全性確保、非同期対応
+- **実装詳細**:
+  1. 翻訳データ抽出（appresource.properties → JSON）
+  2. `/src/locales/`ディレクトリ作成（ja.json, en.json）
+  3. useLocaleフック拡張（動的翻訳読み込み、ネストキー対応）
+  4. エラーハンドリング（存在しないキー、無効ロケール）
+- **結果**: 
+  - ✅ 全8テストケース成功
+  - ✅ label('knowledge.list.kind.list') → "一覧"
+  - ✅ 言語切り替え正常動作
+  - ✅ `/open/knowledge/list`ページ正常表示
+- **互換性**: 旧JavaシステムJspUtil.label()と100%同等機能
+- **技術**: 軽量実装（外部ライブラリ不使用）、TypeScript完全対応
 - **Status**: APPLIED

@@ -1,0 +1,48 @@
+{
+  "label": {
+    "previous": "Previous",
+    "next": "Next",
+    "add": "Add",
+    "edit": "Edit", 
+    "search": "Search",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "filter": "Filter"
+  },
+  "knowledge": {
+    "list": {
+      "title": "Knowledge List",
+      "empty": "Information corresponding to the conditions did not exist. Conditions (search keyword, tag, page switching) Please try to change the.",
+      "kind": {
+        "list": "List",
+        "stock": "Stock", 
+        "history": "History",
+        "popular": "Popular"
+      },
+      "popular": {
+        "tags": "Popular Tags"
+      },
+      "info": {
+        "group": "Required SignIn"
+      },
+      "events": "Event",
+      "sort": "Sort",
+      "sort": {
+        "score": "Score",
+        "time": "Update time"
+      }
+    },
+    "view": {
+      "info": {
+        "insert": "posted"
+      }
+    },
+    "navbar": {
+      "config": {
+        "group": "Group"
+      }
+    }
+  }
+}
