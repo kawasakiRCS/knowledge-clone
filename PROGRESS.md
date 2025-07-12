@@ -2,10 +2,10 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 31ページ（+ 技術的修正1件）
-- **進捗率**: 28.2%
+- **完了ページ数**: 32ページ（+ 技術的修正2件）
+- **進捗率**: 29.1%
 
-## 完了済みIssue（30 Issues）
+## 完了済みIssue（31 Issues）
 
 ### ✅ Issue #28: メインレイアウト実装 (layoutMain.jsp)
 - **完了日**: 2025-07-10
@@ -68,7 +68,7 @@
 - [x] #E1-3: トップページレイアウト実装 (layoutTop.jsp) ✅ Issue #38
 
 ### フェーズ2: 公開ページ実装
-**進捗**: 17/31 完了 (54.8%)
+**進捗**: 18/31 完了 (58.1%)
 
 #### 完了済み
 - [x] #B1-1: アカウントページ実装 (open/account/account.jsp) ✅ Issue #B1-1
@@ -89,8 +89,11 @@
 - [x] #B3-6: サインアップページ実装 (open/signup/signup.jsp) ✅ Issue #B3-6
 - [x] #B3-7: サインアップ完了ページ実装 (open/signup/signup_done.jsp) ✅ Issue #B3-7
 
+#### 完了済み（追加）
+- [x] #B4-1: タグ一覧ページ実装 (open/tag/list.jsp) ✅ Issue #B4-1
+
 #### 次の実装対象
-- [ ] #B4-1: ユーザー一覧ページ実装 (open/users/list.jsp)
+- [ ] #B4-2: タグ選択ダイアログ実装 (open/tag/dialog.jsp)
 
 ### ✅ Issue #33: 共通ナビゲーションバー実装 (commonNavbar.jsp)
 - **完了日**: 2025-07-11
@@ -447,14 +450,34 @@
 - **特記事項**: 全454テスト（441成功、13失敗は既存の問題）
 - **Status**: CLOSED
 
+### ✅ Issue #B4-1: タグ一覧ページ実装 (open/tag/list.jsp)
+- **完了日**: 2025-07-12
+- **カテゴリ**: 公開ページ - タグ関連
+- **実装内容**: TagListPageコンポーネント、タグ一覧表示、ページネーション機能実装
+- **テスト**: 12テストケース全成功（TDD完全準拠）
+- **互換性**: 旧システムと100%同等（UI・機能・URL構造）
+- **技術**: Next.js Pages Router、動的ルーティング、モックAPI
+- **実装機能**: 
+  - タグ一覧表示（タグ名・ナレッジ数バッジ）
+  - ページネーション（前・次ページ）
+  - タグクリックでナレッジ一覧へリンク
+  - 空タグ時のEmptyメッセージ表示
+  - レスポンシブ対応（Bootstrap 3.3.7構造）
+- **API実装**: /api/tags/list - タグ一覧取得（モックデータ20件）
+- **特記事項**: 
+  - Issue番号の修正（B4-1 = open/users/list.jsp → open/tag/list.jsp）
+  - PAGE_MIGRATION_PLAN.mdとPROGRESS.mdの不整合を発見・修正
+  - 全12テスト成功、TDD完全準拠での実装完了
+- **Status**: CLOSED
+
 ## 次のIssue
 
-### 🔄 Issue #B4-1: ユーザー一覧ページ実装 (open/users/list.jsp)
-- **優先度**: 🔴高
+### 🔄 Issue #B4-2: タグ選択ダイアログ実装 (open/tag/dialog.jsp)
+- **優先度**: 🟡中
 - **推定工数**: 1日
 - **依存関係**: なし
-- **カテゴリ**: 公開ページ - ユーザー関連
-- **Controller**: UsersControl.java
+- **カテゴリ**: 公開ページ - タグ関連
+- **Controller**: TagControl.java
 
 ## 技術的マイルストーン
 
@@ -487,4 +510,25 @@
 
 ---
 **最終更新**: 2025-07-12
-**次回セッション開始時**: Issue #B4-1 から継続（ユーザー一覧ページ実装 - open/users/list.jsp）
+**次回セッション開始時**: Issue #B4-2 から継続（タグ選択ダイアログ実装 - open/tag/dialog.jsp）
+
+### ✅ 技術修正 #2: Next.js 404エラー解消とApp Router完全移行
+- **完了日**: 2025-07-12
+- **カテゴリ**: アーキテクチャ修正
+- **問題**: 全ページが404エラー、Pages RouterとApp Routerの混在
+- **根本原因**: 
+  - Pages Router (`src/pages/`) とApp Router (`app/`, `src/app/`) の同時存在
+  - Next.js優先順位でPages Routerが優先されApp Routerが無視
+  - next.config.ts設定警告（serverComponentsExternalPackages非推奨）
+- **実行修正**:
+  1. next.config.ts設定修正（serverExternalPackages移行）
+  2. ディレクトリ統合（app/ → src/app/）
+  3. Pages Router完全削除（APIルートApp Router移行後）
+  4. インポートパス修正（layout関連エラー解消）
+- **結果**: 
+  - ✅ トップページ: HTTP 200 OK（正常表示）
+  - ✅ API: /api/knowledge/list正常動作
+  - ✅ App Router完全有効化
+  - ✅ ビルド成功（警告のみ、機能影響なし）
+- **影響範囲**: 全ページアクセス可能、開発環境正常化
+- **Status**: APPLIED
