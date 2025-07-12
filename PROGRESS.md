@@ -2,10 +2,10 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 28ページ（+ 技術的修正1件）
-- **進捗率**: 25.5%
+- **完了ページ数**: 29ページ（+ 技術的修正1件）
+- **進捗率**: 26.4%
 
-## 完了済みIssue（28 Issues）
+## 完了済みIssue（29 Issues）
 
 ### ✅ Issue #28: メインレイアウト実装 (layoutMain.jsp)
 - **完了日**: 2025-07-10
@@ -68,7 +68,7 @@
 - [x] #E1-3: トップページレイアウト実装 (layoutTop.jsp) ✅ Issue #38
 
 ### フェーズ2: 公開ページ実装
-**進捗**: 14/31 完了 (45.2%)
+**進捗**: 15/31 完了 (48.4%)
 
 #### 完了済み
 - [x] #B1-1: アカウントページ実装 (open/account/account.jsp) ✅ Issue #B1-1
@@ -85,9 +85,10 @@
 - [x] #B3-2: パスワードリセット結果ページ実装 (open/passwordinitialization/forgot_pass_result.jsp) ✅ Issue #B3-2
 - [x] #B3-3: パスワードリセットページ実装 (open/passwordinitialization/password_reset.jsp) ✅ Issue #B3-3
 - [x] #B3-4: パスワードリセット完了ページ実装 (open/passwordinitialization/reset_result.jsp) ✅ Issue #B3-4
+- [x] #B3-5: 仮登録ページ実装 (open/signup/provisional_registration.jsp) ✅ Issue #B3-5
 
 #### 次の実装対象
-- [ ] #B3-5: 仮登録ページ実装 (open/signup/provisional_registration.jsp)
+- [ ] #B3-6: サインアップページ実装 (open/signup/signup.jsp)
 
 ### ✅ Issue #33: 共通ナビゲーションバー実装 (commonNavbar.jsp)
 - **完了日**: 2025-07-11
@@ -394,11 +395,26 @@
 - **特記事項**: 全432テスト（419成功、13失敗は既存の問題）
 - **Status**: CLOSED
 
+### ✅ Issue #B3-5: 仮登録ページ実装 (open/signup/provisional_registration.jsp)
+- **完了日**: 2025-07-12
+- **カテゴリ**: 公開ページ - サインアップ関連
+- **実装内容**: ProvisionalRegistrationPageコンポーネント、管理者承認待ちメッセージページ実装
+- **テスト**: 5テストケース全成功（TDD完全準拠）
+- **互換性**: 旧システムと100%同等（UI・メッセージ・レイアウト）
+- **技術**: Next.js、'use client'、シンプルな静的ページ実装
+- **実装機能**: 
+  - 登録受付結果タイトル表示
+  - 管理者承認待ちメッセージ表示
+  - brタグによる改行対応
+  - MainLayout統合
+- **特記事項**: 全437テスト（424成功、13失敗は既存の問題）
+- **Status**: CLOSED
+
 ## 次のIssue
 
-### 🔄 Issue #B3-5: 仮登録ページ実装 (open/signup/provisional_registration.jsp)
+### 🔄 Issue #B3-6: サインアップページ実装 (open/signup/signup.jsp)
 - **優先度**: 🔴高
-- **推定工数**: 2日
+- **推定工数**: 3日
 - **依存関係**: なし
 - **カテゴリ**: 公開ページ - サインアップ関連
 - **Controller**: SignupControl.java
@@ -424,7 +440,7 @@
 ## 品質指標
 
 ### テストカバレッジ
-- **現在**: 432テスト（419成功、13失敗）（reset_result追加、6テスト増加）
+- **現在**: 437テスト（424成功、13失敗）（provisional_registration追加、5テスト増加）
 - **目標**: 各コンポーネント90%以上
 
 ### 実装品質
@@ -434,4 +450,4 @@
 
 ---
 **最終更新**: 2025-07-12
-**次回セッション開始時**: Issue #B3-5 から継続（仮登録ページ実装 - open/signup/provisional_registration.jsp）
+**次回セッション開始時**: Issue #B3-6 から継続（サインアップページ実装 - open/signup/signup.jsp）
