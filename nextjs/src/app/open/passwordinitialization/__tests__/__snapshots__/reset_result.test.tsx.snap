@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PasswordResetResultPage レイアウト構造 メッセージ後に適切な余白がある 1`] = `
+<h4
+  class="title"
+>
+  Password Reset
+</h4>
+`;
