@@ -222,7 +222,7 @@ describe('KnowledgeHistoryPage', () => {
 
       await waitFor(() => {
         const backButton = screen.getByRole('link', { name: /戻る/ });
-        expect(backButton).toHaveAttribute('href', '/open.knowledge/histories/1?page=2');
+        expect(backButton).toHaveAttribute('href', '/open/knowledge/histories/1?page=2');
       });
     });
   });

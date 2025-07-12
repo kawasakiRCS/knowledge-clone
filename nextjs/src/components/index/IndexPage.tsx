@@ -18,7 +18,7 @@ export const IndexPage: React.FC = () => {
    * ナレッジ一覧ページへ遷移
    */
   const handleHeaderClick = () => {
-    router.push('/open.knowledge/list');
+    router.push('/open/knowledge/list');
   };
 
   return (
@@ -44,7 +44,7 @@ export const IndexPage: React.FC = () => {
             id="showlist" 
             className="btn btn-lg get-start" 
             role="button"
-            href="/open.knowledge/list"
+            href="/open/knowledge/list"
             onClick={(e) => e.stopPropagation()} // ヘッダークリックとの競合防止
           >
             Get Started!

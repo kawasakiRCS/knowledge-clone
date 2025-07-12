@@ -48,7 +48,7 @@ describe('IndexPage', () => {
       
       const button = screen.getByRole('button', { name: 'Get Started!' });
       expect(button).toBeInTheDocument();
-      expect(button).toHaveAttribute('href', '/open.knowledge/list');
+      expect(button).toHaveAttribute('href', '/open/knowledge/list');
       expect(button).toHaveClass('get-start');
     });
 
@@ -116,7 +116,7 @@ describe('IndexPage', () => {
       const headerSection = screen.getByTestId('header-section');
       await user.click(headerSection);
       
-      expect(mockPush).toHaveBeenCalledWith('/open.knowledge/list');
+      expect(mockPush).toHaveBeenCalledWith('/open/knowledge/list');
     });
 
     test('Get Startedボタンクリックでナレッジ一覧へ遷移', async () => {
@@ -127,7 +127,7 @@ describe('IndexPage', () => {
       await user.click(button);
       
       // リンクなのでpreventDefaultしない限り通常の遷移
-      expect(button).toHaveAttribute('href', '/open.knowledge/list');
+      expect(button).toHaveAttribute('href', '/open/knowledge/list');
     });
   });
 

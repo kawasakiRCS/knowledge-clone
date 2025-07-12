@@ -122,7 +122,7 @@ describe('KnowledgeSearchPage', () => {
       await user.click(searchButton);
 
       expect(mockRouter.push).toHaveBeenCalledWith(
-        '/open.knowledge/list?keyword=test+keyword'
+        '/open/knowledge/list?keyword=test+keyword'
       );
     });
 
@@ -334,7 +334,7 @@ describe('KnowledgeSearchPage', () => {
       await user.click(searchButton);
 
       expect(mockRouter.push).toHaveBeenCalledWith(
-        expect.stringContaining('/open.knowledge/list')
+        expect.stringContaining('/open/knowledge/list')
       );
     });
 
@@ -393,7 +393,7 @@ describe('KnowledgeSearchPage', () => {
 
       await waitFor(() => {
         const backButton = screen.getByRole('link', { name: /label\.backlist/i });
-        expect(backButton).toHaveAttribute('href', '/open.knowledge/list');
+        expect(backButton).toHaveAttribute('href', '/open/knowledge/list');
       });
     });
   });

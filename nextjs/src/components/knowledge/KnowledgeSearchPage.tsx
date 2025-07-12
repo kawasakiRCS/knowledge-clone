@@ -112,7 +112,7 @@ export const KnowledgeSearchPage: React.FC = () => {
     });
 
     const queryString = params.toString();
-    const url = queryString ? `/open.knowledge/list?${queryString}` : '/open.knowledge/list';
+    const url = queryString ? `/open/knowledge/list?${queryString}` : '/open/knowledge/list';
     
     router.push(url);
   };
@@ -307,7 +307,7 @@ export const KnowledgeSearchPage: React.FC = () => {
             <i className="fa fa-times-circle"></i>&nbsp;{t('label.clear')}
           </button>
           <a 
-            href="/open.knowledge/list"
+            href="/open/knowledge/list"
             className="btn btn-success" 
             role="button"
           >

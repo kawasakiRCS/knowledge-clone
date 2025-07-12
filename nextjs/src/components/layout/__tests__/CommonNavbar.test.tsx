@@ -49,7 +49,7 @@ describe('CommonNavbar', () => {
       
       const brandLink = screen.getByRole('link', { name: /knowledge/i });
       expect(brandLink).toHaveClass('navbar-brand');
-      expect(brandLink).toHaveAttribute('href', '/open.knowledge/list');
+      expect(brandLink).toHaveAttribute('href', '/open/knowledge/list');
     });
 
     test('検索フォームが表示される', () => {
@@ -174,7 +174,7 @@ describe('CommonNavbar', () => {
       await user.click(searchButton);
       
       // フォーム送信の検証（URLエンコードされた形式）
-      expect(mockPush).toHaveBeenCalledWith('/open.knowledge/list?keyword=%E3%83%86%E3%82%B9%E3%83%88%E6%A4%9C%E7%B4%A2');
+      expect(mockPush).toHaveBeenCalledWith('/open/knowledge/list?keyword=%E3%83%86%E3%82%B9%E3%83%88%E6%A4%9C%E7%B4%A2');
     });
 
     test('Enter キーで検索実行', async () => {
@@ -185,7 +185,7 @@ describe('CommonNavbar', () => {
       
       await user.type(searchInput, 'テスト検索{enter}');
       
-      expect(mockPush).toHaveBeenCalledWith('/open.knowledge/list?keyword=%E3%83%86%E3%82%B9%E3%83%88%E6%A4%9C%E7%B4%A2');
+      expect(mockPush).toHaveBeenCalledWith('/open/knowledge/list?keyword=%E3%83%86%E3%82%B9%E3%83%88%E6%A4%9C%E7%B4%A2');
     });
   });
 
@@ -232,7 +232,7 @@ describe('CommonNavbar', () => {
       
       // 旧システムと同じURL
       const brandLink = screen.getByRole('link', { name: /knowledge/i });
-      expect(brandLink).toHaveAttribute('href', '/open.knowledge/list');
+      expect(brandLink).toHaveAttribute('href', '/open/knowledge/list');
     });
 
     test('Font Awesome アイコンクラス', () => {

@@ -1,7 +1,7 @@
 /**
  * 閲覧履歴ページレイアウト
  */
-import MainLayout from '@/components/layouts/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 
 export const metadata = {
   title: '履歴 - Knowledge',

@@ -102,7 +102,7 @@ export default function KnowledgeHistory({
 
   // URLパラメータの構築
   const buildBackUrl = () => {
-    const baseUrl = `/open.knowledge/histories/${history.knowledgeId}`;
+    const baseUrl = `/open/knowledge/histories/${history.knowledgeId}`;
     const separator = params ? '&' : '?';
     return `${baseUrl}${params}${separator}page=${page}`;
   };

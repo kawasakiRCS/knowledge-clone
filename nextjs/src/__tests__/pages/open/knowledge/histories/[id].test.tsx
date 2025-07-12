@@ -136,8 +136,8 @@ describe('KnowledgeHistoriesPage', () => {
         const prevLinks = screen.getAllByRole('link', { name: /前へ/ });
         const nextLinks = screen.getAllByRole('link', { name: /次へ/ });
         
-        expect(prevLinks[0]).toHaveAttribute('href', '/open.knowledge/histories/1?page=0');
-        expect(nextLinks[0]).toHaveAttribute('href', '/open.knowledge/histories/1?page=2');
+        expect(prevLinks[0]).toHaveAttribute('href', '/open/knowledge/histories/1?page=0');
+        expect(nextLinks[0]).toHaveAttribute('href', '/open/knowledge/histories/1?page=2');
       });
     });
 
@@ -146,7 +146,7 @@ describe('KnowledgeHistoriesPage', () => {
       
       await waitFor(() => {
         const historyLink = screen.getByRole('link', { name: /ナレッジタイトル更新3/ });
-        expect(historyLink).toHaveAttribute('href', '/open.knowledge/history/1?page=0&history_no=3');
+        expect(historyLink).toHaveAttribute('href', '/open/knowledge/history/1?page=0&history_no=3');
       });
     });
 
@@ -157,8 +157,8 @@ describe('KnowledgeHistoriesPage', () => {
         const backToView = screen.getByRole('link', { name: /戻る/ });
         const backToList = screen.getByRole('link', { name: /ナレッジ一覧へ戻る/ });
         
-        expect(backToView).toHaveAttribute('href', '/open.knowledge/view/1');
-        expect(backToList).toHaveAttribute('href', '/open.knowledge/list/0');
+        expect(backToView).toHaveAttribute('href', '/open/knowledge/view/1');
+        expect(backToList).toHaveAttribute('href', '/open/knowledge/list/0');
       });
     });
   });

@@ -132,7 +132,7 @@ describe('MainLayout', () => {
       
       const brandLink = screen.getByRole('link', { name: /knowledge/i });
       expect(brandLink).toBeInTheDocument();
-      expect(brandLink).toHaveAttribute('href', '/open.knowledge/list');
+      expect(brandLink).toHaveAttribute('href', '/open/knowledge/list');
     });
 
     test('検索フォームが表示される', () => {

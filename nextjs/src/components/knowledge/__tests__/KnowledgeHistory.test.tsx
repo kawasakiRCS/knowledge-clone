@@ -176,7 +176,7 @@ describe('KnowledgeHistory', () => {
       );
 
       const backButton = screen.getByText(/戻る/).closest('a');
-      expect(backButton).toHaveAttribute('href', '/open.knowledge/histories/1?page=2');
+      expect(backButton).toHaveAttribute('href', '/open/knowledge/histories/1?page=2');
     });
 
     test('戻るボタンのリンクが正しい（追加パラメータ付き）', () => {
@@ -190,7 +190,7 @@ describe('KnowledgeHistory', () => {
       );
 
       const backButton = screen.getByText(/戻る/).closest('a');
-      expect(backButton).toHaveAttribute('href', '/open.knowledge/histories/1?keyword=test&page=1');
+      expect(backButton).toHaveAttribute('href', '/open/knowledge/histories/1?keyword=test&page=1');
     });
   });
 

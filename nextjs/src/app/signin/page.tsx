@@ -22,7 +22,7 @@ function LoginPageContent() {
   const password = searchParams.get('password') || '';
 
   // URLパラメータから認証説明の表示判定
-  const showDescription = page !== null && page !== '/open.knowledge/list';
+  const showDescription = page !== null && page !== '/open/knowledge/list';
   
   // システム設定でサインアップ機能が有効かどうか（仮実装）
   const showSignup = true; // 実際はシステム設定から取得

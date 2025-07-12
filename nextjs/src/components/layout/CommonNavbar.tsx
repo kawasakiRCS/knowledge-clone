@@ -30,7 +30,7 @@ export function CommonNavbar({
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
-    const searchUrl = `/open.knowledge/list${keyword ? `?keyword=${encodeURIComponent(keyword)}` : ''}`;
+    const searchUrl = `/open/knowledge/list${keyword ? `?keyword=${encodeURIComponent(keyword)}` : ''}`;
     router.push(searchUrl);
   };
 
@@ -56,7 +56,7 @@ export function CommonNavbar({
             <span className="icon-bar"></span>
             <span className="icon-bar"></span>
           </button>
-          <a className="navbar-brand" href="/open.knowledge/list" style={{ cursor: 'pointer' }}>
+          <a className="navbar-brand" href="/open/knowledge/list" style={{ cursor: 'pointer' }}>
             <i className={`fa ${serviceIcon}`}></i>&nbsp;
             {serviceLabel}
           </a>
@@ -165,19 +165,19 @@ export function CommonNavbar({
                   </a>
                   <ul className="dropdown-menu" role="menu">
                     <li>
-                      <a href="/open.knowledge/list">
+                      <a href="/open/knowledge/list">
                         <i className="fa fa-list"></i>&nbsp;ナレッジ一覧
                       </a>
                     </li>
                     <li className="divider"></li>
                     <li>
-                      <a href="/open.knowledge/search">
+                      <a href="/open/knowledge/search">
                         <i className="fa fa-search"></i>&nbsp;検索
                       </a>
                     </li>
                     <li className="divider"></li>
                     <li>
-                      <a id="menuSignin" href="/signin?page=/open.knowledge/list" style={{ cursor: 'pointer' }}>
+                      <a id="menuSignin" href="/signin?page=/open/knowledge/list" style={{ cursor: 'pointer' }}>
                         <i className="fa fa-sign-in"></i>&nbsp;サインイン
                       </a>
                     </li>
@@ -210,7 +210,7 @@ export function CommonNavbar({
                   </a>
                   <ul className="dropdown-menu" role="menu">
                     <li>
-                      <a href="/open.knowledge/list">
+                      <a href="/open/knowledge/list">
                         <i className="fa fa-list"></i>&nbsp;ナレッジ一覧
                       </a>
                     </li>
@@ -222,7 +222,7 @@ export function CommonNavbar({
                     </li>
                     <li className="divider"></li>
                     <li>
-                      <a href="/open.knowledge/search">
+                      <a href="/open/knowledge/search">
                         <i className="fa fa-search"></i>&nbsp;検索
                       </a>
                     </li>
