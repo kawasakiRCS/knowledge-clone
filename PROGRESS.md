@@ -2,10 +2,10 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 30ページ（+ 技術的修正1件）
-- **進捗率**: 27.3%
+- **完了ページ数**: 31ページ（+ 技術的修正1件）
+- **進捗率**: 28.2%
 
-## 完了済みIssue（29 Issues）
+## 完了済みIssue（30 Issues）
 
 ### ✅ Issue #28: メインレイアウト実装 (layoutMain.jsp)
 - **完了日**: 2025-07-10
@@ -68,7 +68,7 @@
 - [x] #E1-3: トップページレイアウト実装 (layoutTop.jsp) ✅ Issue #38
 
 ### フェーズ2: 公開ページ実装
-**進捗**: 16/31 完了 (51.6%)
+**進捗**: 17/31 完了 (54.8%)
 
 #### 完了済み
 - [x] #B1-1: アカウントページ実装 (open/account/account.jsp) ✅ Issue #B1-1
@@ -87,9 +87,10 @@
 - [x] #B3-4: パスワードリセット完了ページ実装 (open/passwordinitialization/reset_result.jsp) ✅ Issue #B3-4
 - [x] #B3-5: 仮登録ページ実装 (open/signup/provisional_registration.jsp) ✅ Issue #B3-5
 - [x] #B3-6: サインアップページ実装 (open/signup/signup.jsp) ✅ Issue #B3-6
+- [x] #B3-7: サインアップ完了ページ実装 (open/signup/signup_done.jsp) ✅ Issue #B3-7
 
 #### 次の実装対象
-- [ ] #B3-7: サインアップ完了ページ実装 (open/signup/signup_done.jsp)
+- [ ] #B4-1: ユーザー一覧ページ実装 (open/users/list.jsp)
 
 ### ✅ Issue #33: 共通ナビゲーションバー実装 (commonNavbar.jsp)
 - **完了日**: 2025-07-11
@@ -431,14 +432,29 @@
 - **特記事項**: 全450テスト（437成功、13失敗は既存の問題）
 - **Status**: CLOSED
 
+### ✅ Issue #B3-7: サインアップ完了ページ実装 (open/signup/signup_done.jsp)
+- **完了日**: 2025-07-12
+- **カテゴリ**: 公開ページ - サインアップ関連
+- **実装内容**: SignupDonePageコンポーネント、メール認証後の完了通知ページ実装
+- **テスト**: 4テストケース全成功（TDD完全準拠）
+- **互換性**: 旧システムと100%同等（UI・メッセージ・リンク）
+- **技術**: Next.js App Router、'use client'、シンプルな静的ページ実装
+- **実装機能**: 
+  - サインアップ完了タイトル表示
+  - ユーザ登録完了メッセージ表示
+  - ナレッジ一覧への開始リンク（/open/knowledge/list）
+  - MainLayout統合
+- **特記事項**: 全454テスト（441成功、13失敗は既存の問題）
+- **Status**: CLOSED
+
 ## 次のIssue
 
-### 🔄 Issue #B3-7: サインアップ完了ページ実装 (open/signup/signup_done.jsp)
+### 🔄 Issue #B4-1: ユーザー一覧ページ実装 (open/users/list.jsp)
 - **優先度**: 🔴高
 - **推定工数**: 1日
 - **依存関係**: なし
-- **カテゴリ**: 公開ページ - サインアップ関連
-- **Controller**: SignupControl.java
+- **カテゴリ**: 公開ページ - ユーザー関連
+- **Controller**: UsersControl.java
 
 ## 技術的マイルストーン
 
@@ -461,7 +477,7 @@
 ## 品質指標
 
 ### テストカバレッジ
-- **現在**: 450テスト（437成功、13失敗）（signup追加、13テスト増加）
+- **現在**: 454テスト（441成功、13失敗）（signup_done追加、4テスト増加）
 - **目標**: 各コンポーネント90%以上
 
 ### 実装品質
@@ -471,4 +487,4 @@
 
 ---
 **最終更新**: 2025-07-12
-**次回セッション開始時**: Issue #B3-7 から継続（サインアップ完了ページ実装 - open/signup/signup_done.jsp）
+**次回セッション開始時**: Issue #B4-1 から継続（ユーザー一覧ページ実装 - open/users/list.jsp）
