@@ -20,3 +20,4 @@ out.txt
 laravel_old/
 laravel/
 .claude/logs/
+.claude/settings.local.json

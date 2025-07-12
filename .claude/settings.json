@@ -1,3 +1,28 @@
 {
-  "hooks": {}
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "TodoWrite",
+        "hooks": [{
+          "type": "command",
+          "command": "bash -c 'if [ -f .claude/scripts/check-todo-completion.sh ]; then .claude/scripts/check-todo-completion.sh; fi'"
+        }]
+      }
+    ],
+    "Stop": [{
+      "hooks": [{
+        "type": "command",
+        "command": "bash -c 'if [ -f .claude/scripts/check-session-end.sh ]; then .claude/scripts/check-session-end.sh; fi'"
+      }]
+    }],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{
+          "type": "command",
+          "command": "bash -c 'if [ -f .claude/scripts/check-git-commit.sh ]; then echo \"$TOOL_INPUT\" | .claude/scripts/check-git-commit.sh; fi'"
+        }]
+      }
+    ]
+  }
 }
