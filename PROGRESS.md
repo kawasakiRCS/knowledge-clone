@@ -558,3 +558,9 @@
 - **互換性**: 旧JavaシステムJspUtil.label()と100%同等機能
 - **技術**: 軽量実装（外部ライブラリ不使用）、TypeScript完全対応
 - **Status**: APPLIED
+
+### 2025-07-13 10:40:11 - Issue #40
+- **コミット**: feat: Issue #40 - Issue紐づけ強制システム実装完了（Git hooks + Claude Code hooks + 自動化スクリプト）
+- **変更ファイル**: .claude/scripts/auto-create-issue.sh .claude/scripts/enforce-issue-workflow.sh .claude/scripts/session-manager.sh .claude/scripts/validate-and-commit.sh .claude/settings.json 
+- **ステータス**: 実装完了
+

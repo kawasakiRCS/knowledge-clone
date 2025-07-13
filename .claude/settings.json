@@ -7,6 +7,13 @@
           "type": "command",
           "command": "bash -c 'if [ -f .claude/scripts/check-todo-completion.sh ]; then .claude/scripts/check-todo-completion.sh; fi'"
         }]
+      },
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [{
+          "type": "command",
+          "command": "bash -c 'if [ -f .claude/scripts/enforce-issue-workflow.sh ]; then .claude/scripts/enforce-issue-workflow.sh; fi'"
+        }]
       }
     ],
     "Stop": [{
