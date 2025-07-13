@@ -5,8 +5,19 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 
+// 履歴データの型定義
+interface KnowledgeHistory {
+  historyNo: number;
+  knowledgeId: number;
+  title: string;
+  content: string;
+  updateUser: number;
+  userName: string;
+  updateDatetime: string;
+}
+
 // モックデータ（実装時はDBから取得）
-const mockHistories: Record<string, any[]> = {
+const mockHistories: Record<string, KnowledgeHistory[]> = {
   '1': [
     {
       historyNo: 5,

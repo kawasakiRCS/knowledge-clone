@@ -26,8 +26,8 @@ export default function KnowledgeListItem({
   
   // echo.jsの初期化
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).echo) {
-      (window as any).echo.init();
+    if (typeof window !== 'undefined' && (window as Window & { echo?: { init(): void } }).echo) {
+      (window as Window & { echo: { init(): void } }).echo.init();
     }
   }, []);
   

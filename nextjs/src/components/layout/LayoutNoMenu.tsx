@@ -25,7 +25,7 @@ const LayoutNoMenu: React.FC<LayoutNoMenuProps> = ({
   scriptsContent,
 }) => {
   const { t } = useLocale();
-  const contextPath = (global as any)._CONTEXT || '';
+  const contextPath = (global as typeof global & { _CONTEXT?: string })._CONTEXT || '';
   
   // デフォルトタイトル
   const title = pageTitle || t('knowledge.title');

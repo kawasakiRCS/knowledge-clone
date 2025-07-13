@@ -4,7 +4,6 @@
  * @description 指定されたIDのナレッジを取得する
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { StockKnowledge } from '@/types/knowledge';

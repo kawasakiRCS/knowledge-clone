@@ -1,8 +1,24 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
+import { Knowledge } from '@/types/knowledge';
 
 // モックデータ
-const mockKnowledgeData: any = {
+const mockKnowledgeData: Record<string, Knowledge & {
+  tags: Array<{ tagId: number; tagName: string }>;
+  stocks: Array<{ stockId: number; userId: number }>;
+  targets: Array<{ targetId: number; targetName: string }>;
+  groups: Array<{ value: string; label: string }>;
+  editors: string[];
+  editable: boolean;
+  files: Array<{ fileNo: number; fileName: string; fileSize: number; mimeType: string }>;
+  comments: Array<{
+    commentNo: number;
+    comment: string;
+    insertUser: string;
+    insertDatetime: string;
+    likeCount: number;
+  }>;
+}> = {
   1: {
     knowledgeId: 1,
     title: 'Next.js App Routerの基本',

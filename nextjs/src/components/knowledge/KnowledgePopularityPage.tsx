@@ -28,11 +28,19 @@ export interface Knowledge {
   };
   tagNames: string;
   tagIds: string;
-  stocks: any[];
+  stocks: Array<{ stockId: number; userId: number }>;
   pin: boolean;
-  targets?: any[];
-  events?: any;
-  participations?: any;
+  targets?: Array<{ targetId: number; targetName: string }>;
+  events?: {
+    eventId: number;
+    eventName: string;
+    eventDateTime: string;
+  };
+  participations?: {
+    count: number;
+    limit: number;
+    status?: number;
+  };
 }
 
 interface Tag {
@@ -233,7 +241,7 @@ export const KnowledgePopularityPage: React.FC = () => {
                   {knowledge.stocks && knowledge.stocks.length > 0 && (
                     <>
                       <i className="fa fa-star-o"></i>
-                      {knowledge.stocks.map((stock: any) => (
+                      {knowledge.stocks.map((stock: { stockId: number; stockName: string }) => (
                         <span key={stock.stockId}>
                           <Link href={`/open/knowledge/stocks?stockid=${stock.stockId}`}>
                             <span className="tag label label-primary">

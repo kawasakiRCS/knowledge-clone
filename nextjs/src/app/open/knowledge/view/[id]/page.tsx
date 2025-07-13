@@ -7,6 +7,7 @@ import KnowledgeView from '@/components/knowledge/KnowledgeView';
 import ErrorPageComponent from '@/components/error/ErrorPage';
 import NotFoundPageComponent from '@/components/error/NotFoundPage';
 import ForbiddenPageComponent from '@/components/error/ForbiddenPage';
+import { Knowledge } from '@/types/knowledge';
 
 interface Props {
   params: {
@@ -15,7 +16,7 @@ interface Props {
 }
 
 const KnowledgeViewPage: React.FC<Props> = ({ params }) => {
-  const [knowledge, setKnowledge] = useState<any>(null);
+  const [knowledge, setKnowledge] = useState<Knowledge | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<number | null>(null);
 

@@ -47,8 +47,8 @@ describe('KnowledgeListPage', () => {
     });
 
     test('ログイン時はストックタブが表示される', () => {
-      const { useAuth } = require('../../../lib/hooks/useAuth');
-      useAuth.mockReturnValue({ user: { userId: 1 }, isAuthenticated: true });
+      const useAuthModule = require('../../../lib/hooks/useAuth');
+      useAuthModule.useAuth.mockReturnValue({ user: { userId: 1 }, isAuthenticated: true });
       
       render(<KnowledgeListPage />);
       

@@ -42,7 +42,11 @@ export const KnowledgeSearchPage: React.FC = () => {
   // ユーザー検索用
   const [userSearchKeyword, setUserSearchKeyword] = useState('');
   const [userSearchPage, setUserSearchPage] = useState(0);
-  const [searchedUsers, setSearchedUsers] = useState<any[]>([]);
+  const [searchedUsers, setSearchedUsers] = useState<Array<{
+    userId: number;
+    userName: string;
+    email?: string;
+  }>>([]);
 
   // タグ入力参照
   const tagInputRef = useRef<HTMLInputElement>(null);

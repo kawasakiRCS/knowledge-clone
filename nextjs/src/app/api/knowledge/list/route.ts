@@ -141,9 +141,7 @@ export async function GET(request: NextRequest) {
     // パラメータ取得
     const keyword = searchParams.get('keyword') || '';
     const tag = searchParams.get('tag') || '';
-    const group = searchParams.get('group') || '';
-    const creator = searchParams.get('creator') || '';
-    const template = searchParams.get('template') || '';
+    // group, creator, templateは将来的に実装予定
     const offset = parseInt(searchParams.get('offset') || '0');
     const limit = parseInt(searchParams.get('limit') || '50');
 

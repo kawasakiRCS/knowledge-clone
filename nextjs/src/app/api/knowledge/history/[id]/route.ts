@@ -15,8 +15,18 @@ export async function GET(
   // 権限チェック（モック）
   // TODO: 実際の権限チェックを実装
   
+  // 履歴データの型定義
+  interface KnowledgeHistoryDetail {
+    historyNo: number;
+    knowledgeId: number;
+    updateUser: string;
+    userName: string;
+    updateDatetime: string;
+    content: string;
+  }
+
   // 履歴データ（モック）
-  const mockHistories: Record<string, any> = {
+  const mockHistories: Record<string, KnowledgeHistoryDetail> = {
     '1': {
       historyNo: 1,
       knowledgeId: 1,

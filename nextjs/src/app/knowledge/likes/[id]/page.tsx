@@ -32,7 +32,7 @@ export default function KnowledgeLikesPage({ params, searchParams }: PageProps) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ status: number; message: string } | null>(null);
   const [data, setData] = useState<LikesResponse | null>(null);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated: _isAuthenticated } = useAuth();
 
   const knowledgeId = params.id;
   const page = searchParams.page ? parseInt(searchParams.page as string) : 0;
@@ -59,7 +59,7 @@ export default function KnowledgeLikesPage({ params, searchParams }: PageProps) 
 
         const result: LikesResponse = await response.json();
         setData(result);
-      } catch (err) {
+      } catch (_err) {
         setError({ status: 500, message: 'Failed to fetch likes' });
       } finally {
         setLoading(false);

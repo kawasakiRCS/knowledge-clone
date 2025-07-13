@@ -27,9 +27,9 @@ interface PageProps {
 }
 
 export default function KnowledgeHistoriesPage({ params }: PageProps) {
-  const router = useRouter();
+  const _router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   
   const knowledgeId = params.id;
   const pageParam = searchParams.get('page') || '0';
@@ -50,8 +50,8 @@ export default function KnowledgeHistoriesPage({ params }: PageProps) {
 
   useEffect(() => {
     // echo.js初期化（画像遅延読み込み）
-    if (typeof window !== 'undefined' && (window as any).echo) {
-      (window as any).echo.init();
+    if (typeof window !== 'undefined' && (window as Window & { echo?: { init(): void } }).echo) {
+      (window as Window & { echo: { init(): void } }).echo.init();
     }
   }, [histories]);
 

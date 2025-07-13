@@ -4,7 +4,7 @@
  * @description 旧システムとの互換性テストを含む
  */
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+// import userEvent from '@testing-library/user-event'; // 未使用のためコメントアウト
 import { useRouter } from 'next/navigation';
 import KnowledgeHistoriesPage from '@/app/open/knowledge/histories/[id]/page';
 
@@ -173,7 +173,8 @@ describe('KnowledgeHistoriesPage', () => {
       render(await KnowledgeHistoriesPage({ params: { id: '999' } }));
       
       await waitFor(() => {
-        expect(require('next/navigation').notFound).toHaveBeenCalled();
+        const { notFound } = jest.mocked(require('next/navigation'));
+        expect(notFound).toHaveBeenCalled();
       });
     });
   });
@@ -216,7 +217,8 @@ describe('KnowledgeHistoriesPage', () => {
       // paramsパラメータ付きでレンダリング
       jest.mocked(useRouter().push).mockClear();
       const searchParams = new URLSearchParams('tag=1&keyword=test');
-      jest.mocked(require('next/navigation').useSearchParams).mockReturnValueOnce({
+      const { useSearchParams } = jest.mocked(require('next/navigation'));
+      useSearchParams.mockReturnValueOnce({
         get: (key: string) => searchParams.get(key),
         toString: () => searchParams.toString(),
       });
