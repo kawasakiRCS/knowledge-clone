@@ -162,7 +162,7 @@ export const KnowledgeListPage: React.FC<KnowledgeListPageProps> = ({ initialDat
           </li>
           {isAuthenticated && (
             <li role="presentation">
-              <a href="/open/knowledge/stocks">{label('knowledge.list.kind.stock')}</a>
+              <Link href="/open/knowledge/stocks">{label('knowledge.list.kind.stock')}</Link>
             </li>
           )}
           <li role="presentation">

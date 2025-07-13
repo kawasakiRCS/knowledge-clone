@@ -4,6 +4,7 @@
  * @description 旧システムauth/authorizerError.jspに対応するNext.jsページ
  * URL: /authorizer_error
  */
+import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
 
 export default function AuthorizerErrorPage() {
@@ -16,12 +17,12 @@ export default function AuthorizerErrorPage() {
           <p>アクセスする権限がありません。</p>
           <hr />
           <div className="text-center">
-            <a href="/" className="btn btn-primary">
+            <Link href="/" className="btn btn-primary">
               <i className="fa fa-home"></i>&nbsp;トップページへ戻る
-            </a>
-            <a href="/signin" className="btn btn-info ml-2">
+            </Link>
+            <Link href="/signin" className="btn btn-info ml-2">
               <i className="fa fa-sign-in"></i>&nbsp;サインイン
-            </a>
+            </Link>
           </div>
         </div>
       </div>

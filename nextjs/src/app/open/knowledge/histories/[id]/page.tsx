@@ -7,6 +7,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Script from 'next/script';
 import { useRouter, useSearchParams, notFound } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import MainLayout from '@/components/layout/MainLayout';
@@ -89,7 +90,10 @@ export default function KnowledgeHistoriesPage({ params }: PageProps) {
 
   const headContent = (
     <>
-      <script src="/bower/echojs/dist/echo.min.js"></script>
+      <Script 
+        src="/bower/echojs/dist/echo.min.js" 
+        strategy="beforeInteractive"
+      />
     </>
   );
 

@@ -7,6 +7,7 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { StockKnowledge } from '@/types/knowledge';
 import { useLocale } from '@/hooks/useLocale';
 import { formatDate } from '@/lib/utils';
@@ -62,24 +63,24 @@ export default function KnowledgeListItem({
         
         <div>
           {unreadLabel}
-          <img 
+          <Image 
             src="/images/loader.gif"
-            data-echo={`/open/account/icon/${knowledge.insertUser}`}
             alt="icon"
-            width="20"
-            height="20"
+            width={20}
+            height={20}
+            data-echo={`/open/account/icon/${knowledge.insertUser}`}
           />
           {' '}
           <span dangerouslySetInnerHTML={{ __html: t('knowledge.view.info.insert', insertUserLink, formatDate(knowledge.insertDatetime)) }} />
           {knowledge.insertDatetime !== knowledge.updateDatetime && (
             <>
               {' ('}
-              <img 
+              <Image 
                 src="/images/loader.gif"
-                data-echo={`/open/account/icon/${knowledge.updateUser}`}
                 alt="icon"
-                width="20"
-                height="20"
+                width={20}
+                height={20}
+                data-echo={`/open/account/icon/${knowledge.updateUser}`}
               />
               {' '}
               <span dangerouslySetInnerHTML={{ __html: t('knowledge.view.info.update', updateUserLink, formatDate(knowledge.updateDatetime)) }} />

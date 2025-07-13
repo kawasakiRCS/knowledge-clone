@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useRef } from 'react';
 import { formatDate } from '@/lib/utils';
 
@@ -112,13 +113,13 @@ export default function KnowledgeHistory({
       <h4 className="title">編集履歴詳細</h4>
 
       <p>
-        <img
+        <Image
           src="/images/loader.gif"
-          data-src={`/open.account/icon/${history.updateUser}`}
           alt="icon"
-          width="36"
-          height="36"
+          width={36}
+          height={36}
           style={{ float: 'left' }}
+          data-src={`/open.account/icon/${history.updateUser}`}
         />
         <br />
         <i className="fa fa-user"></i>&nbsp;{history.userName}&nbsp;

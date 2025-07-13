@@ -10,6 +10,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/lib/hooks/useAuth';
 
 interface CommonNavbarProps {
@@ -155,11 +156,11 @@ export function CommonNavbar({
                     aria-haspopup="true" 
                     aria-expanded="false"
                   >
-                    <img 
+                    <Image 
                       src="/open.account/icon/0" 
                       alt="icon" 
-                      width="15" 
-                      height="15"
+                      width={15} 
+                      height={15}
                     />
                     <span className="caret"></span>
                   </a>
@@ -195,11 +196,11 @@ export function CommonNavbar({
                     data-toggle="dropdown"
                     aria-label="user menu"
                   >
-                    <img 
+                    <Image 
                       src={`/open.account/icon/${user?.id || 0}`} 
                       alt="icon" 
-                      width="15" 
-                      height="15"
+                      width={15} 
+                      height={15}
                     />
                     {unreadCount > 0 && (
                       <small>
