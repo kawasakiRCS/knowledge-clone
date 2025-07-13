@@ -5,7 +5,7 @@
  * @since 1.0.0
  */
 
-export { MainLayout } from './MainLayout';
+export { default as MainLayout } from './MainLayout';
 export { Header } from './Header';
 export { Navbar } from './Navbar';
 export { CommonNavbar } from './CommonNavbar';

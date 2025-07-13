@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/hooks/useAuth';
 import { useLocale } from '../../lib/hooks/useLocale';
-import { MainLayout } from '../layout/MainLayout';
+import MainLayout from '../layout/MainLayout';
 import '../../styles/knowledge-edit.css';
 
 interface Template {

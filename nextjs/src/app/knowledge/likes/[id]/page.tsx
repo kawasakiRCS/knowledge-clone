@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 import NotFoundPage from '@/components/error/NotFoundPage';
 import ForbiddenPage from '@/components/error/ForbiddenPage';
 import ServerErrorPage from '@/components/error/ServerErrorPage';

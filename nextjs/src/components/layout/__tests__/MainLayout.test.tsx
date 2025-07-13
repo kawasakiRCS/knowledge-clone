@@ -7,7 +7,7 @@
 
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MainLayout } from '../MainLayout';
+import MainLayout from '../MainLayout';
 
 // Jest環境でのNext.js mocks
 jest.mock('next/head', () => {
