@@ -6,9 +6,10 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const knowledgeId = parseInt(params.id, 10);
+  const { id } = await params;
+  const knowledgeId = parseInt(id, 10);
   const searchParams = request.nextUrl.searchParams;
   const historyNo = parseInt(searchParams.get('history_no') || '0', 10);
 

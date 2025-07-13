@@ -9,14 +9,14 @@ import Script from 'next/script';
  * ナレッジ履歴詳細ページのパラメータ
  */
 interface PageParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     history_no?: string;
     page?: string;
-    [key: string]: string | undefined;
-  };
+    [key: string]: string | string[] | undefined;
+  }>;
 }
 
 /**
@@ -25,14 +25,17 @@ interface PageParams {
  * @description 特定の履歴バージョンの詳細と現在との差分を表示
  */
 export default async function KnowledgeHistoryPage({ params, searchParams }: PageParams) {
-  const knowledgeId = params.id;
-  const historyNo = searchParams.history_no || '0';
-  const page = parseInt(searchParams.page || '0', 10);
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  
+  const knowledgeId = resolvedParams.id;
+  const historyNo = resolvedSearchParams.history_no || '0';
+  const page = parseInt(resolvedSearchParams.page as string || '0', 10);
 
   // その他のパラメータを構築
-  const otherParams = Object.entries(searchParams)
+  const otherParams = Object.entries(resolvedSearchParams)
     .filter(([key]) => key !== 'history_no' && key !== 'page')
-    .map(([key, value]) => `${key}=${value}`)
+    .map(([key, value]) => `${key}=${Array.isArray(value) ? value[0] : value}`)
     .join('&');
   const paramsString = otherParams ? `?${otherParams}` : '';
 
@@ -74,33 +77,6 @@ export default async function KnowledgeHistoryPage({ params, searchParams }: Pag
     return (
       <MainLayout
         pageTitle="編集履歴詳細"
-        headContent={
-          <link
-            rel="stylesheet"
-            type="text/css"
-            href="/bower/diff2html/dist/diff2html.css"
-          />
-        }
-        scriptsContent={
-          <>
-            <Script
-              src="/bower/echojs/dist/echo.min.js"
-              strategy="beforeInteractive"
-            />
-            <Script
-              src="/bower/jsdiff/diff.min.js"
-              strategy="beforeInteractive"
-            />
-            <Script
-              src="/bower/diff2html/dist/diff2html.min.js"
-              strategy="beforeInteractive"
-            />
-            <Script
-              src="/bower/diff2html/dist/diff2html-ui.min.js"
-              strategy="beforeInteractive"
-            />
-          </>
-        }
       >
         <KnowledgeHistory
           history={history}

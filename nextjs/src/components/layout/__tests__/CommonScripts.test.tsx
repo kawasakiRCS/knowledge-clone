@@ -14,8 +14,12 @@ declare global {
     _LOGIN_USER_ID: number | null;
     _LANG: string;
     _LOGGING_NOTIFY_DESKTOP: boolean;
-    jQuery: any;
-    $: any;
+    jQuery: {
+      notify: jest.Mock;
+    };
+    $: {
+      notify: jest.Mock;
+    };
     notify: jest.Mock;
   }
 }
@@ -88,7 +92,7 @@ describe('CommonScripts', () => {
   describe('Cookie管理', () => {
     test('タイムゾーンオフセットがCookieに保存される', () => {
       const mockDate = new Date('2024-01-01T12:00:00Z');
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate as any);
+      jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
       
       // Cookieの設定をキャプチャするためのモック
       const originalCookie = Object.getOwnPropertyDescriptor(document, 'cookie');

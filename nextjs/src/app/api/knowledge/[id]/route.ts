@@ -57,16 +57,18 @@ const mockKnowledgeData: Record<string, Knowledge & {
       { tagId: 3, tagName: 'TypeScript' }
     ],
     stocks: [
-      { stockId: 1, stockName: 'Web開発' },
-      { stockId: 2, stockName: 'フロントエンド' }
+      { stockId: 1, userId: 1, stockName: 'お気に入り' },
+      { stockId: 2, userId: 1, stockName: 'あとで読む' }
     ],
     targets: [],
     groups: [],
     editors: [],
     editable: false,
-    insertUser: '山田太郎',
+    insertUser: 1,
+    insertUserName: '山田太郎',
     insertDatetime: '2024-01-15T10:00:00',
-    updateUser: '山田太郎',
+    updateUser: 1,
+    updateUserName: '山田太郎',
     updateDatetime: '2024-01-16T14:30:00',
     files: [
       { 
@@ -124,9 +126,11 @@ const mockKnowledgeData: Record<string, Knowledge & {
     groups: [],
     editors: ['user1'],
     editable: true,
-    insertUser: '管理者',
+    insertUser: 2,
+    insertUserName: '管理者',
     insertDatetime: '2024-01-10T10:00:00',
-    updateUser: '管理者',
+    updateUser: 2,
+    updateUserName: '管理者',
     updateDatetime: '2024-01-10T10:00:00',
     files: [],
     comments: []
@@ -151,9 +155,11 @@ const mockKnowledgeData: Record<string, Knowledge & {
     ],
     editors: [],
     editable: false,
-    insertUser: 'CTO',
+    insertUser: 3,
+    insertUserName: 'CTO',
     insertDatetime: '2024-01-05T10:00:00',
-    updateUser: 'CTO',
+    updateUser: 3,
+    updateUserName: 'CTO',
     updateDatetime: '2024-01-05T10:00:00',
     files: [],
     comments: []
@@ -162,9 +168,9 @@ const mockKnowledgeData: Record<string, Knowledge & {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id;
+  const { id } = await params;
   
   // モックデータから取得
   const knowledge = mockKnowledgeData[id];

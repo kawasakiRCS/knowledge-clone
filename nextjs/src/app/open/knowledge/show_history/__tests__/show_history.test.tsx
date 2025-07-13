@@ -99,7 +99,7 @@ const mockHistoryKnowledges = [
 ];
 
 // APIモックのセットアップ
-const setupFetchMock = (data: any = mockHistoryKnowledges) => {
+const setupFetchMock = (data: typeof mockHistoryKnowledges = mockHistoryKnowledges) => {
   global.fetch = jest.fn(() =>
     Promise.resolve({
       ok: true,

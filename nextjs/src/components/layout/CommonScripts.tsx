@@ -17,8 +17,8 @@ declare global {
     _LOGIN_USER_ID: number | null;
     _LANG: string;
     _LOGGING_NOTIFY_DESKTOP: boolean;
-    jQuery: JQueryStatic;
-    $: JQueryStatic;
+    jQuery: any;
+    $: any;
     notify: (message: string, type?: string) => void;
     jstz?: {
       determine: () => {

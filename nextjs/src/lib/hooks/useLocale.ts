@@ -17,14 +17,14 @@ async function loadTranslations(locale: string): Promise<TranslationData> {
   try {
     const translations = await import(`../../locales/${locale}.json`);
     return translations.default || translations;
-  } catch (error) {
+  } catch {
     console.warn(`Failed to load translations for locale: ${locale}`);
     // フォールバック：日本語を読み込み
     if (locale !== 'ja') {
       try {
         const fallback = await import('../../locales/ja.json');
         return fallback.default || fallback;
-      } catch (fallbackError) {
+      } catch {
         console.error('Failed to load fallback translations');
         return {};
       }
@@ -80,7 +80,7 @@ export function useLocale() {
     
     // ドット記法でネストされたオブジェクトにアクセス
     const keys = key.split('.');
-    let value: any = translations;
+    let value: string | number | TranslationData = translations;
     
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {

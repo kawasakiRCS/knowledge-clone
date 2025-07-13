@@ -12,7 +12,9 @@ import Link from 'next/link';
 import { useLocale } from '@/lib/hooks/useLocale';
 
 export function CommonFooter() {
-  const { locale, displayName } = useLocale();
+  const { displayName } = useLocale();
+  // 将来の国際化機能拡張用
+  // const { locale, displayName } = useLocale();
 
   return (
     <>

@@ -119,18 +119,18 @@ const SignupPage: React.FC = () => {
       } else {
         // Handle errors
         if (data.errors) {
-          const newErrors: ValidationError[] = data.errors.map((err: any) => ({
+          const newErrors: ValidationError[] = data.errors.map((err: {field?: string; message: string}) => ({
             field: err.field || 'general',
             message: t(err.message)
           }));
           setErrors(newErrors);
         }
         if (data.warnings) {
-          setWarnings(data.warnings.map((warn: any) => t(warn.message)));
+          setWarnings(data.warnings.map((warn: {message: string}) => t(warn.message)));
         }
       }
-    } catch (error) {
-      console.error('Signup error:', error);
+    } catch (_error) {
+      console.error('Signup error:', _error);
       setErrors([{ field: 'general', message: 'An error occurred. Please try again.' }]);
     } finally {
       setIsSubmitting(false);

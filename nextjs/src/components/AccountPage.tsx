@@ -13,7 +13,7 @@ import { CommonKnowledgeList } from './partials/CommonKnowledgeList';
 import { CPChart } from './partials/CPChart';
 import { AccountInfo, ContributionPointHistory, ActivityHistory } from '@/types/account';
 import { StockKnowledge } from '@/types/knowledge';
-import { useLocale } from '@/lib/hooks/useLocale';
+import { useLocale } from '@/hooks/useLocale';
 
 interface AccountPageProps {
   userId: number;

@@ -7,7 +7,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import KnowledgeListItem from '@/components/knowledge/KnowledgeListItem';
 import KnowledgeSubList from '@/components/knowledge/KnowledgeSubList';
 import { StockKnowledge } from '@/types/knowledge';
-import { StocksEntity } from '@/types/stock';
+import { Stock as StocksEntity } from '@/types/knowledge';
 
 interface PageParams {
   searchParams: {

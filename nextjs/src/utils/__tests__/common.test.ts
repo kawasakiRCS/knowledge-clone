@@ -18,7 +18,14 @@ import {
 declare global {
   interface Window {
     _LOGGING_NOTIFY_DESKTOP: boolean;
-    $: any;
+    $: {
+      (selector: string): {
+        focus: jest.Mock;
+        val: jest.Mock;
+        get: jest.Mock;
+      };
+      notify: jest.Mock;
+    };
   }
 }
 
@@ -199,7 +206,7 @@ describe('common.js機能', () => {
         }
       };
       
-      handleErrorResponse(xhr as any, 'error', new Error('test'));
+      handleErrorResponse(xhr, 'error', new Error('test'));
       
       expect(window.$.notify).toHaveBeenCalledWith('Error 1', 'warn');
       expect(window.$.notify).toHaveBeenCalledWith('Error 2', 'warn');
@@ -210,13 +217,13 @@ describe('common.js機能', () => {
         statusText: 'Internal Server Error'
       };
       
-      handleErrorResponse(xhr as any, 'error', new Error('test'));
+      handleErrorResponse(xhr, 'error', new Error('test'));
       
       expect(window.$.notify).toHaveBeenCalledWith('Internal Server Error', 'warn');
     });
 
     test('xhrがnullの場合のエラー処理', () => {
-      handleErrorResponse(null as any, 'error', new Error('test'));
+      handleErrorResponse({}, 'error', new Error('test'));
       
       expect(window.$.notify).toHaveBeenCalledWith('data load error. please try again.', 'warn');
     });

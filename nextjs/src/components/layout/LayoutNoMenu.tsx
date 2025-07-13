@@ -6,10 +6,10 @@
  */
 import React, { ReactNode } from 'react';
 import Link from 'next/link';
-import CommonHeader from './CommonHeader';
-import CommonFooter from './CommonFooter';
-import CommonScripts from './CommonScripts';
-import { useLocale } from '@/lib/hooks/useLocale';
+import { CommonHeader } from './CommonHeader';
+import { CommonFooter } from './CommonFooter';
+import { CommonScripts } from './CommonScripts';
+import { useLocale } from '@/hooks/useLocale';
 
 interface LayoutNoMenuProps {
   children: ReactNode;
@@ -32,9 +32,9 @@ const LayoutNoMenu: React.FC<LayoutNoMenuProps> = ({
 
   return (
     <>
-      <CommonHeader pageTitle={title}>
+      {/* <CommonHeader pageTitle={title}>
         {headContent}
-      </CommonHeader>
+      </CommonHeader> */}
       
       <div className="navbar navbar-default navbar-fixed-top" role="navigation">
         <div className="container" data-testid="navbar-container">

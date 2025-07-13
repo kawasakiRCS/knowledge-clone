@@ -75,12 +75,17 @@ const translations: Record<string, Record<string, string>> = {
   }
 };
 
-export function useLocale() {
+interface UseLocaleReturn {
+  locale: string;
+  t: (key: string, ...args: (string | number)[]) => string;
+}
+
+export function useLocale(): UseLocaleReturn {
   // デフォルトは日本語
   const locale = 'ja';
   
   // 翻訳関数
-  const t = useCallback((key: string, ...args: any[]): string => {
+  const t = useCallback((key: string, ...args: (string | number)[]): string => {
     let translation = translations[locale]?.[key] || translations['en']?.[key] || key;
     
     // パラメータの置換

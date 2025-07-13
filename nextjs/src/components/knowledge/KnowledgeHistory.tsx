@@ -60,7 +60,7 @@ export default function KnowledgeHistory({
 
       try {
         // ライブラリの動的インポート
-        const [{ createPatch }, { Diff2Html }] = await Promise.all([
+        const [{ createPatch }, Diff2Html] = await Promise.all([
           import('diff'),
           import('diff2html'),
         ]);
@@ -77,10 +77,8 @@ export default function KnowledgeHistory({
         );
 
         // diff2htmlで差分をHTML化
-        const diffHtml = Diff2Html.html(unifiedDiff, {
-          inputFormat: 'diff',
-          outputFormat: 'side-by-side',
-          matching: 'lines',
+        const diffHtml = Diff2Html.default.html(unifiedDiff, {
+          outputFormat: 'side-by-side' as const,
           drawFileList: false,
         });
 

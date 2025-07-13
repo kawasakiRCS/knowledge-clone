@@ -1,20 +1,23 @@
 import { KnowledgeStocksPage } from '../page';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     offset: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     stockid?: string;
-  };
+  }>;
 }
 
-export default function StocksWithOffsetPage({ params, searchParams }: PageProps) {
+export default async function StocksWithOffsetPage({ params, searchParams }: PageProps) {
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  
   return (
     <KnowledgeStocksPage
       searchParams={{
-        ...searchParams,
-        offset: params.offset,
+        ...resolvedSearchParams,
+        offset: resolvedParams.offset,
       }}
     />
   );

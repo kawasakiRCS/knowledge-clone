@@ -5,11 +5,10 @@
  */
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
-import { useRouter, useSearchParams, notFound } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useSearchParams, notFound } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
 
 interface KnowledgeHistory {
@@ -22,17 +21,15 @@ interface KnowledgeHistory {
 }
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function KnowledgeHistoriesPage({ params }: PageProps) {
-  const _router = useRouter();
+// useSearchParamsを使用するコンポーネントを分離
+function KnowledgeHistoriesContent({ params }: PageProps) {
   const searchParams = useSearchParams();
-  const { user: _user } = useAuth();
-  
-  const knowledgeId = params.id;
+  const [knowledgeId, setKnowledgeId] = useState<string>('');
   const pageParam = searchParams.get('page') || '0';
   const page = parseInt(pageParam, 10);
   
@@ -44,17 +41,6 @@ export default function KnowledgeHistoriesPage({ params }: PageProps) {
   const currentParams = searchParams.toString();
   const connect = currentParams ? '&' : '?';
   const paramsWithConnect = currentParams ? `?${currentParams}` : '';
-
-  useEffect(() => {
-    fetchHistories();
-  }, [knowledgeId, page, fetchHistories]);
-
-  useEffect(() => {
-    // echo.js初期化（画像遅延読み込み）
-    if (typeof window !== 'undefined' && (window as Window & { echo?: { init(): void } }).echo) {
-      (window as Window & { echo: { init(): void } }).echo.init();
-    }
-  }, [histories]);
 
   const fetchHistories = useCallback(async () => {
     try {
@@ -77,6 +63,25 @@ export default function KnowledgeHistoriesPage({ params }: PageProps) {
     }
   }, [knowledgeId, page]);
 
+  useEffect(() => {
+    params.then(resolvedParams => {
+      setKnowledgeId(resolvedParams.id);
+    });
+  }, [params]);
+
+  useEffect(() => {
+    if (knowledgeId) {
+      fetchHistories();
+    }
+  }, [knowledgeId, page, fetchHistories]);
+
+  useEffect(() => {
+    // echo.js初期化（画像遅延読み込み）
+    if (typeof window !== 'undefined' && (window as Window & { echo?: { init(): void } }).echo) {
+      (window as Window & { echo: { init(): void } }).echo.init();
+    }
+  }, [histories]);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString('ja-JP', {
@@ -88,28 +93,9 @@ export default function KnowledgeHistoriesPage({ params }: PageProps) {
     });
   };
 
-  const headContent = (
-    <>
-      <Script 
-        src="/bower/echojs/dist/echo.min.js" 
-        strategy="beforeInteractive"
-      />
-    </>
-  );
-
-  const scriptsContent = (
-    <script dangerouslySetInnerHTML={{
-      __html: `
-        if (typeof echo !== 'undefined') {
-          echo.init();
-        }
-      `
-    }} />
-  );
-
   if (loading) {
     return (
-      <MainLayout pageTitle="ナレッジの編集履歴" headContent={headContent}>
+      <MainLayout pageTitle="ナレッジの編集履歴">
         <div className="container">
           <h4 className="title">読み込み中...</h4>
         </div>
@@ -119,7 +105,7 @@ export default function KnowledgeHistoriesPage({ params }: PageProps) {
 
   if (error) {
     return (
-      <MainLayout pageTitle="ナレッジの編集履歴" headContent={headContent}>
+      <MainLayout pageTitle="ナレッジの編集履歴">
         <div className="container">
           <h4 className="title">エラー</h4>
           <p>{error}</p>
@@ -131,8 +117,6 @@ export default function KnowledgeHistoriesPage({ params }: PageProps) {
   return (
     <MainLayout 
       pageTitle="ナレッジの編集履歴" 
-      headContent={headContent}
-      scriptsContent={scriptsContent}
     >
       <div className="container">
         <h4 className="title">
@@ -223,5 +207,20 @@ export default function KnowledgeHistoriesPage({ params }: PageProps) {
         </Link>
       </div>
     </MainLayout>
+  );
+}
+
+// Suspense境界でラップしたメインコンポーネント
+export default function KnowledgeHistoriesPage({ params }: PageProps) {
+  return (
+    <Suspense fallback={
+      <MainLayout pageTitle="ナレッジの編集履歴">
+        <div className="container">
+          <h4 className="title">読み込み中...</h4>
+        </div>
+      </MainLayout>
+    }>
+      <KnowledgeHistoriesContent params={params} />
+    </Suspense>
   );
 }

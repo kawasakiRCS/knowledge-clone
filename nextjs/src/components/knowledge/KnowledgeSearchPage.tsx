@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../lib/hooks/useAuth';
-import { useLocale } from '../../lib/hooks/useLocale';
+import { useAuth } from '@/hooks/useAuth';
+import { useLocale } from '@/hooks/useLocale';
 import MainLayout from '../layout/MainLayout';
 import '../../styles/knowledge-edit.css';
 
@@ -13,9 +13,10 @@ interface Template {
   typeName: string;
 }
 
-interface TagsInputRef {
-  tagsinput: (action: string, value?: string) => void;
-}
+// 将来のタグ入力機能拡張用
+// interface TagsInputRef {
+//   tagsinput: (action: string, value?: string) => void;
+// }
 
 export const KnowledgeSearchPage: React.FC = () => {
   const router = useRouter();
@@ -84,7 +85,7 @@ export const KnowledgeSearchPage: React.FC = () => {
         }
 
         setLoading(false);
-      } catch (err) {
+      } catch {
         setError('Failed to load initial data');
         setLoading(false);
       }

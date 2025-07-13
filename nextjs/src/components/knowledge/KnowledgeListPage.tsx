@@ -5,21 +5,22 @@
  */
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '../../lib/hooks/useAuth';
-import { useLocale } from '../../lib/hooks/useLocale';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+import { useLocale } from '@/hooks/useLocale';
 import { Knowledge, KnowledgeListResponse, KnowledgeListParams, TemplateType, Tag, Group } from '../../types/knowledge';
 
 interface KnowledgeListPageProps {
   initialData?: KnowledgeListResponse;
 }
 
-export const KnowledgeListPage: React.FC<KnowledgeListPageProps> = ({ initialData }) => {
-  const router = useRouter();
+// useSearchParams を使用するコンポーネントを分離
+const KnowledgeListContent: React.FC<KnowledgeListPageProps> = ({ initialData }) => {
   const searchParams = useSearchParams();
-  const { user, isAuthenticated } = useAuth();
-  const { locale, label } = useLocale();
+  const { isAuthenticated } = useAuth();
+  const { t } = useLocale();
 
   const [knowledges, setKnowledges] = useState<Knowledge[]>(initialData?.knowledges || []);
   const [loading, setLoading] = useState(!initialData);
@@ -44,7 +45,7 @@ export const KnowledgeListPage: React.FC<KnowledgeListPageProps> = ({ initialDat
   const params = getParams();
 
   // データ取得
-  const fetchData = async (params: KnowledgeListParams) => {
+  const fetchData = useCallback(async (params: KnowledgeListParams) => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams();
@@ -71,13 +72,13 @@ export const KnowledgeListPage: React.FC<KnowledgeListPageProps> = ({ initialDat
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!initialData) {
       fetchData(params);
     }
-  }, [searchParams]);
+  }, [searchParams, initialData, params, fetchData]);
 
   // ナレッジアイテムレンダリング
   const renderKnowledgeItem = (knowledge: Knowledge) => (
@@ -111,7 +112,7 @@ export const KnowledgeListPage: React.FC<KnowledgeListPageProps> = ({ initialDat
           <a href={`/open/account/info/${knowledge.insertUser}`} className="text-primary btn-link">
             {knowledge.insertUserName}
           </a>
-          {` ${label('knowledge.view.info.insert')} ${new Date(knowledge.insertDatetime).toLocaleDateString()}`}
+          {` ${t('knowledge.view.info.insert')} ${new Date(knowledge.insertDatetime).toLocaleDateString()}`}
         </div>
       </div>
 
@@ -155,18 +156,18 @@ export const KnowledgeListPage: React.FC<KnowledgeListPageProps> = ({ initialDat
       <div className="row">
         <ul className="nav nav-tabs">
           <li role="presentation" className="active">
-            <a href="/open/knowledge/list">{label('knowledge.list.kind.list')}</a>
+            <a href="/open/knowledge/list">{t('knowledge.list.kind.list')}</a>
           </li>
           <li role="presentation">
-            <a href="/open/knowledge/show_popularity">{label('knowledge.list.kind.popular')}</a>
+            <a href="/open/knowledge/show_popularity">{t('knowledge.list.kind.popular')}</a>
           </li>
           {isAuthenticated && (
             <li role="presentation">
-              <Link href="/open/knowledge/stocks">{label('knowledge.list.kind.stock')}</Link>
+              <Link href="/open/knowledge/stocks">{t('knowledge.list.kind.stock')}</Link>
             </li>
           )}
           <li role="presentation">
-            <a href="/open/knowledge/show_history">{label('knowledge.list.kind.history')}</a>
+            <a href="/open/knowledge/show_history">{t('knowledge.list.kind.history')}</a>
           </li>
         </ul>
       </div>
@@ -212,7 +213,7 @@ export const KnowledgeListPage: React.FC<KnowledgeListPageProps> = ({ initialDat
           {loading ? (
             <div>Loading...</div>
           ) : knowledges.length === 0 ? (
-            <div>{label('knowledge.list.empty')}</div>
+            <div>{t('knowledge.list.empty')}</div>
           ) : (
             knowledges.map(renderKnowledgeItem)
           )}
@@ -220,12 +221,12 @@ export const KnowledgeListPage: React.FC<KnowledgeListPageProps> = ({ initialDat
 
         {/* サイドバー */}
         <div className="col-sm-12 col-md-4">
-          <h5>- <i className="fa fa-calendar"></i>&nbsp;{label('knowledge.list.events')} - </h5>
+          <h5>- <i className="fa fa-calendar"></i>&nbsp;{t('knowledge.list.events')} - </h5>
           <div className="events">
             <div id="datepicker"></div>
           </div>
 
-          <h5>- <i className="fa fa-group"></i>&nbsp;{label('knowledge.navbar.config.group')} - </h5>
+          <h5>- <i className="fa fa-group"></i>&nbsp;{t('knowledge.navbar.config.group')} - </h5>
           {groups.length > 0 ? (
             <div className="list-group">
               {groups.map(group => (
@@ -240,10 +241,10 @@ export const KnowledgeListPage: React.FC<KnowledgeListPageProps> = ({ initialDat
               ))}
             </div>
           ) : (
-            <p>{label('knowledge.list.info.group')}</p>
+            <p>{t('knowledge.list.info.group')}</p>
           )}
 
-          <h5>- <i className="fa fa-tags"></i>&nbsp;{label('knowledge.list.popular.tags')} - </h5>
+          <h5>- <i className="fa fa-tags"></i>&nbsp;{t('knowledge.list.popular.tags')} - </h5>
           <div className="list-group">
             {tags.map(tag => (
               <a
@@ -264,17 +265,26 @@ export const KnowledgeListPage: React.FC<KnowledgeListPageProps> = ({ initialDat
         <ul className="pager">
           <li className="previous">
             <a href={`/open/knowledge/list/${Math.max(0, (params.offset || 0) - 1)}`}>
-              <span aria-hidden="true">&larr;</span>{label('label.previous')}
+              <span aria-hidden="true">&larr;</span>{t('label.previous')}
             </a>
           </li>
           <li className="next">
             <a href={`/open/knowledge/list/${(params.offset || 0) + 1}`}>
-              {label('label.next')} <span aria-hidden="true">&rarr;</span>
+              {t('label.next')} <span aria-hidden="true">&rarr;</span>
             </a>
           </li>
         </ul>
       </nav>
     </div>
+  );
+};
+
+// Suspense境界でラップしたメインコンポーネント
+export const KnowledgeListPage: React.FC<KnowledgeListPageProps> = ({ initialData }) => {
+  return (
+    <Suspense fallback={<div className="text-center"><div>Loading...</div></div>}>
+      <KnowledgeListContent initialData={initialData} />
+    </Suspense>
   );
 };
 

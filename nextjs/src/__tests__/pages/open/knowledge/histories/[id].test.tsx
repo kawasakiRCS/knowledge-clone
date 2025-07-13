@@ -5,7 +5,7 @@
  */
 import { render, screen, waitFor } from '@testing-library/react';
 // import userEvent from '@testing-library/user-event'; // 未使用のためコメントアウト
-import { useRouter } from 'next/navigation';
+import { useRouter, notFound as mockNotFound } from 'next/navigation';
 import KnowledgeHistoriesPage from '@/app/open/knowledge/histories/[id]/page';
 
 // モック
@@ -28,9 +28,16 @@ jest.mock('@/hooks/useAuth', () => ({
   })),
 }));
 
+interface MockMainLayoutProps {
+  children: React.ReactNode;
+  pageTitle: string;
+  headContent?: React.ReactNode;
+  scriptsContent?: React.ReactNode;
+}
+
 jest.mock('@/components/layout/MainLayout', () => ({
   __esModule: true,
-  default: ({ children, pageTitle, headContent, scriptsContent }: any) => (
+  default: ({ children, pageTitle, headContent, scriptsContent }: MockMainLayoutProps) => (
     <div>
       <h1>{pageTitle}</h1>
       {headContent}
@@ -41,7 +48,14 @@ jest.mock('@/components/layout/MainLayout', () => ({
 }));
 
 // echo.js モック（遅延画像読み込み）
-(global as any).echo = {
+declare global {
+  // eslint-disable-next-line no-var
+  var echo: {
+    init: jest.Mock;
+  };
+}
+
+global.echo = {
   init: jest.fn(),
 };
 
@@ -173,8 +187,7 @@ describe('KnowledgeHistoriesPage', () => {
       render(await KnowledgeHistoriesPage({ params: { id: '999' } }));
       
       await waitFor(() => {
-        const { notFound } = jest.mocked(require('next/navigation'));
-        expect(notFound).toHaveBeenCalled();
+        expect(mockNotFound).toHaveBeenCalled();
       });
     });
   });
@@ -217,7 +230,7 @@ describe('KnowledgeHistoriesPage', () => {
       // paramsパラメータ付きでレンダリング
       jest.mocked(useRouter().push).mockClear();
       const searchParams = new URLSearchParams('tag=1&keyword=test');
-      const { useSearchParams } = jest.mocked(require('next/navigation'));
+      const { useSearchParams } = jest.requireMock('next/navigation');
       useSearchParams.mockReturnValueOnce({
         get: (key: string) => searchParams.get(key),
         toString: () => searchParams.toString(),

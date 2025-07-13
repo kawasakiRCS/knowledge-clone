@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
 import NotFoundPage from '@/components/error/NotFoundPage';
 import ForbiddenPage from '@/components/error/ForbiddenPage';
 import ServerErrorPage from '@/components/error/ServerErrorPage';
@@ -24,18 +23,25 @@ interface LikesResponse {
 }
 
 interface PageProps {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default function KnowledgeLikesPage({ params, searchParams }: PageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ status: number; message: string } | null>(null);
   const [data, setData] = useState<LikesResponse | null>(null);
-  const { isAuthenticated: _isAuthenticated } = useAuth();
+  const [knowledgeId, setKnowledgeId] = useState<string>('');
+  const [page, setPage] = useState<number>(0);
 
-  const knowledgeId = params.id;
-  const page = searchParams.page ? parseInt(searchParams.page as string) : 0;
+  // paramsとsearchParamsをuseEffectで処理
+  useEffect(() => {
+    Promise.all([params, searchParams]).then(([resolvedParams, resolvedSearchParams]) => {
+      setKnowledgeId(resolvedParams.id);
+      const pageParam = resolvedSearchParams.page ? parseInt(resolvedSearchParams.page as string) : 0;
+      setPage(pageParam);
+    });
+  }, [params, searchParams]);
 
   useEffect(() => {
     const fetchLikes = async () => {
@@ -59,26 +65,21 @@ export default function KnowledgeLikesPage({ params, searchParams }: PageProps) 
 
         const result: LikesResponse = await response.json();
         setData(result);
-      } catch (_err) {
+      } catch {
         setError({ status: 500, message: 'Failed to fetch likes' });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLikes();
+    if (knowledgeId) {
+      fetchLikes();
+    }
   }, [knowledgeId, page]);
 
   // クエリパラメータを保持してページ番号を追加する関数
   const buildPageUrl = (pageNum: number) => {
-    const params = new URLSearchParams();
-    Object.entries(searchParams).forEach(([key, value]) => {
-      if (key !== 'page' && value) {
-        params.append(key, Array.isArray(value) ? value[0] : value);
-      }
-    });
-    params.append('page', pageNum.toString());
-    return `/knowledge/likes/${knowledgeId}?${params.toString()}`;
+    return `/knowledge/likes/${knowledgeId}?page=${pageNum}`;
   };
 
   // 日時フォーマット関数

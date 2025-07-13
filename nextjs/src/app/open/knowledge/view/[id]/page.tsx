@@ -10,20 +10,30 @@ import ForbiddenPageComponent from '@/components/error/ForbiddenPage';
 import { Knowledge } from '@/types/knowledge';
 
 interface Props {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const KnowledgeViewPage: React.FC<Props> = ({ params }) => {
   const [knowledge, setKnowledge] = useState<Knowledge | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<number | null>(null);
+  const [knowledgeId, setKnowledgeId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Promise型のparamsを解決
+    params.then((resolvedParams) => {
+      setKnowledgeId(resolvedParams.id);
+    });
+  }, [params]);
+
+  useEffect(() => {
+    if (!knowledgeId) return;
+    
     const fetchKnowledge = async () => {
       try {
-        const response = await fetch(`/api/knowledge/${params.id}`);
+        const response = await fetch(`/api/knowledge/${knowledgeId}`);
         
         if (!response.ok) {
           setError(response.status);
@@ -41,7 +51,7 @@ const KnowledgeViewPage: React.FC<Props> = ({ params }) => {
     };
 
     fetchKnowledge();
-  }, [params.id]);
+  }, [knowledgeId]);
 
   if (loading) {
     return (
@@ -66,9 +76,19 @@ const KnowledgeViewPage: React.FC<Props> = ({ params }) => {
     return <ErrorPageComponent statusCode={error} />;
   }
 
+  if (!knowledge) {
+    return (
+      <MainLayout>
+        <div className="text-center" style={{ padding: '100px 0' }}>
+          <p>ナレッジが見つかりません。</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout pageTitle={`${knowledge.title} - Knowledge`}>
-      <KnowledgeView knowledge={knowledge} />
+      <KnowledgeView knowledge={knowledge as any} />
     </MainLayout>
   );
 };

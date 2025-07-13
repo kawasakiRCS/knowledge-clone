@@ -89,10 +89,10 @@ const mockHistories: Record<string, KnowledgeHistory[]> = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const knowledgeId = params.id;
+    const { id: knowledgeId } = await params;
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '0', 10);
     const limit = 20; // PAGE_LIMIT

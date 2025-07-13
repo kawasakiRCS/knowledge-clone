@@ -151,7 +151,7 @@ describe('KnowledgePopularityPage', () => {
 
     test('ログイン時はストックタブが表示される', async () => {
       // useAuthをモック
-      const mockUseAuth = jest.spyOn(require('@/hooks/useAuth'), 'useAuth');
+      const mockUseAuth = jest.spyOn(jest.requireMock('@/hooks/useAuth'), 'useAuth');
       mockUseAuth.mockReturnValue({ isLoggedIn: true, user: { userId: 'user1' } });
       
       render(<KnowledgePopularityPage />);

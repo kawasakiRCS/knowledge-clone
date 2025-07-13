@@ -7,9 +7,14 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LayoutNoMenu from '../LayoutNoMenu';
 
+interface MockLinkProps {
+  children: React.ReactNode;
+  href: string;
+}
+
 // Mock Next.js modules
 jest.mock('next/link', () => {
-  return ({ children, href }: any) => <a href={href}>{children}</a>;
+  return ({ children, href }: MockLinkProps) => <a href={href}>{children}</a>;
 });
 
 // Mock dependencies
@@ -34,8 +39,13 @@ jest.mock('@/lib/hooks/useLocale', () => ({
   }),
 }));
 
+interface MockCommonHeaderProps {
+  children?: React.ReactNode;
+  pageTitle?: string;
+}
+
 jest.mock('../CommonHeader', () => {
-  return function CommonHeader({ children, pageTitle }: any) {
+  return function CommonHeader({ children, pageTitle }: MockCommonHeaderProps) {
     // document.titleを設定（副作用）
     if (typeof document !== 'undefined' && pageTitle) {
       document.title = pageTitle;
@@ -56,8 +66,13 @@ jest.mock('../CommonScripts', () => {
   };
 });
 
-// グローバル変数のモック
-(global as any)._CONTEXT = '/knowledge';
+// グローバル変数の型定義とモック
+declare global {
+  // eslint-disable-next-line no-var
+  var _CONTEXT: string;
+}
+
+global._CONTEXT = '/knowledge';
 
 describe('LayoutNoMenu', () => {
   beforeEach(() => {
@@ -185,7 +200,7 @@ describe('LayoutNoMenu', () => {
       );
 
       // グローバル変数が設定されていることを確認
-      expect((window as any)._CONTEXT).toBe('/knowledge');
+      expect((window as Window & { _CONTEXT?: string })._CONTEXT).toBe('/knowledge');
     });
   });
 

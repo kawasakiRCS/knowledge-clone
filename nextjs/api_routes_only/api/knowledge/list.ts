@@ -4,7 +4,7 @@
  * @description 旧システムのKnowledgeControl.listメソッドと互換
  */
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Knowledge, KnowledgeListResponse, TemplateType, Tag, Group } from '../../../types/knowledge';
+import { Knowledge, KnowledgeListResponse, TemplateType, Tag, Group } from '../../../src/types/knowledge';
 
 // モックデータ
 const mockTemplates: Record<number, TemplateType> = {
@@ -139,7 +139,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Knowle
       offset: 0, 
       limit: 50,
       error: 'Method not allowed' 
-    } as any);
+    } as KnowledgeListResponse & { error: string });
   }
 
   try {
@@ -257,6 +257,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Knowle
       offset: 0,
       limit: 50,
       error: 'Internal server error'
-    } as any);
+    } as KnowledgeListResponse & { error: string });
   }
 }

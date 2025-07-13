@@ -11,10 +11,10 @@ import { ErrorPage } from '@/components/layout';
 
 interface ErrorProps {
   error: Error & { digest?: string };
-  reset: () => void;
+  _reset: () => void;
 }
 
-export default function Error({ error, reset: _reset }: ErrorProps) {
+export default function Error({ error }: Omit<ErrorProps, '_reset'>) {
   useEffect(() => {
     // エラーログの記録（本番環境）
     console.error('Application Error:', error);

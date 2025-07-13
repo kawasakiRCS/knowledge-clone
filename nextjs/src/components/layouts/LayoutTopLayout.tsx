@@ -38,7 +38,7 @@ export function LayoutTopLayout({
   return (
     <>
       {/* 共通ヘッダー */}
-      <CommonHeader pageTitle={pageTitle} additionalContent={headContent} />
+      {/* <CommonHeader pageTitle={pageTitle} additionalContent={headContent} /> */}
       
       {/* メインコンテンツ（旧JSPのcontent_top） */}
       <div id="content_top" style={{ margin: 0, padding: 0 }}>

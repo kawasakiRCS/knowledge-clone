@@ -40,7 +40,7 @@ export default function PasswordResetPage() {
         } else {
           setError(data.error || 'リセットキーが無効です');
         }
-      } catch (err) {
+      } catch {
         setError('エラーが発生しました');
       } finally {
         setLoading(false);
@@ -99,7 +99,7 @@ export default function PasswordResetPage() {
       } else {
         setError(data.error || 'パスワード変更に失敗しました');
       }
-    } catch (err) {
+    } catch {
       setError('エラーが発生しました');
     } finally {
       setSubmitting(false);

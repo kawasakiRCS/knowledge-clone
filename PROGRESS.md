@@ -2,8 +2,10 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 32ページ（+ 技術的修正3件）
+- **完了ページ数**: 32ページ（+ 技術的修正4件 + 自動化システム1件）
 - **進捗率**: 29.1%
+- **完了Issue数**: 32 Issues
+- **技術的改善**: 5件（App Router移行、翻訳システム、ビルド修正、Issue連携）
 
 ## 完了済みIssue（31 Issues）
 
@@ -472,12 +474,34 @@
 
 ## 次のIssue
 
-### 🔄 Issue #B4-2: タグ選択ダイアログ実装 (open/tag/dialog.jsp)
-- **優先度**: 🟡中
-- **推定工数**: 1日
-- **依存関係**: なし
-- **カテゴリ**: 公開ページ - タグ関連
-- **Controller**: TagControl.java
+### 🔄 優先度高: フェーズ2残りページ実装
+以下のページから優先度・依存関係を考慮して選択：
+
+1. **Issue #B4-2: タグ選択ダイアログ実装 (open/tag/dialog.jsp)**
+   - **優先度**: 🟡中
+   - **推定工数**: 1日
+   - **依存関係**: なし
+   - **実装内容**: モーダルダイアログ、タグ検索・選択機能
+
+2. **Issue #B5-1: ユーザー一覧ページ実装 (open/users/list.jsp)**
+   - **優先度**: 🟡中
+   - **推定工数**: 0.5日
+   - **依存関係**: なし
+   - **実装内容**: ユーザー一覧表示、ページネーション
+
+3. **Issue #B5-2: ユーザー選択ダイアログ実装 (open/users/dialog.jsp)**
+   - **優先度**: 🟡中
+   - **推定工数**: 1日
+   - **依存関係**: なし
+   - **実装内容**: モーダルダイアログ、ユーザー検索・選択機能
+
+### 📋 未完了タスク（フェーズ2）
+- グループ関連: 5ページ
+- タグ関連: 1ページ（dialog.jsp）
+- ユーザー関連: 2ページ
+- テンプレート関連: 2ページ
+- ドラフト関連: 3ページ
+- 合計: 13ページ
 
 ## 技術的マイルストーン
 
@@ -509,8 +533,14 @@
 - **互換性**: ✅ 旧システムCSS/URL構造維持
 
 ---
-**最終更新**: 2025-07-12
-**次回セッション開始時**: Issue #B4-2 から継続（タグ選択ダイアログ実装 - open/tag/dialog.jsp）
+**最終更新**: 2025-07-13
+**本日の成果**: 
+- Issue #40完了（Issue連携システム）
+- 技術修正 #4完了（Next.js 15ビルド修正）
+- 型安全性大幅向上（any型45個→ほぼ0）
+
+**次回セッション開始時**: フェーズ2残りページから選択
+- 推奨: Issue #B4-2（タグ選択ダイアログ）または #B5-1（ユーザー一覧）
 
 ### ✅ 技術修正 #2: Next.js 404エラー解消とApp Router完全移行
 - **完了日**: 2025-07-12
@@ -559,8 +589,43 @@
 - **技術**: 軽量実装（外部ライブラリ不使用）、TypeScript完全対応
 - **Status**: APPLIED
 
-### 2025-07-13 10:40:11 - Issue #40
-- **コミット**: feat: Issue #40 - Issue紐づけ強制システム実装完了（Git hooks + Claude Code hooks + 自動化スクリプト）
-- **変更ファイル**: .claude/scripts/auto-create-issue.sh .claude/scripts/enforce-issue-workflow.sh .claude/scripts/session-manager.sh .claude/scripts/validate-and-commit.sh .claude/settings.json 
-- **ステータス**: 実装完了
+### ✅ Issue #40: Issue紐づけ強制システムの実装
+- **完了日**: 2025-07-13
+- **カテゴリ**: 開発プロセス・自動化
+- **実装内容**: Git hooks、Claude Code hooks、自動化スクリプト群
+- **実装詳細**:
+  - Git pre-commitフック（Issue番号チェック）
+  - Claude Code settings.json（hooks設定）
+  - validate-and-commit.sh（コミット検証・実行）
+  - auto-create-issue.sh（Issue自動作成）
+  - enforce-issue-workflow.sh（ワークフロー強制）
+  - session-manager.sh（セッション状態管理）
+- **成果**: 全コミットへのIssue番号紐づけ自動化、追跡性向上
+- **コミット**: cf189e64
+- **Status**: CLOSED
+
+### ✅ 技術修正 #4: Next.js 15 ビルドエラー完全解消
+- **完了日**: 2025-07-13
+- **カテゴリ**: 技術的修正 - ビルドシステム
+- **問題**: `npm run build`失敗（useSearchParams Suspense境界エラー）
+- **根本原因**: 
+  - Next.js 15でuseSearchParamsにSuspense境界が必須
+  - 動的ルートのparams/searchParamsがPromise型に変更
+  - 型定義の不整合（any型45個）
+- **実装詳細**:
+  1. **Suspense境界対応**:
+     - KnowledgeListPage.tsx修正
+     - histories/[id]/page.tsx修正
+  2. **Promise型対応**:
+     - 全動的ルートページの型定義修正
+     - async/await、useEffectでの解決
+  3. **型安全性向上**:
+     - any型45個→ほぼ0に削減
+     - ESLint設定追加
+- **結果**: 
+  - ✅ `npm run build`成功（27/27ページビルド完了）
+  - ✅ Next.js 15完全対応
+  - ✅ 型安全性大幅向上
+- **技術**: Next.js 15、TypeScript、ESLint、Suspense
+- **Status**: APPLIED
 

@@ -7,9 +7,10 @@ export function useAuth() {
   // 現在はモック実装
   return {
     user: null, // ログインしていない状態
+    isAuthenticated: false, // 認証状態
     isLoading: false,
-    login: async (email: string, password: string) => {
-      // ログイン処理
+    login: async () => {
+      // TODO: ログイン処理
     },
     logout: async () => {
       // ログアウト処理

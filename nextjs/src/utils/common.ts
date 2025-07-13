@@ -9,7 +9,19 @@ declare global {
   interface Window {
     _CONTEXT: string;
     _LOGGING_NOTIFY_DESKTOP: boolean;
-    $: any;
+    $: any & {
+      notify: (message: string, type?: string | object) => void;
+      fn: {
+        modal: {
+          Constructor: {
+            prototype: {
+              setScrollbar: () => void;
+              resetScrollbar: () => void;
+            };
+          };
+        };
+      };
+    };
     jQuery: any;
   }
 }
@@ -84,7 +96,7 @@ export function insertAtCaret(target: string, str: string): void {
   
   if (navigator.userAgent.match(/MSIE/)) {
     // IE対応
-    const r = (document as any).selection.createRange();
+    const r = (document as Document & { selection: { createRange: () => { text: string; select: () => void } } }).selection.createRange();
     r.text = str;
     r.select();
   } else {
@@ -100,7 +112,7 @@ export function insertAtCaret(target: string, str: string): void {
 /**
  * オブジェクトが文字列かどうかを判定する
  */
-export function isString(obj: any): boolean {
+export function isString(obj: unknown): boolean {
   return typeof obj === 'string' || obj instanceof String;
 }
 
@@ -135,7 +147,14 @@ export function escapeLink(url: string): string {
 /**
  * AJAXエラーレスポンスを処理する
  */
-export function handleErrorResponse(xhr: any, textStatus: string, error: Error): void {
+interface ErrorResponse {
+  responseJSON?: {
+    children?: Array<{ message: string }>;
+  };
+  statusText?: string;
+}
+
+export function handleErrorResponse(xhr: ErrorResponse, textStatus: string, error: Error): void {
   console.log(error);
   console.log(xhr);
   
@@ -168,8 +187,8 @@ export function initPageTop(): void {
   if (typeof window === 'undefined' || !window.$) return;
   
   const pagetop = window.$('.pagetop');
-  window.$(window).scroll(function() {
-    if (window.$(this).scrollTop() > 100) {
+  window.$(window).scroll(() => {
+    if (window.$(window).scrollTop() > 100) {
       pagetop.fadeIn();
     } else {
       pagetop.fadeOut();
@@ -210,7 +229,7 @@ export function initModalScrollbar(): void {
   
   window.$(window).load(function() {
     const oldSSB = window.$.fn.modal.Constructor.prototype.setScrollbar;
-    window.$.fn.modal.Constructor.prototype.setScrollbar = function(this: any) {
+    window.$.fn.modal.Constructor.prototype.setScrollbar = function(this: { bodyIsOverflowing: boolean; scrollbarWidth: number }) {
       oldSSB.apply(this);
       if (this.bodyIsOverflowing && this.scrollbarWidth) {
         window.$('.navbar-fixed-top, .navbar-fixed-bottom').css('padding-right', this.scrollbarWidth);
@@ -218,7 +237,7 @@ export function initModalScrollbar(): void {
     };
     
     const oldRSB = window.$.fn.modal.Constructor.prototype.resetScrollbar;
-    window.$.fn.modal.Constructor.prototype.resetScrollbar = function(this: any) {
+    window.$.fn.modal.Constructor.prototype.resetScrollbar = function(this: object) {
       oldRSB.apply(this);
       window.$('.navbar-fixed-top, .navbar-fixed-bottom').css('padding-right', '');
     };
@@ -236,9 +255,9 @@ export function startSessionKeepAlive(): void {
     window.$.ajax({
       type: 'GET',
       url: url
-    }).done(function(result: any, textStatus: string, xhr: any) {
+    }).done(function() {
       console.log('OK');
-    }).fail(function(xhr: any, textStatus: string, error: any) {
+    }).fail(function(error: any) {
       console.error(error);
     });
   }, 1000 * 60 * 5); // 5分ごと

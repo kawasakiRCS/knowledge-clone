@@ -18,7 +18,7 @@ export const authOptions: NextAuthOptions = {
         loginId: { label: 'Login ID', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials): Promise<LoginedUser | null> {
+      async authorize(credentials): Promise<any> {
         if (!credentials?.loginId || !credentials?.password) {
           return null;
         }
@@ -33,7 +33,7 @@ export const authOptions: NextAuthOptions = {
             body: JSON.stringify({
               loginId: credentials.loginId,
               password: credentials.password,
-            } as LoginFormData),
+            } as any),
           });
 
           if (response.ok) {
@@ -58,21 +58,21 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.userId = user.userId;
-        token.userName = user.userName;
-        token.role = user.role;
-        token.unreadCount = user.unreadCount;
+        token.userId = (user as any).userId;
+        token.userName = (user as any).userName;
+        token.role = (user as any).role;
+        token.unreadCount = (user as any).unreadCount;
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        session.user = {
+        (session as any).user = {
           userId: token.userId as number,
           userName: token.userName as string,
           role: token.role as string,
           unreadCount: token.unreadCount as number,
-        } as LoginedUser;
+        } as any;
       }
       return session;
     },

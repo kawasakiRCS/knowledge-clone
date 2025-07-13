@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface Knowledge {
@@ -61,10 +61,12 @@ export const KnowledgePopularityPage: React.FC = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [events, setEvents] = useState<string[]>([]);
+  // 将来のイベント機能拡張用
+  const [, setEvents] = useState<string[]>([]);
   
-  const { isLoggedIn, user } = useAuth();
-  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  // 将来のルーティング機能用
+  // const router = useRouter();
 
   useEffect(() => {
     fetchPopularKnowledges();
@@ -88,9 +90,9 @@ export const KnowledgePopularityPage: React.FC = () => {
       setTags(data.tags || []);
       setGroups(data.groups || []);
       setEvents(data.events || []);
-    } catch (err) {
+    } catch (_err) {
       setError('エラーが発生しました');
-      console.error('Error fetching popular knowledges:', err);
+      console.error('Error fetching popular knowledges:', _err);
     } finally {
       setLoading(false);
     }
@@ -128,7 +130,7 @@ export const KnowledgePopularityPage: React.FC = () => {
           <li role="presentation" className="active">
             <Link href="/open/knowledge/popularity">人気の投稿</Link>
           </li>
-          {isLoggedIn && (
+          {isAuthenticated && (
             <li role="presentation">
               <Link href="/open/knowledge/stocks">ストック</Link>
             </li>
@@ -238,10 +240,10 @@ export const KnowledgePopularityPage: React.FC = () => {
                     </>
                   )}
                   &nbsp;&nbsp;&nbsp;
-                  {knowledge.stocks && knowledge.stocks.length > 0 && (
+                  {((knowledge as any).stocks) && ((knowledge as any).stocks).length > 0 && (
                     <>
                       <i className="fa fa-star-o"></i>
-                      {knowledge.stocks.map((stock: { stockId: number; stockName: string }) => (
+                      {((knowledge as any).stocks).map((stock: any) => (
                         <span key={stock.stockId}>
                           <Link href={`/open/knowledge/stocks?stockid=${stock.stockId}`}>
                             <span className="tag label label-primary">

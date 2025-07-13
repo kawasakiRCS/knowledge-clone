@@ -27,10 +27,11 @@ const generateMockLikes = (knowledgeId: number, page: number, limit: number = 50
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const knowledgeId = parseInt(params.id);
+    const { id } = await params;
+    const knowledgeId = parseInt(id);
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '0');
 

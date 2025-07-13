@@ -1,5 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+type Stock = {
+  stockId: number;
+  stockName: string;
+};
+
 type Knowledge = {
   knowledgeId: number;
   title: string;
@@ -23,7 +28,7 @@ type Knowledge = {
   };
   tagNames: string;
   tagIds: string;
-  stocks: any[];
+  stocks: Stock[];
   pin: boolean;
 };
 

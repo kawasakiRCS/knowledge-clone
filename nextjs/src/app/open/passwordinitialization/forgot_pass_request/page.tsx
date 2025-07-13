@@ -9,7 +9,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export function ForgotPasswordRequestPage() {
+function ForgotPasswordRequestPage() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
@@ -65,7 +65,7 @@ export function ForgotPasswordRequestPage() {
         // エラー時はメッセージを表示
         setError(data.error || 'エラーが発生しました');
       }
-    } catch (err) {
+    } catch {
       setError('通信エラーが発生しました');
     } finally {
       setIsSubmitting(false);

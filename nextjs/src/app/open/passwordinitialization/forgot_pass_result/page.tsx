@@ -6,7 +6,7 @@
 import React from 'react';
 import Link from 'next/link';
 
-export function ForgotPasswordResultPage() {
+function ForgotPasswordResultPage() {
   return (
     <>
       <h4 className="title">パスワード忘れのリクエスト</h4>

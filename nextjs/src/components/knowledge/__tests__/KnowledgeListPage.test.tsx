@@ -47,7 +47,7 @@ describe('KnowledgeListPage', () => {
     });
 
     test('ログイン時はストックタブが表示される', () => {
-      const useAuthModule = require('../../../lib/hooks/useAuth');
+      const useAuthModule = jest.requireMock('../../../lib/hooks/useAuth');
       useAuthModule.useAuth.mockReturnValue({ user: { userId: 1 }, isAuthenticated: true });
       
       render(<KnowledgeListPage />);

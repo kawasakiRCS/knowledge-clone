@@ -14,9 +14,9 @@ const validResetKeys = new Map([
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
-  const { key } = params;
+  const { key } = await params;
   
   // リセットキーの検証
   const resetData = validResetKeys.get(key);

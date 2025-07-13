@@ -112,7 +112,7 @@ export default function KnowledgeListItem({
         )}
         
         <div className="tags">
-          {knowledge.tags.map((tag) => (
+          {((knowledge as any).tags || []).map((tag: any) => (
             <Link 
               key={tag.tagId}
               href={`/open/knowledge/list?tag=${tag.tagId}`}

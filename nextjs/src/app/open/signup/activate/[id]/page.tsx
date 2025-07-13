@@ -7,25 +7,36 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale } from '@/hooks/useLocale';
+// import { useLocale } from '@/hooks/useLocale';
 import MainLayout from '@/components/layout/MainLayout';
 
 interface ActivatePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const ActivatePage: React.FC<ActivatePageProps> = ({ params }) => {
   const router = useRouter();
-  const { t } = useLocale();
+  // 将来の多言語対応用
+  // const { t } = useLocale();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activationId, setActivationId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Promise型のparamsを解決
+    params.then((resolvedParams) => {
+      setActivationId(resolvedParams.id);
+    });
+  }, [params]);
+
+  useEffect(() => {
+    if (!activationId) return;
+    
     const activate = async () => {
       try {
-        const response = await fetch(`/api/signup/activate/${params.id}`);
+        const response = await fetch(`/api/signup/activate/${activationId}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -44,7 +55,7 @@ const ActivatePage: React.FC<ActivatePageProps> = ({ params }) => {
     };
 
     activate();
-  }, [params.id, router]);
+  }, [activationId, router]);
 
   if (isProcessing) {
     return (
