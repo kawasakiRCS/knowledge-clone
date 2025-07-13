@@ -30,7 +30,6 @@ echo "✅ PostgreSQL is ready!"
 
 # 3. Prismaクライアント生成
 echo "🔧 Generating Prisma client..."
-cd /home/ubuntu01/workspace/knowledge/nextjs
 npm run prisma:generate
 
 # 4. データベース接続テスト
