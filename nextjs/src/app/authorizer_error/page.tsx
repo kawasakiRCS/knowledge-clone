@@ -4,7 +4,7 @@
  * @description 旧システムauth/authorizerError.jspに対応するNext.jsページ
  * URL: /authorizer_error
  */
-import { MainLayout } from '@/components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 
 export default function AuthorizerErrorPage() {
   return (

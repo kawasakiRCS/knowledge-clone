@@ -4,7 +4,7 @@
  * @description 旧システムのserver_error.jspと同等の機能を提供
  */
 import React from 'react';
-import { MainLayout } from '../layout/MainLayout';
+import MainLayout from '../layout/MainLayout';
 
 interface ServerErrorPageProps {
   errorAttribute?: string;
@@ -13,7 +13,7 @@ interface ServerErrorPageProps {
   isLocalhost?: boolean;
 }
 
-export const ServerErrorPage: React.FC<ServerErrorPageProps> = ({
+const ServerErrorPage: React.FC<ServerErrorPageProps> = ({
   errorAttribute,
   exception,
   serverException,
@@ -55,3 +55,5 @@ export const ServerErrorPage: React.FC<ServerErrorPageProps> = ({
     </MainLayout>
   );
 };
+
+export default ServerErrorPage;

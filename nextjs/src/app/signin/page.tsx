@@ -8,7 +8,7 @@
 
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MainLayout } from '@/components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 import { LoginForm } from '@/components/forms/LoginForm';
 import { LoginFormData } from '@/types/auth';
 

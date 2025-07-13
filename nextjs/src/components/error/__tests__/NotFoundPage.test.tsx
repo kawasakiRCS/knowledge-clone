@@ -4,7 +4,7 @@
  * @description 404エラーページのテスト（旧システム: not_found.jsp）
  */
 import { render, screen } from '@testing-library/react';
-import { NotFoundPage } from '../NotFoundPage';
+import NotFoundPage from '../NotFoundPage';
 
 // Next.js関連のmock
 jest.mock('next/router', () => ({

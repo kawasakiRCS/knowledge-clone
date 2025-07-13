@@ -4,7 +4,7 @@
  * @description 旧システムのopen/account/account.jspに対応
  */
 import { GetServerSideProps } from 'next';
-import { MainLayout } from '@/components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 import { AccountPage } from '@/components/AccountPage';
 
 interface AccountInfoPageProps {

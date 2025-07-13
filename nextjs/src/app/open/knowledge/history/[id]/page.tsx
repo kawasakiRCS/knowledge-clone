@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
-import { MainLayout } from '@/components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 import KnowledgeHistory from '@/components/knowledge/KnowledgeHistory';
-import { ErrorPage } from '@/components/error/ErrorPage';
-import { ForbiddenPage } from '@/components/error/ForbiddenPage';
+import ErrorPage from '@/components/error/ErrorPage';
+import ForbiddenPage from '@/components/error/ForbiddenPage';
 import Script from 'next/script';
 
 /**

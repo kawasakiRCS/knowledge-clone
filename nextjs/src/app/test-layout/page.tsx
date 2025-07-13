@@ -7,7 +7,7 @@
 
 'use client';
 
-import { MainLayout } from '@/components/layout';
+import MainLayout from '@/components/layout/MainLayout';
 
 export default function TestLayoutPage() {
   return (

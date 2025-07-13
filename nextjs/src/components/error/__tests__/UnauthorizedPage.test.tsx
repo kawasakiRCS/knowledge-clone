@@ -4,7 +4,7 @@
  * @description 401エラーページのテスト（旧システム: unauthorized.jsp）
  */
 import { render, screen } from '@testing-library/react';
-import { UnauthorizedPage } from '../UnauthorizedPage';
+import UnauthorizedPage from '../UnauthorizedPage';
 
 // Next.js関連のmock
 jest.mock('next/router', () => ({

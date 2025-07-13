@@ -4,7 +4,7 @@
  * @description 403エラーページのテスト（旧システム: forbidden.jsp）
  */
 import { render, screen } from '@testing-library/react';
-import { ForbiddenPage } from '../ForbiddenPage';
+import ForbiddenPage from '../ForbiddenPage';
 
 // Next.js関連のmock
 jest.mock('next/router', () => ({

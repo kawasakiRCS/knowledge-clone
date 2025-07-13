@@ -4,13 +4,13 @@
  * @description 旧システムのforbidden.jspと同等の機能を提供
  */
 import React from 'react';
-import { MainLayout } from '../layout/MainLayout';
+import MainLayout from '../layout/MainLayout';
 
 interface ForbiddenPageProps {
   errorAttribute?: string;
 }
 
-export const ForbiddenPage: React.FC<ForbiddenPageProps> = ({
+const ForbiddenPage: React.FC<ForbiddenPageProps> = ({
   errorAttribute
 }) => {
   return (
@@ -34,3 +34,5 @@ export const ForbiddenPage: React.FC<ForbiddenPageProps> = ({
     </MainLayout>
   );
 };
+
+export default ForbiddenPage;

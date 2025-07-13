@@ -40,7 +40,7 @@ interface MainLayoutProps {
   };
 }
 
-export function MainLayout({
+function MainLayout({
   children,
   pageTitle = "Knowledge",
   customHead,
@@ -102,3 +102,5 @@ export function MainLayout({
     </>
   );
 }
+
+export default MainLayout;

@@ -4,13 +4,13 @@
  * @description 旧システムのunauthorized.jspと同等の機能を提供
  */
 import React from 'react';
-import { MainLayout } from '../layout/MainLayout';
+import MainLayout from '../layout/MainLayout';
 
 interface UnauthorizedPageProps {
   errorAttribute?: string;
 }
 
-export const UnauthorizedPage: React.FC<UnauthorizedPageProps> = ({
+const UnauthorizedPage: React.FC<UnauthorizedPageProps> = ({
   errorAttribute
 }) => {
   return (
@@ -34,3 +34,5 @@ export const UnauthorizedPage: React.FC<UnauthorizedPageProps> = ({
     </MainLayout>
   );
 };
+
+export default UnauthorizedPage;

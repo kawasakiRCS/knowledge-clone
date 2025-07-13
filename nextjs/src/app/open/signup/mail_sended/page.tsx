@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { useLocale } from '@/hooks/useLocale';
-import { MainLayout } from '@/components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 
 const MailSendedPage: React.FC = () => {
   const { t } = useLocale();

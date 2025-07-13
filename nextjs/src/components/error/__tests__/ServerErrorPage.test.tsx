@@ -4,7 +4,7 @@
  * @description 500エラーページのテスト（旧システム: server_error.jsp）
  */
 import { render, screen } from '@testing-library/react';
-import { ServerErrorPage } from '../ServerErrorPage';
+import ServerErrorPage from '../ServerErrorPage';
 
 // Next.js関連のmock
 jest.mock('next/router', () => ({

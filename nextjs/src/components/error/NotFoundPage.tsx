@@ -4,13 +4,13 @@
  * @description 旧システムのnot_found.jspと同等の機能を提供
  */
 import React from 'react';
-import { MainLayout } from '../layout/MainLayout';
+import MainLayout from '../layout/MainLayout';
 
 interface NotFoundPageProps {
   errorAttribute?: string;
 }
 
-export const NotFoundPage: React.FC<NotFoundPageProps> = ({
+const NotFoundPage: React.FC<NotFoundPageProps> = ({
   errorAttribute
 }) => {
   return (
@@ -34,3 +34,5 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({
     </MainLayout>
   );
 };
+
+export default NotFoundPage;

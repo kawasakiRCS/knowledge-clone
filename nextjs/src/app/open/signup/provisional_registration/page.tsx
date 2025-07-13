@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { MainLayout } from '@/components/layout';
+import MainLayout from '@/components/layout/MainLayout';
 
 /**
  * 仮登録ページコンポーネント
