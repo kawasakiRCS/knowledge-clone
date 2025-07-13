@@ -5,7 +5,7 @@
  */
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
 import { useRouter, useSearchParams, notFound } from 'next/navigation';
@@ -47,7 +47,7 @@ export default function KnowledgeHistoriesPage({ params }: PageProps) {
 
   useEffect(() => {
     fetchHistories();
-  }, [knowledgeId, page]);
+  }, [knowledgeId, page, fetchHistories]);
 
   useEffect(() => {
     // echo.js初期化（画像遅延読み込み）
@@ -56,7 +56,7 @@ export default function KnowledgeHistoriesPage({ params }: PageProps) {
     }
   }, [histories]);
 
-  const fetchHistories = async () => {
+  const fetchHistories = useCallback(async () => {
     try {
       const response = await fetch(`/api/knowledge/histories/${knowledgeId}?page=${page}`);
       
@@ -75,7 +75,7 @@ export default function KnowledgeHistoriesPage({ params }: PageProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [knowledgeId, page]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
