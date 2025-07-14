@@ -5,7 +5,7 @@
  */
 import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { KnowledgeService } from '../knowledgeService';
-import { prisma } from '@/lib/db/prisma';
+import { prisma } from '@/lib/db';
 
 describe('KnowledgeService', () => {
   let knowledgeService: KnowledgeService;

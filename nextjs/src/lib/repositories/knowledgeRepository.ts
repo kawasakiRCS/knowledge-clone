@@ -3,7 +3,7 @@
  * 
  * @description 旧JavaシステムのKnowledgesDao.javaと互換性のあるリポジトリ
  */
-import { prisma } from '@/lib/db/prisma';
+import { prisma } from '@/lib/db';
 import { Knowledge, User } from '@prisma/client';
 
 export interface SearchKnowledgeParams {
@@ -13,7 +13,11 @@ export interface SearchKnowledgeParams {
 }
 
 export interface KnowledgeWithAuthor extends Knowledge {
-  author?: User | null;
+  author?: {
+    userId: number;
+    userName: string;
+    userKey: string;
+  } | null;
 }
 
 export class KnowledgeRepository {

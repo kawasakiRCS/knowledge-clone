@@ -4,14 +4,14 @@
  * @description 旧JavaシステムのLoginedUserの完全移植
  */
 import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { prisma } from '@/lib/db';
 
 export interface AuthenticatedUser {
   userId: number;
   userName: string;
   userKey: string;
   isAdmin: boolean;
-  groups: Array<{ groupId: number; groupName: string }>;
+  // groups: Array<{ groupId: number; groupName: string }>; // Will be added when group functionality is implemented
 }
 
 /**
@@ -36,18 +36,7 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
         userId: userId,
         deleteFlag: 0 // 削除されていないユーザーのみ
       },
-      include: {
-        userGroups: {
-          include: {
-            group: {
-              select: {
-                groupId: true,
-                groupName: true
-              }
-            }
-          }
-        }
-      }
+      // Note: Group relations will be added later when group tables are implemented
     });
 
     if (!user) {
@@ -55,20 +44,21 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
     }
 
     // 管理者権限チェック（旧システムの Level.ADMIN チェック）
-    const isAdmin = user.level === 1; // レベル1 = 管理者
+    // TODO: Add level field to users table or implement admin role check
+    const isAdmin = false; // Temporarily disabled until level/role field is added
 
-    // グループ情報の整形
-    const groups = user.userGroups.map(ug => ({
-      groupId: ug.group.groupId,
-      groupName: ug.group.groupName
-    }));
+    // Group functionality will be implemented later
+    // const groups = user.userGroups.map(ug => ({
+    //   groupId: ug.group.groupId,
+    //   groupName: ug.group.groupName
+    // }));
 
     return {
       userId: user.userId,
       userName: user.userName,
       userKey: user.userKey,
-      isAdmin,
-      groups
+      isAdmin
+      // groups // Will be added when group functionality is implemented
     };
   } catch (error) {
     console.error('Authentication error:', error);

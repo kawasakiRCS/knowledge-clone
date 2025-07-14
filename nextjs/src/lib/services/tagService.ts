@@ -143,10 +143,10 @@ export class TagService {
   async createTag(tagName: string, userId: number): Promise<TagData | null> {
     try {
       // 重複チェック
-      const existing = await prisma.tagsEntity.findFirst({
+      const existing = await prisma.tag.findFirst({
         where: {
           tagName,
-          deleteFlag: false
+          deleteFlag: 0
         }
       });
 
@@ -160,14 +160,14 @@ export class TagService {
 
       // 新規作成
       const now = new Date();
-      const tag = await prisma.tagsEntity.create({
+      const tag = await prisma.tag.create({
         data: {
           tagName,
-          insertUser: BigInt(userId),
+          insertUser: userId,
           insertDatetime: now,
-          updateUser: BigInt(userId),
+          updateUser: userId,
           updateDatetime: now,
-          deleteFlag: false
+          deleteFlag: 0
         }
       });
 
@@ -192,8 +192,8 @@ export class TagService {
    */
   async deleteTag(tagId: number, userId: number): Promise<boolean> {
     try {
-      const tag = await prisma.tagsEntity.findUnique({
-        where: { tagId: BigInt(tagId) }
+      const tag = await prisma.tag.findUnique({
+        where: { tagId: tagId }
       });
 
       if (!tag || tag.deleteFlag) {
@@ -201,11 +201,11 @@ export class TagService {
       }
 
       // 論理削除実行
-      await prisma.tagsEntity.update({
-        where: { tagId: BigInt(tagId) },
+      await prisma.tag.update({
+        where: { tagId: tagId },
         data: {
-          deleteFlag: true,
-          updateUser: BigInt(userId),
+          deleteFlag: 1,
+          updateUser: userId,
           updateDatetime: new Date()
         }
       });
@@ -235,29 +235,29 @@ export class TagService {
       const now = new Date();
 
       // 既存の紐づけを削除
-      await prisma.knowledgeTagMapsEntity.updateMany({
+      await prisma.knowledgeTag.updateMany({
         where: {
           knowledgeId: BigInt(knowledgeId),
-          deleteFlag: false
+          deleteFlag: 0
         },
         data: {
-          deleteFlag: true,
-          updateUser: BigInt(userId),
+          deleteFlag: 1,
+          updateUser: userId,
           updateDatetime: now
         }
       });
 
       // 新しい紐づけを作成
       for (const tagId of tagIds) {
-        await prisma.knowledgeTagMapsEntity.create({
+        await prisma.knowledgeTag.create({
           data: {
             knowledgeId: BigInt(knowledgeId),
-            tagId: BigInt(tagId),
-            insertUser: BigInt(userId),
+            tagId: tagId,
+            insertUser: userId,
             insertDatetime: now,
-            updateUser: BigInt(userId),
+            updateUser: userId,
             updateDatetime: now,
-            deleteFlag: false
+            deleteFlag: 0
           }
         });
       }

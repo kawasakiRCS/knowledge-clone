@@ -5,7 +5,7 @@
  */
 
 // モック環境のセットアップ
-jest.mock('@/lib/db/prisma', () => ({
+jest.mock('@/lib/db', () => ({
   prisma: {
     user: {
       findUnique: jest.fn()

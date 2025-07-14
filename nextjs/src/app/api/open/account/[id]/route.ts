@@ -13,10 +13,11 @@ import { AccountService } from '@/lib/services/accountService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = parseInt(params.id);
+    const resolvedParams = await params;
+    const userId = parseInt(resolvedParams.id);
     const pathname = request.nextUrl.pathname;
     const action = pathname.split('/').pop(); // 最後のパスセグメントを取得
 

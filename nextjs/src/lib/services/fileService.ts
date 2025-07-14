@@ -55,7 +55,7 @@ export class FileService {
    */
   async getFile(fileNo: number, currentUser: AuthenticatedUser | null): Promise<FileData | null> {
     try {
-      const fileEntity = await prisma.knowledgeFilesEntity.findUnique({
+      const fileEntity = await prisma.knowledgeFile.findUnique({
         where: { fileNo: BigInt(fileNo) },
         select: {
           fileNo: true,
@@ -80,9 +80,9 @@ export class FileService {
 
       return {
         fileNo: Number(fileEntity.fileNo),
-        fileName: fileEntity.fileName,
-        fileBinary: fileEntity.fileBinary,
-        fileSize: Number(fileEntity.fileSize),
+        fileName: fileEntity.fileName || '',
+        fileBinary: fileEntity.fileBinary ? Buffer.from(fileEntity.fileBinary) : Buffer.alloc(0),
+        fileSize: Number(fileEntity.fileSize || 0),
         knowledgeId: fileEntity.knowledgeId ? Number(fileEntity.knowledgeId) : undefined
       };
     } catch (error) {
@@ -113,12 +113,23 @@ export class FileService {
     const knowledgeId = Number(fileEntity.knowledgeId);
     
     // ナレッジの可視性チェック（未認証ユーザーも含む）
-    const knowledge = await this.knowledgeRepository.findKnowledge(
-      knowledgeId,
-      currentUser?.userId || -1
-    );
+    const knowledge = await this.knowledgeRepository.findById(BigInt(knowledgeId));
 
-    return knowledge !== null;
+    if (!knowledge) {
+      return false;
+    }
+
+    // 公開フラグによる可視性チェック
+    if (knowledge.publicFlag === 1) {
+      return true; // 公開
+    } else if (knowledge.publicFlag === 2 && currentUser) {
+      return true; // 保護（認証済みユーザーのみ）
+    } else if (knowledge.publicFlag === 3 && currentUser) {
+      // 非公開（作成者のみ）
+      return knowledge.insertUser === currentUser.userId;
+    }
+
+    return false;
   }
 
   /**
@@ -259,25 +270,26 @@ export class FileService {
     try {
       const now = new Date();
       
-      const fileEntity = await prisma.knowledgeFilesEntity.create({
+      const fileEntity = await prisma.knowledgeFile.create({
         data: {
           fileName,
           fileBinary,
-          fileSize: BigInt(fileBinary.length),
+          fileSize: fileBinary.length,
           knowledgeId: knowledgeId ? BigInt(knowledgeId) : null,
-          insertUser: BigInt(userId),
+          insertUser: userId,
           insertDatetime: now,
-          updateUser: BigInt(userId),
+          updateUser: userId,
           updateDatetime: now,
-          deleteFlag: false
+          deleteFlag: 0,
+          parseStatus: 0
         }
       });
 
       return {
         fileNo: Number(fileEntity.fileNo),
-        fileName: fileEntity.fileName,
-        fileBinary: fileEntity.fileBinary,
-        fileSize: Number(fileEntity.fileSize),
+        fileName: fileEntity.fileName || '',
+        fileBinary: fileEntity.fileBinary ? Buffer.from(fileEntity.fileBinary) : Buffer.alloc(0),
+        fileSize: Number(fileEntity.fileSize || 0),
         knowledgeId: fileEntity.knowledgeId ? Number(fileEntity.knowledgeId) : undefined
       };
     } catch (error) {
@@ -293,7 +305,7 @@ export class FileService {
    */
   async deleteFile(fileNo: number, userId: number): Promise<boolean> {
     try {
-      const fileEntity = await prisma.knowledgeFilesEntity.findUnique({
+      const fileEntity = await prisma.knowledgeFile.findUnique({
         where: { fileNo: BigInt(fileNo) }
       });
 
@@ -319,11 +331,11 @@ export class FileService {
       }
 
       // 論理削除実行
-      await prisma.knowledgeFilesEntity.update({
+      await prisma.knowledgeFile.update({
         where: { fileNo: BigInt(fileNo) },
         data: {
-          deleteFlag: true,
-          updateUser: BigInt(userId),
+          deleteFlag: 1,
+          updateUser: userId,
           updateDatetime: new Date()
         }
       });

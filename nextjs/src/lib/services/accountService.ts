@@ -3,7 +3,7 @@
  * 
  * @description 旧JavaシステムのAccountLogicと互換性のあるサービス
  */
-import { prisma } from '@/lib/db/prisma';
+import { prisma } from '@/lib/db';
 import { User } from '@prisma/client';
 import { KnowledgeService } from './knowledgeService';
 import crypto from 'crypto';

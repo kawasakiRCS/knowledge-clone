@@ -6,7 +6,7 @@
 import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { GET } from '../route';
 import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { prisma } from '@/lib/db';
 
 describe('/api/knowledge/[id]', () => {
   let testKnowledgeId: bigint;

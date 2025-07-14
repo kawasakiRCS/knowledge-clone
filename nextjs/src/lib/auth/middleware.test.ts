@@ -6,7 +6,7 @@
 import { getAuthenticatedUser, canEditKnowledge, canDeleteKnowledge, canAccessKnowledge, AuthenticatedUser } from './middleware';
 
 // Prismaクライアントのモック
-jest.mock('@/lib/db/prisma', () => ({
+jest.mock('@/lib/db', () => ({
   prisma: {
     user: {
       findUnique: jest.fn()
@@ -58,7 +58,7 @@ describe('Authentication Middleware', () => {
     });
 
     test('should return user for valid Authorization header', async () => {
-      const { prisma } = require('@/lib/db/prisma');
+      const { prisma } = require('@/lib/db');
       
       prisma.user.findUnique.mockResolvedValue({
         userId: 1,
@@ -93,7 +93,7 @@ describe('Authentication Middleware', () => {
     });
 
     test('should identify admin user correctly', async () => {
-      const { prisma } = require('@/lib/db/prisma');
+      const { prisma } = require('@/lib/db');
       
       prisma.user.findUnique.mockResolvedValue({
         userId: 2,

@@ -195,7 +195,7 @@ export class KnowledgeService {
     // ナレッジ更新
     const updated = await this.knowledgeRepo.update(data.knowledgeId, {
       title: data.title,
-      content: data.content || existing.content,
+      content: data.content || existing.content || undefined,
       publicFlag: data.publicFlag,
       typeId: data.typeId,
       updateUser: user.userId,

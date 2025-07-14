@@ -35,7 +35,7 @@ model User {
 
 // Knowledges table
 model Knowledge {
-  knowledgeId    BigInt    @id @map("knowledge_id")
+  knowledgeId    BigInt    @id @default(autoincrement()) @map("knowledge_id")
   title          String    @db.VarChar(1024)
   content        String?   @db.Text
   publicFlag     Int?      @map("public_flag")
@@ -125,4 +125,23 @@ model KnowledgeGroup {
   
   @@id([knowledgeId, groupId])
   @@map("knowledge_groups")
+}
+
+// Knowledge Files table
+model KnowledgeFile {
+  fileNo         BigInt    @id @default(autoincrement()) @map("file_no")
+  knowledgeId    BigInt?   @map("knowledge_id")
+  commentNo      BigInt?   @map("comment_no")
+  fileName       String?   @map("file_name") @db.VarChar(256)
+  fileSize       Float?    @map("file_size")
+  fileBinary     Bytes?    @map("file_binary")
+  parseStatus    Int       @map("parse_status")
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @map("delete_flag")
+  draftId        String?   @map("draft_id") @db.VarChar(64)
+  
+  @@map("knowledge_files")
 }
