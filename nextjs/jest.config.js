@@ -27,7 +27,7 @@ const customJestConfig = {
     '<rootDir>/app/**/*.{spec,test}.{js,jsx,ts,tsx}',
   ],
   transformIgnorePatterns: [
-    '/node_modules/',
+    '/node_modules/(?!(react-markdown|remark-gfm|rehype-highlight|highlight.js))',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
 }

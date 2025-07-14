@@ -11,6 +11,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocale } from '@/hooks/useLocale';
 import { Knowledge, KnowledgeListResponse, KnowledgeListParams, TemplateType, Tag, Group } from '../../types/knowledge';
+import '@/styles/knowledge-list.css';
 
 interface KnowledgeListPageProps {
   initialData?: KnowledgeListResponse;
@@ -81,6 +82,19 @@ const KnowledgeListContent: React.FC<KnowledgeListPageProps> = ({ initialData })
     }
   }, [searchParams, initialData]);
 
+  // LazyLoad画像の実装
+  useEffect(() => {
+    const images = document.querySelectorAll('img[data-echo]');
+    images.forEach(img => {
+      const src = img.getAttribute('data-echo');
+      if (src) {
+        const imgElement = img as HTMLImageElement;
+        imgElement.src = src;
+        imgElement.classList.add('loaded');
+      }
+    });
+  }, [knowledges]);
+
   // ナレッジアイテムレンダリング
   const renderKnowledgeItem = (knowledge: Knowledge) => (
     <div key={knowledge.knowledgeId} className="knowledge_item" data-testid="knowledge-item">
@@ -109,18 +123,42 @@ const KnowledgeListContent: React.FC<KnowledgeListPageProps> = ({ initialData })
             alt="icon"
             width="20"
             height="20"
+            style={{ borderRadius: '50%', marginRight: '5px' }}
           />
           <a href={`/open/account/info/${knowledge.insertUser}`} className="text-primary btn-link">
             {knowledge.insertUserName}
           </a>
           {` ${t('knowledge.view.info.insert')} ${new Date(knowledge.insertDatetime).toLocaleDateString()}`}
+          {knowledge.insertDatetime !== knowledge.updateDatetime && (
+            <>
+              {' ('}
+              <img
+                src="/images/loader.gif"
+                data-echo={`/open/account/icon/${knowledge.updateUser}`}
+                alt="icon"
+                width="20"
+                height="20"
+                style={{ borderRadius: '50%', marginRight: '5px' }}
+              />
+              <a href={`/open/account/info/${knowledge.updateUser}`} className="text-primary btn-link">
+                {knowledge.updateUserName}
+              </a>
+              {` ${t('knowledge.view.info.update')} ${new Date(knowledge.updateDatetime).toLocaleDateString()}`}
+              {')'}
+            </>
+          )}
         </div>
       </div>
 
       <div className="item-info">
         <i className="fa fa-heart-o" style={{ marginLeft: '5px' }}></i>&nbsp;× {knowledge.point} &nbsp;
+        {knowledge.pointOnTerm && knowledge.pointOnTerm > 0 && (
+          <>
+            (<i className="fa fa-line-chart" aria-hidden="true"></i>&nbsp;× {knowledge.pointOnTerm}) &nbsp;
+          </>
+        )}
         <a className="text-primary btn-link" href={`/open/knowledge/likes/${knowledge.knowledgeId}`}>
-          <i className="fa fa-thumbs-o-up"></i>&nbsp;× {knowledge.likeCount}
+          <i className="fa fa-thumbs-o-up"></i>&nbsp;× <span id="like_count">{knowledge.likeCount}</span>
         </a> &nbsp;
         <a className="text-primary btn-link" href={`/open/knowledge/view/${knowledge.knowledgeId}#comments`}>
           <i className="fa fa-comments-o"></i>&nbsp;× {knowledge.commentCount}
@@ -128,20 +166,26 @@ const KnowledgeListContent: React.FC<KnowledgeListPageProps> = ({ initialData })
         
         {templates[knowledge.typeId] && (
           <>
-            <i className={`fa ${templates[knowledge.typeId].typeIcon}`}></i>
+            <i className={`fa ${templates[knowledge.typeId].typeIcon}`}></i>&nbsp;
             {templates[knowledge.typeId].typeName}
             &nbsp;
           </>
         )}
 
+        {/* 公開区分 */}
+        {knowledge.publicFlag === 1 && <i className="fa fa-globe" title="公開"></i>}
+        {knowledge.publicFlag === 2 && <i className="fa fa-lock" title="非公開"></i>}
+        {knowledge.publicFlag === 3 && <i className="fa fa-shield" title="保護"></i>}
+        &nbsp;
+
+        {/* タグ表示 */}
         {knowledge.tagNames && (
           <>
             &nbsp;&nbsp;&nbsp;
-            <i className="fa fa-tags"></i>
             {knowledge.tagNames.split(',').map((tagName, index) => (
               <a key={index} href={`/open/knowledge/list?tagNames=${encodeURIComponent(tagName)}`}>
                 <span className="tag label label-info">
-                  <i className="fa fa-tag"></i>{tagName}
+                  <i className="fa fa-tag"></i>&nbsp;{tagName}
                 </span>
               </a>
             ))}
@@ -192,19 +236,25 @@ const KnowledgeListContent: React.FC<KnowledgeListPageProps> = ({ initialData })
       {/* クイックフィルタ */}
       <div className="row">
         <div className="col-sm-12">
-          <a href="#quickFilter" data-toggle="collapse">
-            <i className="fa fa-angle-double-right" aria-hidden="true"></i>
-            <i className="fa fa-filter" aria-hidden="true"></i>Filter
-          </a>
-          <div id="quickFilter" className="collapse">
-            {Object.values(templates).map(template => (
-              <label key={template.typeId} aria-label={template.typeName}>
-                <input type="checkbox" name="template" value={template.typeId} />
-                <i className={`fa ${template.typeIcon}`}></i>
-                {template.typeName}&nbsp;
-              </label>
-            ))}
-          </div>
+          <form role="form" action="/open/knowledge/list">
+            <input type="hidden" name="from" value="quickFilter" />
+            <a href="#quickFilter" data-toggle="collapse">
+              <i className="fa fa-angle-double-right" aria-hidden="true"></i>
+              <i className="fa fa-filter" aria-hidden="true"></i>Filter
+            </a>
+            <div id="quickFilter" className="collapse">
+              {Object.values(templates).map(template => (
+                <label key={template.typeId} aria-label={template.typeName}>
+                  <input type="checkbox" name="template" value={template.typeId} />
+                  <i className={`fa ${template.typeIcon}`}></i>
+                  {template.typeName}&nbsp;
+                </label>
+              ))}
+              <button className="btn btn-primary btn-xs" type="submit">
+                <i className="fa fa-search"></i>&nbsp;{t('label.apply')}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 

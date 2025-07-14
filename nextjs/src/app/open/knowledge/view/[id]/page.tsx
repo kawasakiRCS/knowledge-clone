@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import MainLayout from '@/components/layout/MainLayout';
 import KnowledgeView from '@/components/knowledge/KnowledgeView';
 // エラーページコンポーネント
 import ErrorPageComponent from '@/components/error/ErrorPage';
@@ -55,12 +54,10 @@ const KnowledgeViewPage: React.FC<Props> = ({ params }) => {
 
   if (loading) {
     return (
-      <MainLayout>
-        <div className="text-center" style={{ padding: '100px 0' }}>
-          <i className="fa fa-spinner fa-spin fa-3x"></i>
-          <p>読み込み中...</p>
-        </div>
-      </MainLayout>
+      <div className="text-center" style={{ padding: '100px 0' }}>
+        <i className="fa fa-spinner fa-spin fa-3x"></i>
+        <p>読み込み中...</p>
+      </div>
     );
   }
 
@@ -78,19 +75,13 @@ const KnowledgeViewPage: React.FC<Props> = ({ params }) => {
 
   if (!knowledge) {
     return (
-      <MainLayout>
-        <div className="text-center" style={{ padding: '100px 0' }}>
-          <p>ナレッジが見つかりません。</p>
-        </div>
-      </MainLayout>
+      <div className="text-center" style={{ padding: '100px 0' }}>
+        <p>ナレッジが見つかりません。</p>
+      </div>
     );
   }
 
-  return (
-    <MainLayout pageTitle={`${knowledge.title} - Knowledge`}>
-      <KnowledgeView knowledge={knowledge as any} />
-    </MainLayout>
-  );
+  return <KnowledgeView knowledge={knowledge as any} />;
 };
 
 export default KnowledgeViewPage;

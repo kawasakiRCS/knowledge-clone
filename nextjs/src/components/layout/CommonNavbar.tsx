@@ -137,7 +137,22 @@ export function CommonNavbar({
                   <div className="btn-group">
                     <a href="/protect.stock/mylist" className="btn btn-warning" id="navListButtonLink">
                       <i className="fa fa-star-o"></i>&nbsp;
-                      <span className="navListButtonText">マイストック</span>
+                      <span className="navListButtonText">ストック</span>
+                    </a>
+                  </div>
+                </li>
+
+                {/* ユーザーポイント表示 */}
+                <li className="navButton navPointButton">
+                  <div className="btn-group">
+                    <a 
+                      href="/open/account/account" 
+                      className="btn btn-success" 
+                      id="navPointButtonLink"
+                      title="あなたのポイント"
+                    >
+                      <i className="fa fa-star"></i>&nbsp;
+                      <span className="navPointButtonText">{user?.point || 0}</span>
                     </a>
                   </div>
                 </li>
