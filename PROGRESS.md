@@ -597,8 +597,32 @@
 - **技術基盤確立**: Repository/Service/API Pattern、認証・権限システム、TDD完全準拠
 - **接続問題調査**: Rancher Desktop + WSL環境固有のネットワーク問題特定
 
-**次回セッション開始時**: WSL環境での開発継続、またはBACKEND_MIGRATION_PLAN.mdに従ってPhase 1 Week 3開始
-- 推奨: WSL環境セットアップまたは通知システムAPI（/api/notifications/）実装
+### ✅ Issue #47: 技術修正 #7 - Prismaインポートエラー完全修正とNext.js 15対応
+- **完了日**: 2025-07-14
+- **カテゴリ**: 技術的修正 - 基盤システム安定化
+- **問題**: Module not found: @/lib/db/prisma、Next.js 15型エラー、Prismaスキーマ不整合
+- **根本原因**: 
+  - 全ファイルで`@/lib/db/prisma`インポートパス不正（存在しないモジュール）
+  - Next.js 15動的ルートparams型変更（Promise型必須）
+  - Prismaスキーマ定義不足（knowledgeId autoincrement、KnowledgeFileモデル）
+  - TypeScript型安全性問題（nullable値、BigInt/Int混在）
+- **実行修正**:
+  1. **Prismaインポートパス統一**: 全15ファイルで`@/lib/db/prisma` → `@/lib/db`
+  2. **Next.js 15完全対応**: params型をPromise<{id: string}>に変更、await処理追加
+  3. **Prismaスキーマ修正**: knowledgeId autoincrement追加、KnowledgeFileモデル追加
+  4. **型安全性向上**: nullable値ハンドリング、BigInt/Int適切使用、エラー型チェック
+- **結果**: 
+  - ✅ ビルド成功（32/32ページ生成完了）
+  - ✅ TypeScript strict mode対応
+  - ✅ 実データベース接続維持
+  - ✅ オリジナルDBスキーマ保護（knowledge_schema.sql無変更）
+- **技術**: Next.js 15、TypeScript、Prisma ORM、PostgreSQL
+- **影響範囲**: 全APIルート正常動作復旧、ナレッジ記事表示機能復旧、バックエンドAPI基盤安定化
+- **コミット**: 495dc427
+- **Status**: CLOSED
+
+**次回セッション開始時**: ナレッジ記事表示機能テスト、またはBACKEND_MIGRATION_PLAN.mdに従ってPhase 1 Week 3開始
+- 推奨: ナレッジAPI動作確認またはソーシャル機能API実装（いいね・コメント・グループ）
 
 ### ✅ 技術修正 #6: knowledges.anonymousカラムエラー完全修正
 - **完了日**: 2025-07-14
