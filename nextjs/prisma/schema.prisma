@@ -35,23 +35,23 @@ model User {
 
 // Knowledges table
 model Knowledge {
-  knowledgeId    BigInt    @id @default(autoincrement()) @map("knowledge_id")
+  knowledgeId    BigInt    @id @map("knowledge_id")
   title          String    @db.VarChar(1024)
-  content        String?
+  content        String?   @db.Text
   publicFlag     Int?      @map("public_flag")
   tagIds         String?   @map("tag_ids") @db.VarChar(1024)
-  tagNames       String?   @map("tag_names")
-  likeCount      BigInt?   @default(0) @map("like_count")
-  commentCount   Int?      @default(0) @map("comment_count")
-  viewCount      BigInt?   @default(0) @map("view_count")
+  tagNames       String?   @map("tag_names") @db.Text
+  likeCount      BigInt?   @map("like_count")
+  commentCount   Int?      @map("comment_count")
   typeId         Int?      @map("type_id")
-  notifyStatus   Int?      @default(0) @map("notify_status")
-  point          Int       @default(0)
   insertUser     Int?      @map("insert_user")
   insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
   updateUser     Int?      @map("update_user")
   updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
-  deleteFlag     Int?      @default(0) @map("delete_flag")
+  deleteFlag     Int?      @map("delete_flag")
+  notifyStatus   Int?      @map("notify_status")
+  viewCount      BigInt?   @map("view_count")
+  point          Int       @default(0)
 
   // Relations
   author User? @relation("KnowledgeAuthor", fields: [insertUser], references: [userId])

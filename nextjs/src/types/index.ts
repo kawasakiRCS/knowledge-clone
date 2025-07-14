@@ -8,24 +8,23 @@
  * @description Represents a knowledge article in the system
  */
 export interface Knowledge {
-  id: string
+  knowledgeId: bigint
   title: string
-  content: string
-  publicFlag: number
+  content?: string
+  publicFlag?: number
   tagIds?: string
   tagNames?: string
-  likeCount: number
-  commentCount: number
-  viewCount: number
+  likeCount?: bigint
+  commentCount?: number
   typeId?: number
-  notifyStatus: number
-  point?: number
-  anonymous: number
-  insertUser: number
-  insertDatetime: Date
-  updateUser: number
-  updateDatetime: Date
-  deleteFlag: number
+  insertUser?: number
+  insertDatetime?: Date
+  updateUser?: number
+  updateDatetime?: Date
+  deleteFlag?: number
+  notifyStatus?: number
+  viewCount?: bigint
+  point: number
 }
 
 /**
