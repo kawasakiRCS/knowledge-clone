@@ -128,4 +128,93 @@ export class KnowledgeRepository {
       data: { point }
     });
   }
+
+  /**
+   * ナレッジを新規作成
+   * 
+   * @description 旧システムのinsert相当
+   * @param data ナレッジ作成データ
+   * @returns 作成されたナレッジ
+   */
+  async create(data: {
+    title: string;
+    content: string;
+    publicFlag: number;
+    typeId: number;
+    insertUser: number;
+    insertDatetime: Date;
+    updateUser: number;
+    updateDatetime: Date;
+    deleteFlag: number;
+    viewCount: bigint;
+    point: number;
+  }): Promise<Knowledge> {
+    return await prisma.knowledge.create({
+      data: {
+        title: data.title,
+        content: data.content,
+        publicFlag: data.publicFlag,
+        typeId: data.typeId,
+        insertUser: data.insertUser,
+        insertDatetime: data.insertDatetime,
+        updateUser: data.updateUser,
+        updateDatetime: data.updateDatetime,
+        deleteFlag: data.deleteFlag,
+        viewCount: data.viewCount,
+        point: data.point
+      }
+    });
+  }
+
+  /**
+   * ナレッジを更新
+   * 
+   * @description 旧システムのupdate相当
+   * @param knowledgeId ナレッジID
+   * @param data 更新データ
+   * @returns 更新されたナレッジ
+   */
+  async update(knowledgeId: bigint, data: {
+    title?: string;
+    content?: string;
+    publicFlag?: number;
+    typeId?: number;
+    updateUser: number;
+    updateDatetime: Date;
+  }): Promise<Knowledge> {
+    return await prisma.knowledge.update({
+      where: { knowledgeId },
+      data
+    });
+  }
+
+  /**
+   * ナレッジを論理削除
+   * 
+   * @description 旧システムの論理削除相当
+   * @param knowledgeId ナレッジID
+   * @param deleteUser 削除者ID
+   */
+  async softDelete(knowledgeId: bigint, deleteUser: number): Promise<void> {
+    await prisma.knowledge.update({
+      where: { knowledgeId },
+      data: {
+        deleteFlag: 1,
+        updateUser: deleteUser,
+        updateDatetime: new Date()
+      }
+    });
+  }
+
+  /**
+   * ナレッジを物理削除
+   * 
+   * @description 旧システムのphysicalDelete相当
+   * @param knowledgeId ナレッジID
+   */
+  async delete(knowledgeId: bigint): Promise<void> {
+    await prisma.knowledge.delete({
+      where: { knowledgeId }
+    });
+  }
 }
