@@ -2,10 +2,10 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 32ページ（+ 技術的修正4件 + 自動化システム1件）
+- **完了ページ数**: 32ページ（+ 技術的修正5件 + 自動化システム1件）
 - **進捗率**: 29.1%
-- **完了Issue数**: 32 Issues
-- **技術的改善**: 5件（App Router移行、翻訳システム、ビルド修正、Issue連携）
+- **完了Issue数**: 33 Issues
+- **技術的改善**: 6件（App Router移行、翻訳システム、ビルド修正、Issue連携、無限ループ修正）
 
 ## 完了済みIssue（31 Issues）
 
@@ -470,6 +470,19 @@
   - Issue番号の修正（B4-1 = open/users/list.jsp → open/tag/list.jsp）
   - PAGE_MIGRATION_PLAN.mdとPROGRESS.mdの不整合を発見・修正
   - 全12テスト成功、TDD完全準拠での実装完了
+- **Status**: CLOSED
+
+### ✅ Issue #43: /open/knowledge/listページの無限ループバグ修正
+- **完了日**: 2025-07-14
+- **カテゴリ**: 技術的修正
+- **修正内容**: KnowledgeListPageコンポーネントのuseEffect無限ループ修正
+- **原因**: useEffectの依存配列に毎回新しく生成されるparamsオブジェクトが含まれていた
+- **解決策**: 
+  - useEffect内でgetParams()を呼び出すように変更
+  - 依存配列からparamsとfetchDataを削除
+  - searchParams変更時のみデータ再取得するように修正
+- **影響範囲**: src/components/knowledge/KnowledgeListPage.tsx
+- **テスト**: 開発サーバーで動作確認済み、無限ループ解消を確認
 - **Status**: CLOSED
 
 ## 次のIssue

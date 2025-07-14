@@ -76,9 +76,10 @@ const KnowledgeListContent: React.FC<KnowledgeListPageProps> = ({ initialData })
 
   useEffect(() => {
     if (!initialData) {
+      const params = getParams();
       fetchData(params);
     }
-  }, [searchParams, initialData, params, fetchData]);
+  }, [searchParams, initialData]);
 
   // ナレッジアイテムレンダリング
   const renderKnowledgeItem = (knowledge: Knowledge) => (
