@@ -76,9 +76,9 @@ function MainLayout({
         <main 
           className={cn(
             "flex-1 container mx-auto px-4",
-            "pt-[70px]", // body { padding-top: 70px; } を再現
             className
           )}
+          style={{ paddingTop: '80px' }}
           id="content_top"
         >
           {children}
