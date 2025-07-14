@@ -163,6 +163,95 @@ const mockKnowledgeData: Record<string, Knowledge & {
     updateDatetime: '2024-01-05T10:00:00',
     files: [],
     comments: []
+  },
+  672: {
+    knowledgeId: 672,
+    title: 'React Server Components の活用方法',
+    content: `
+      <h2>React Server Components とは</h2>
+      <p>React Server Components (RSC) は、サーバーサイドでレンダリングされるReactコンポーネントです。</p>
+      
+      <h3>主な利点</h3>
+      <ul>
+        <li>バンドルサイズの削減</li>
+        <li>データフェッチングの最適化</li>
+        <li>SEO改善</li>
+        <li>初期表示速度の向上</li>
+      </ul>
+      
+      <h3>使用例</h3>
+      <pre><code>// Server Component (app/page.tsx)
+export default async function Page() {
+  const data = await fetch('https://api.example.com/data');
+  const result = await data.json();
+  
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;{result.title}&lt;/h1&gt;
+      &lt;ClientComponent data={result} /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+      
+      <h3>注意点</h3>
+      <p>Server Componentsでは、useState、useEffect等のクライアントサイドAPIは使用できません。</p>
+    `,
+    publicFlag: 1,
+    typeId: 1,
+    point: 200,
+    likeCount: 18,
+    commentCount: 7,
+    tags: [
+      { tagId: 1, tagName: 'Next.js' },
+      { tagId: 2, tagName: 'React' },
+      { tagId: 3, tagName: 'TypeScript' },
+      { tagId: 6, tagName: 'Server Components' }
+    ],
+    stocks: [
+      { stockId: 1, userId: 1, stockName: 'お気に入り' },
+      { stockId: 3, userId: 2, stockName: 'RSC関連' }
+    ],
+    targets: [],
+    groups: [],
+    editors: [],
+    editable: false,
+    insertUser: 1,
+    insertUserName: '山田太郎',
+    insertDatetime: '2024-01-20T09:00:00',
+    updateUser: 1,
+    updateUserName: '山田太郎',
+    updateDatetime: '2024-01-22T16:45:00',
+    files: [
+      { 
+        fileNo: 3, 
+        fileName: 'rsc-best-practices.md',
+        fileSize: 1024000,
+        mimeType: 'text/markdown'
+      }
+    ],
+    comments: [
+      {
+        commentNo: 1,
+        comment: '<p>Server Componentsの概念がよく理解できました。特にバンドルサイズ削減の効果は大きいですね。</p>',
+        insertUser: '伊藤綾子',
+        insertDatetime: '2024-01-21T10:30:00',
+        likeCount: 4
+      },
+      {
+        commentNo: 2,
+        comment: '<p>クライアントサイドとサーバーサイドの境界を意識した設計が重要だと感じました。</p>',
+        insertUser: '高橋健太',
+        insertDatetime: '2024-01-21T14:15:00',
+        likeCount: 6
+      },
+      {
+        commentNo: 3,
+        comment: '<p>実際のプロジェクトで使ってみましたが、パフォーマンス改善効果は大きかったです。</p>',
+        insertUser: '松本由美',
+        insertDatetime: '2024-01-22T11:00:00',
+        likeCount: 2
+      }
+    ]
   }
 };
 

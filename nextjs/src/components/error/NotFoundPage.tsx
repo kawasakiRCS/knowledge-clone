@@ -18,7 +18,8 @@ const NotFoundPage: React.FC<NotFoundPageProps> = ({
       <div className="container">
         <h3>Error</h3>
         <p>
-          message.httpstatus.404
+          お探しのページが見つかりませんでした。<br />
+          指定されたURLが正しいかご確認ください。
         </p>
         
         {errorAttribute && (

@@ -676,3 +676,59 @@
   - 最終稼働：`http://localhost:3002`
 - **Status**: APPLIED
 
+## 🔧 バックエンド移植計画策定（進行中）
+
+### 📋 背景・問題認識
+- **現状**: フロントエンド（JSPページ移植）のみの計画
+- **不足**: 完全なバックエンドロジック移植計画が欠如
+- **必要性**: 旧Javaシステムの完全移植には78テーブル・20+Controllerの移植が必須
+
+### 🎯 策定中の計画
+1. **BACKEND_MIGRATION_PLAN.md**: バックエンド移植専用計画書
+2. **API_DESIGN.md**: RESTful API設計書  
+3. **DATA_MIGRATION_PLAN.md**: データ移行計画書
+4. **既存計画との統合**: フロントエンド計画との調整
+
+### 📊 Java旧システム規模分析
+- **Controller数**: 20+クラス（control/配下）
+- **DAO数**: 78テーブル対応（dao/配下）
+- **バッチ処理**: 12+クラス（bat/配下）
+- **JavaScript**: 25+ファイル（React化必要）
+- **JSP**: 110ページ（移植計画済み）
+
+### 🔄 統合的進捗管理方針
+- **PROGRESS.md中央管理**: フロントエンド・バックエンド進捗を統合記録
+- **計画書間の整合性**: 重複・矛盾防止のクロスリファレンス
+- **段階的実装**: TDD対応の独立可能な実装単位設計
+
+### 📅 現在の作業状況
+- **2025-07-14 開始**: バックエンド移植計画策定着手
+- **✅ 完了**: Javaソースコード全体分析（54 Controller、54 DAO、40+ Logic）
+- **✅ 完了**: BACKEND_MIGRATION_PLAN.md作成
+- **進行中**: 既存計画との統合・調整
+
+### 📊 Java旧システム詳細分析結果
+#### Controller分析 (54クラス)
+- **open/**: 11クラス（公開API） - view, list, signup, password等
+- **protect/**: 14クラス（認証API） - edit, save, group, stock等  
+- **admin/**: 16クラス（管理API） - users, system, template等
+- **api/**: 5クラス（専用API） - knowledges, groups, users等
+
+#### DAO分析 (54クラス + 48gen)
+- **Core**: knowledges, users, groups, tags, comments
+- **Social**: likes, stocks, notifications
+- **Admin**: configs, templates, webhooks
+- **File**: knowledge_files, account_images
+
+#### Logic分析 (40+クラス)
+- **Core Logic**: KnowledgeLogic, AccountLogic, GroupLogic
+- **System Logic**: MailLogic, NotificationLogic, WebhookLogic
+- **Activity**: アクティビティ処理・ポイントシステム
+- **Notification**: 通知・メール・Webhook送信
+
+### 🎯 作成済み移植計画
+1. **BACKEND_MIGRATION_PLAN.md**: 54 Controller → API Routes変換表
+2. **段階的実装**: Phase 1-5（計14週間）
+3. **TDD戦略**: API/Service/Repository層のテスト戦略
+4. **認証・認可**: Java認証システム完全移植計画
+
