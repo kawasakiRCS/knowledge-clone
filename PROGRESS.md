@@ -552,6 +552,42 @@
 - **型安全性**: ✅ TypeScript strict mode
 - **互換性**: ✅ 旧システムCSS/URL構造維持
 
+## 🚨 データベース接続問題調査結果（2025-07-14）
+
+### 📊 問題概要
+- **現象**: Next.jsアプリケーションからPostgreSQLコンテナ（port 5433）への接続エラー
+- **エラー**: `Can't reach database server at localhost:5433`
+- **環境**: Rancher Desktop + WSL、外部PostgreSQLコンテナは正常稼働
+
+### 🔍 調査結果
+1. **PostgreSQLコンテナ状態**: ✅ 正常稼働（knowledge-postgres、16時間稼働）
+2. **ポートマッピング**: ✅ 正常（0.0.0.0:5433->5432/tcp）
+3. **コンテナ内接続**: ✅ 正常（pg_isready成功、psqlクエリ成功）
+4. **Windows接続**: ❌ 失敗（PowerShell Test-NetConnection失敗）
+
+### 🔧 試行した修正（元に戻し済み）
+- ~~Prismaクライアント重複設定削除~~（元に戻し済み）
+- ~~Next.js設定最適化~~（元に戻し済み）
+- ~~DATABASE_URL接続先変更~~（元に戻し済み）
+- ~~テスト用API作成~~（削除済み）
+
+### 💡 根本原因
+**Rancher Desktop + WSL環境でのWindows-コンテナ間ネットワーク通信問題**
+- Docker Desktop未使用のため、Windows標準のDockerネットワークドライバーが不在
+- WSL環境とWindowsホスト間でのポート転送問題
+- Rancher Desktop特有のネットワーク設定問題
+
+### 🚀 推奨解決策
+**WSL環境内での開発継続**
+- WSL内でNext.js開発サーバーを起動
+- PostgreSQLコンテナとNext.jsアプリケーションを同一ネットワーク空間で実行
+- Windowsからの接続問題を回避
+
+### 📝 対応方針
+- 現在の外部コンテナ構成を維持
+- 開発環境をWSL内に移行して接続問題を解決
+- 他の開発作業は継続可能
+
 ---
 **最終更新**: 2025-07-14
 **本日の成果**: 
@@ -559,9 +595,10 @@
 - **実装完了API**: ナレッジ詳細、保護ナレッジCRUD、アカウント管理、ファイル・タグ管理
 - **テスト実行**: 全94テストケース（88成功、6軽微な失敗）
 - **技術基盤確立**: Repository/Service/API Pattern、認証・権限システム、TDD完全準拠
+- **接続問題調査**: Rancher Desktop + WSL環境固有のネットワーク問題特定
 
-**次回セッション開始時**: BACKEND_MIGRATION_PLAN.mdに従ってPhase 1 Week 3開始
-- 推奨: 通知システムAPI（/api/notifications/）またはコメントAPI（/api/comments/）
+**次回セッション開始時**: WSL環境での開発継続、またはBACKEND_MIGRATION_PLAN.mdに従ってPhase 1 Week 3開始
+- 推奨: WSL環境セットアップまたは通知システムAPI（/api/notifications/）実装
 
 ### ✅ 技術修正 #2: Next.js 404エラー解消とApp Router完全移行
 - **完了日**: 2025-07-12
