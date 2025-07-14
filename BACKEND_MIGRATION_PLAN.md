@@ -432,6 +432,52 @@ describe('KnowledgeRepository', () => {
 - **技術リスク**: 複雑クエリ性能劣化 → 早期プロトタイプ検証
 - **データリスク**: 移行時データ損失 → 段階的移行・バックアップ
 - **互換性リスク**: 既存フロントエンドとの不整合 → API契約テスト
+- **スキーマ不整合リスク**: Prismaスキーマ・TypeScript型定義・実DB構造の不一致 → 厳密な同期手順遵守
+
+### 4. スキーマ同期管理 🔧
+
+#### 4.1. データソース優先順位（厳守）
+```
+1. 最優先: knowledge_schema.sql（実データベース構造）
+2. 修正対象: prisma/schema.prisma
+3. 修正対象: TypeScript型定義（src/types/*.ts）
+```
+
+#### 4.2. スキーマ変更時の必須手順
+```bash
+# 1. 実DBスキーマ確認
+grep -A 20 "CREATE TABLE target_table" knowledge_schema.sql
+
+# 2. Prismaスキーマ修正
+vim nextjs/prisma/schema.prisma
+
+# 3. TypeScript型定義修正
+vim nextjs/src/types/index.ts
+
+# 4. Prismaクライアント再生成
+cd nextjs && npx prisma generate
+
+# 5. Next.jsキャッシュクリア
+rm -rf .next
+
+# 6. 動作確認テスト実行
+npm test && npm run build
+```
+
+#### 4.3. 禁止事項
+- ❌ `knowledge_schema.sql`の修正（実DBが変更不可のため）
+- ❌ 古い型定義の放置（`anonymous`カラム事件の再発防止）
+- ❌ Prismaスキーマとコード内型定義の不整合放置
+- ❌ スキーマ変更後のPrismaクライアント再生成忘れ
+
+#### 4.4. チェックリスト
+各API実装時・スキーマ変更時の必須確認事項：
+- [ ] `knowledge_schema.sql`とPrismaスキーマの完全一致
+- [ ] TypeScript型定義とPrismaスキーマの一致
+- [ ] 存在しないカラム（`anonymous`等）の削除確認
+- [ ] `npx prisma generate`実行済み
+- [ ] 開発サーバー正常起動
+- [ ] APIエンドポイント正常動作
 
 ---
 

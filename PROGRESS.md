@@ -600,6 +600,30 @@
 **次回セッション開始時**: WSL環境での開発継続、またはBACKEND_MIGRATION_PLAN.mdに従ってPhase 1 Week 3開始
 - 推奨: WSL環境セットアップまたは通知システムAPI（/api/notifications/）実装
 
+### ✅ 技術修正 #6: knowledges.anonymousカラムエラー完全修正
+- **完了日**: 2025-07-14
+- **カテゴリ**: 技術的修正 - データベーススキーマ同期
+- **問題**: `/api/knowledge/list`で`knowledges.anonymous`カラム不存在エラー
+- **根本原因**: 
+  - 最新コミットで`prisma.ts`削除時にTypeScript型定義に古いスキーマ情報が残存
+  - `src/types/index.ts`の`Knowledge`インターフェースに存在しない`anonymous`カラム定義
+  - 実DB（`knowledge_schema.sql`）には`anonymous`カラム不存在、Prismaスキーマとの不整合
+- **実行修正**:
+  1. **実DBスキーマ確認**: `knowledge_schema.sql`から正しい`knowledges`テーブル構造（17カラム）を確認
+  2. **Prismaスキーマ修正**: `anonymous`カラム削除、実DB構造に完全一致
+  3. **TypeScript型定義修正**: `src/types/index.ts`から`anonymous: number`行削除
+  4. **Prismaクライアント再生成**: `npx prisma generate`で型生成
+  5. **キャッシュクリア**: Next.jsキャッシュ削除（`rm -rf .next`）
+- **結果**: 
+  - ✅ `/api/knowledge/list?offset=0`正常動作復旧
+  - ✅ 実データ取得成功（ID 672「LibreChat 構成」など678件）
+  - ✅ 実DB構造との完全同期確立
+- **予防策**: `BACKEND_MIGRATION_PLAN.md`にスキーマ同期管理セクション追加
+  - データソース優先順位明確化（`knowledge_schema.sql` > Prismaスキーマ > TypeScript型定義）
+  - スキーマ変更時の必須手順・禁止事項・チェックリスト策定
+  - `anonymous`カラム事件の再発防止策明記
+- **Status**: APPLIED
+
 ### ✅ 技術修正 #2: Next.js 404エラー解消とApp Router完全移行
 - **完了日**: 2025-07-12
 - **カテゴリ**: アーキテクチャ修正
