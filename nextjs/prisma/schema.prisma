@@ -12,16 +12,20 @@ datasource db {
 
 // Users table
 model User {
-  userNo         Int       @id @default(autoincrement()) @map("user_no")
-  userId         String    @unique @map("user_id") @db.VarChar(256)
-  password       String    @db.VarChar(1024)
+  userId         Int       @id @default(autoincrement()) @map("user_id")
+  userKey        String    @unique @map("user_key") @db.VarChar(256)
   userName       String    @map("user_name") @db.VarChar(256)
+  password       String    @db.VarChar(1024)
+  salt           String?   @db.VarChar(1024)
+  localeKey      String?   @map("locale_key") @db.VarChar(12)
   mailAddress    String?   @map("mail_address") @db.VarChar(256)
-  insertUser     Int       @map("insert_user")
-  insertDatetime DateTime  @map("insert_datetime") @db.Timestamp(6)
-  updateUser     Int       @map("update_user")
-  updateDatetime DateTime  @map("update_datetime") @db.Timestamp(6)
-  deleteFlag     Int       @map("delete_flag")
+  authLdap       Int?      @map("auth_ldap")
+  rowId          String?   @map("row_id") @db.VarChar(64)
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @default(0) @map("delete_flag")
 
   // Relations
   createdKnowledges Knowledge[] @relation("KnowledgeAuthor")
@@ -31,27 +35,26 @@ model User {
 
 // Knowledges table
 model Knowledge {
-  knowledgeId    String    @id @map("knowledge_id") @db.VarChar(10)
+  knowledgeId    BigInt    @id @default(autoincrement()) @map("knowledge_id")
   title          String    @db.VarChar(1024)
   content        String?
-  publicFlag     Int       @map("public_flag")
+  publicFlag     Int?      @map("public_flag")
   tagIds         String?   @map("tag_ids") @db.VarChar(1024)
-  tagNames       String?   @map("tag_names") @db.VarChar(1024)
-  likeCount      Int       @default(0) @map("like_count")
-  commentCount   Int       @default(0) @map("comment_count")
-  viewCount      Int       @default(0) @map("view_count")
+  tagNames       String?   @map("tag_names")
+  likeCount      BigInt?   @default(0) @map("like_count")
+  commentCount   Int?      @default(0) @map("comment_count")
+  viewCount      BigInt?   @default(0) @map("view_count")
   typeId         Int?      @map("type_id")
-  notifyStatus   Int       @default(0) @map("notify_status")
-  point          Int?
-  anonymous      Int       @default(0)
-  insertUser     Int       @map("insert_user")
-  insertDatetime DateTime  @map("insert_datetime") @db.Timestamp(6)
-  updateUser     Int       @map("update_user")
-  updateDatetime DateTime  @map("update_datetime") @db.Timestamp(6)
-  deleteFlag     Int       @default(0) @map("delete_flag")
+  notifyStatus   Int?      @default(0) @map("notify_status")
+  point          Int       @default(0)
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @default(0) @map("delete_flag")
 
   // Relations
-  author User @relation("KnowledgeAuthor", fields: [insertUser], references: [userNo])
+  author User? @relation("KnowledgeAuthor", fields: [insertUser], references: [userId])
   
   @@map("knowledges")
 }
@@ -60,11 +63,66 @@ model Knowledge {
 model Tag {
   tagId          Int       @id @default(autoincrement()) @map("tag_id")
   tagName        String    @unique @map("tag_name") @db.VarChar(128)
-  insertUser     Int       @map("insert_user")
-  insertDatetime DateTime  @map("insert_datetime") @db.Timestamp(6)
-  updateUser     Int       @map("update_user")
-  updateDatetime DateTime  @map("update_datetime") @db.Timestamp(6)
-  deleteFlag     Int       @default(0) @map("delete_flag")
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @default(0) @map("delete_flag")
   
   @@map("tags")
+}
+
+// Template Masters table
+model TemplateMaster {
+  typeId         Int       @id @map("type_id")
+  typeName       String    @map("type_name") @db.VarChar(256)
+  typeIcon       String?   @map("type_icon") @db.VarChar(64)
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @default(0) @map("delete_flag")
+  
+  @@map("template_masters")
+}
+
+// Groups table
+model Group {
+  groupId        Int       @id @default(autoincrement()) @map("group_id")
+  groupName      String    @map("group_name") @db.VarChar(256)
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @default(0) @map("delete_flag")
+  
+  @@map("groups")
+}
+
+// Knowledge Tags (many-to-many relation)
+model KnowledgeTag {
+  knowledgeId    BigInt    @map("knowledge_id")
+  tagId          Int       @map("tag_id")
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @default(0) @map("delete_flag")
+  
+  @@id([knowledgeId, tagId])
+  @@map("knowledge_tags")
+}
+
+// Knowledge Groups (many-to-many relation)
+model KnowledgeGroup {
+  knowledgeId    BigInt    @map("knowledge_id")
+  groupId        Int       @map("group_id")
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @default(0) @map("delete_flag")
+  
+  @@id([knowledgeId, groupId])
+  @@map("knowledge_groups")
 }

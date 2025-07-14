@@ -2,134 +2,10 @@
  * ナレッジ一覧API
  * 
  * @description 旧システムのapi/knowledge/list.apiに対応
- * Pages RouterからApp Routerに移行
+ * Pages RouterからApp Routerに移行 - 実DBデータ取得版
  */
 import { NextRequest, NextResponse } from 'next/server';
-
-// モックデータ（実際の実装では DB から取得）
-const mockKnowledges = [
-  {
-    knowledgeId: 2,
-    title: "Reactのベストプラクティス",
-    content: "Reactアプリケーション開発でのベストプラクティスをまとめました。",
-    insertUser: 2,
-    insertUserName: "佐藤花子",
-    insertDatetime: "2025-01-09T14:30:00Z",
-    updateUser: 2,
-    updateUserName: "佐藤花子", 
-    updateDatetime: "2025-01-09T14:30:00Z",
-    publicFlag: 1,
-    likeCount: 8,
-    commentCount: 5,
-    point: 15,
-    pointOnTerm: 3,
-    typeId: 1,
-    tagNames: "React,JavaScript",
-    tagIds: "2,1",
-    pin: true
-  },
-  {
-    knowledgeId: 1,
-    title: "Next.js入門ガイド",
-    content: "Next.jsの基本的な使い方について説明します。",
-    insertUser: 1,
-    insertUserName: "田中太郎",
-    insertDatetime: "2025-01-10T09:00:00Z",
-    updateUser: 1,
-    updateUserName: "田中太郎",
-    updateDatetime: "2025-01-10T09:00:00Z",
-    publicFlag: 1,
-    likeCount: 5,
-    commentCount: 3,
-    point: 10,
-    pointOnTerm: 2,
-    typeId: 1,
-    tagNames: "Next.js,React,TypeScript",
-    tagIds: "4,2,3",
-    pin: false
-  },
-  {
-    knowledgeId: 3,
-    title: "TypeScript型定義のコツ",
-    content: "TypeScriptで効果的な型定義を行うためのテクニックを紹介します。",
-    insertUser: 3,
-    insertUserName: "鈴木一郎",
-    insertDatetime: "2025-01-08T11:15:00Z",
-    updateUser: 3,
-    updateUserName: "鈴木一郎",
-    updateDatetime: "2025-01-08T11:15:00Z",
-    publicFlag: 1,
-    likeCount: 12,
-    commentCount: 7,
-    point: 20,
-    pointOnTerm: 5,
-    typeId: 1,
-    tagNames: "TypeScript,JavaScript",
-    tagIds: "3,1",
-    pin: false
-  },
-  {
-    knowledgeId: 4,
-    title: "Javaメモリ管理について",
-    content: "Javaアプリケーションでのメモリ管理の重要なポイントを解説します。",
-    insertUser: 4,
-    insertUserName: "山田次郎",
-    insertDatetime: "2025-01-07T16:45:00Z",
-    updateUser: 4,
-    updateUserName: "山田次郎",
-    updateDatetime: "2025-01-07T16:45:00Z",
-    publicFlag: 1,
-    likeCount: 6,
-    commentCount: 2,
-    point: 12,
-    pointOnTerm: 1,
-    typeId: 1,
-    tagNames: "Java",
-    tagIds: "5",
-    pin: false
-  },
-  {
-    knowledgeId: 5,
-    title: "デバッグのQ&A集",
-    content: "よくあるデバッグ問題とその解決方法をQ&A形式でまとめました。",
-    insertUser: 5,
-    insertUserName: "高橋美咲",
-    insertDatetime: "2025-01-06T13:20:00Z",
-    updateUser: 5,
-    updateUserName: "高橋美咲",
-    updateDatetime: "2025-01-06T13:20:00Z",
-    publicFlag: 1,
-    likeCount: 9,
-    commentCount: 4,
-    point: 18,
-    pointOnTerm: 4,
-    typeId: 2,
-    tagNames: "デバッグ,トラブルシューティング",
-    tagIds: "6,7",
-    pin: false
-  }
-];
-
-const mockTags = [
-  { tagId: 1, tagName: "JavaScript", knowledgeCount: 15 },
-  { tagId: 2, tagName: "React", knowledgeCount: 12 },
-  { tagId: 3, tagName: "TypeScript", knowledgeCount: 8 },
-  { tagId: 4, tagName: "Next.js", knowledgeCount: 6 },
-  { tagId: 5, tagName: "Java", knowledgeCount: 20 }
-];
-
-const mockGroups = [
-  { groupId: 1, groupName: "開発チーム", groupKnowledgeCount: 25 },
-  { groupId: 2, groupName: "QAチーム", groupKnowledgeCount: 10 },
-  { groupId: 3, groupName: "デザインチーム", groupKnowledgeCount: 8 }
-];
-
-const mockTemplates = {
-  "1": { typeId: 1, typeName: "ナレッジ", typeIcon: "fa-file-text-o" },
-  "2": { typeId: 2, typeName: "Q&A", typeIcon: "fa-question-circle-o" },
-  "3": { typeId: 3, typeName: "イベント", typeIcon: "fa-calendar" },
-  "4": { typeId: 4, typeName: "ブックマーク", typeIcon: "fa-bookmark" }
-};
+import { prisma } from '@/lib/db';
 
 /**
  * ナレッジ一覧取得API
@@ -141,46 +17,142 @@ export async function GET(request: NextRequest) {
     // パラメータ取得
     const keyword = searchParams.get('keyword') || '';
     const tag = searchParams.get('tag') || '';
-    // group, creator, templateは将来的に実装予定
+    const group = searchParams.get('group') || '';
+    const user = searchParams.get('user') || '';
+    const tagNames = searchParams.get('tagNames') || '';
     const offset = parseInt(searchParams.get('offset') || '0');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const templates = searchParams.getAll('template');
 
-    // フィルタリング処理（モック）
-    let filteredKnowledges = mockKnowledges;
-    
+    // ナレッジデータをDBから取得
+    let whereConditions: any = {
+      deleteFlag: 0,
+      publicFlag: 1, // 公開記事のみ
+    };
+
+    // キーワード検索
     if (keyword) {
-      filteredKnowledges = filteredKnowledges.filter(k => 
-        k.title.includes(keyword) || k.content.includes(keyword)
-      );
-    }
-    
-    if (tag) {
-      filteredKnowledges = filteredKnowledges.filter(k => 
-        k.tagNames.includes(tag)
-      );
+      whereConditions.OR = [
+        { title: { contains: keyword, mode: 'insensitive' } },
+        { content: { contains: keyword, mode: 'insensitive' } },
+      ];
     }
 
-    // ページネーション
-    const total = filteredKnowledges.length;
-    const paginatedKnowledges = filteredKnowledges.slice(offset, offset + limit);
+    // タグ名検索
+    if (tagNames) {
+      whereConditions.tagNames = { contains: tagNames };
+    }
+
+    // テンプレート種別フィルタ
+    if (templates.length > 0) {
+      whereConditions.typeId = { in: templates.map(t => parseInt(t)) };
+    }
+
+    // ナレッジ取得（ユーザー情報付き）
+    const knowledges = await prisma.knowledge.findMany({
+      where: whereConditions,
+      include: {
+        author: true,
+      },
+      orderBy: {
+        insertDatetime: 'desc',
+      },
+      skip: offset,
+      take: limit,
+    });
+
+    // 総件数取得
+    const total = await prisma.knowledge.count({
+      where: whereConditions,
+    });
+
+    // ナレッジデータの変換
+    const transformedKnowledges = knowledges.map(k => ({
+      knowledgeId: Number(k.knowledgeId),
+      title: k.title,
+      content: k.content || '',
+      insertUser: k.insertUser || 0,
+      insertUserName: k.author?.userName || '不明',
+      insertDatetime: k.insertDatetime?.toISOString() || '',
+      updateUser: k.updateUser || 0,
+      updateUserName: k.author?.userName || '不明',
+      updateDatetime: k.updateDatetime?.toISOString() || '',
+      publicFlag: k.publicFlag || 1,
+      likeCount: Number(k.likeCount || 0),
+      commentCount: k.commentCount || 0,
+      point: k.point || 0,
+      typeId: k.typeId || -100,
+      tagNames: k.tagNames || '',
+      tagIds: k.tagIds || '',
+      pin: false, // 将来的に実装
+    }));
+
+    // タグ情報を取得
+    const tags = await prisma.$queryRaw`
+      SELECT t.tag_id, t.tag_name, COUNT(kt.knowledge_id) as knowledge_count
+      FROM tags t
+      LEFT JOIN knowledge_tags kt ON t.tag_id = kt.tag_id AND kt.delete_flag = 0
+      WHERE t.delete_flag = 0
+      GROUP BY t.tag_id, t.tag_name
+      ORDER BY knowledge_count DESC
+      LIMIT 20
+    ` as any[];
+
+    const transformedTags = tags.map(t => ({
+      tagId: t.tag_id,
+      tagName: t.tag_name,
+      knowledgeCount: Number(t.knowledge_count),
+    }));
+
+    // グループ情報を取得
+    const groups = await prisma.$queryRaw`
+      SELECT g.group_id, g.group_name, COUNT(kg.knowledge_id) as knowledge_count
+      FROM groups g
+      LEFT JOIN knowledge_groups kg ON g.group_id = kg.group_id AND kg.delete_flag = 0
+      WHERE g.delete_flag = 0
+      GROUP BY g.group_id, g.group_name
+      ORDER BY knowledge_count DESC
+      LIMIT 10
+    ` as any[];
+
+    const transformedGroups = groups.map(g => ({
+      groupId: g.group_id,
+      groupName: g.group_name,
+      groupKnowledgeCount: Number(g.knowledge_count),
+    }));
+
+    // テンプレート情報を取得
+    const templateMasters = await prisma.templateMaster.findMany({
+      where: { deleteFlag: 0 },
+      orderBy: { typeId: 'asc' },
+    });
+
+    const transformedTemplates: Record<number, any> = {};
+    templateMasters.forEach(t => {
+      transformedTemplates[t.typeId] = {
+        typeId: t.typeId,
+        typeName: t.typeName,
+        typeIcon: t.typeIcon || 'fa-file-text-o',
+      };
+    });
 
     // レスポンス
     const response = {
-      knowledges: paginatedKnowledges,
+      knowledges: transformedKnowledges,
       total,
       offset,
       limit,
-      tags: mockTags,
-      groups: mockGroups,
-      templates: mockTemplates,
-      selectedTemplates: []
+      tags: transformedTags,
+      groups: transformedGroups,
+      templates: transformedTemplates,
+      selectedTemplates: [],
     };
 
     return NextResponse.json(response);
   } catch (error) {
     console.error('Knowledge list API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     );
   }

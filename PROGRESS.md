@@ -5,7 +5,7 @@
 - **完了ページ数**: 32ページ（+ 技術的修正5件 + 自動化システム1件）
 - **進捗率**: 29.1%
 - **完了Issue数**: 33 Issues
-- **技術的改善**: 6件（App Router移行、翻訳システム、ビルド修正、Issue連携、無限ループ修正）
+- **技術的改善**: 6件（App Router移行、翻訳システム、ビルド修正、Issue連携、無限ループ修正、実データ統合）
 
 ## 完了済みIssue（31 Issues）
 
@@ -640,5 +640,39 @@
   - ✅ Next.js 15完全対応
   - ✅ 型安全性大幅向上
 - **技術**: Next.js 15、TypeScript、ESLint、Suspense
+- **Status**: APPLIED
+
+### ✅ 技術修正 #5: ナレッジ一覧ページ実データ対応
+- **完了日**: 2025-07-14
+- **カテゴリ**: 技術的修正 - データベース統合
+- **問題**: `/open/knowledge/list`でダミーデータ表示（実DB未接続）
+- **調査結果**: 
+  - APIルート：ハードコードされたモックデータを返却
+  - Prismaスキーマ：実際のDB構造と不一致
+  - DB接続：localhost:5433のPostgreSQLに実データ678件存在
+- **実装詳細**:
+  1. **Prismaスキーマ修正**:
+     - `users`テーブル：`user_id`（主キー）に変更
+     - `knowledges`テーブル：`knowledge_id`（BigInt）に変更  
+     - `template_masters`、`groups`、`knowledge_tags`、`knowledge_groups`テーブル追加
+  2. **API実装修正**（`/api/knowledge/list/route.ts`）:
+     - モックデータ削除、実DB取得に変更
+     - Prismaクエリ実装（ユーザー結合、検索フィルタ）
+     - タグ・グループ・テンプレート情報取得
+     - BigInt→number型変換、NULL値処理
+  3. **データベース接続検証**:
+     - 接続テストスクリプト作成（`test-db-connection.js`）
+     - 実データ確認スクリプト作成（`check-real-data-fixed.js`）
+     - API経由テストエンドポイント作成（`/api/test-db`）
+- **結果**: 
+  - ✅ 実データ678件取得成功
+  - ✅ 最新記事："EXboard用キーボードショートカット拡張機能を作成しました"
+  - ✅ タグ情報：AWS(55件)、Linux(43件)、SQL Server(34件)など20タグ
+  - ✅ グループ情報：特命プロジェクト室(10件)、*社内(7件)など5グループ
+  - ✅ テンプレート：knowledge、event、presentation、bookmark、障害情報
+- **技術**: Prisma ORM、PostgreSQL 15.13、BigInt型処理、データ変換
+- **開発環境整理**: 
+  - 重複Next.jsプロセス停止（ポート3000-3005整理）
+  - 最終稼働：`http://localhost:3002`
 - **Status**: APPLIED
 
