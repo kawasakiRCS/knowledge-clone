@@ -95,6 +95,27 @@ const KnowledgeListContent: React.FC<KnowledgeListPageProps> = ({ initialData })
     });
   }, [knowledges]);
 
+  // ユーザー情報表示コンポーネント
+  const renderUserInfo = (userId: number, userName: string, showLink: boolean = true) => (
+    <>
+      <img
+        src="/images/loader.gif"
+        data-echo={`/open/account/icon/${userId}`}
+        alt="icon"
+        width="20"
+        height="20"
+        style={{ borderRadius: '50%', marginRight: '5px' }}
+      />
+      {showLink ? (
+        <a href={`/open/account/info/${userId}`} className="text-primary btn-link">
+          {userName}
+        </a>
+      ) : (
+        <span>{userName}</span>
+      )}
+    </>
+  );
+
   // ナレッジアイテムレンダリング
   const renderKnowledgeItem = (knowledge: Knowledge) => (
     <div key={knowledge.knowledgeId} className="knowledge_item" data-testid="knowledge-item">
@@ -117,33 +138,13 @@ const KnowledgeListContent: React.FC<KnowledgeListPageProps> = ({ initialData })
         </a>
         
         <div>
-          <img
-            src="/images/loader.gif"
-            data-echo={`/open/account/icon/${knowledge.insertUser}`}
-            alt="icon"
-            width="20"
-            height="20"
-            style={{ borderRadius: '50%', marginRight: '5px' }}
-          />
-          <a href={`/open/account/info/${knowledge.insertUser}`} className="text-primary btn-link">
-            {knowledge.insertUserName}
-          </a>
-          {` ${t('knowledge.view.info.insert')} ${new Date(knowledge.insertDatetime).toLocaleDateString()}`}
+          {renderUserInfo(knowledge.insertUser, knowledge.insertUserName)}
+          {` ${t('knowledge.view.info.insert', knowledge.insertUserName, new Date(knowledge.insertDatetime).toLocaleDateString())}`}
           {knowledge.insertDatetime !== knowledge.updateDatetime && (
             <>
               {' ('}
-              <img
-                src="/images/loader.gif"
-                data-echo={`/open/account/icon/${knowledge.updateUser}`}
-                alt="icon"
-                width="20"
-                height="20"
-                style={{ borderRadius: '50%', marginRight: '5px' }}
-              />
-              <a href={`/open/account/info/${knowledge.updateUser}`} className="text-primary btn-link">
-                {knowledge.updateUserName}
-              </a>
-              {` ${t('knowledge.view.info.update')} ${new Date(knowledge.updateDatetime).toLocaleDateString()}`}
+              {renderUserInfo(knowledge.updateUser, knowledge.updateUserName)}
+              {` ${t('knowledge.view.info.update', knowledge.updateUserName, new Date(knowledge.updateDatetime).toLocaleDateString())}`}
               {')'}
             </>
           )}
