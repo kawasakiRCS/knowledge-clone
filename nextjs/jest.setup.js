@@ -90,3 +90,157 @@ jest.mock('next-auth/react', () => ({
   },
   signOut: jest.fn(),
 }))
+
+// Mock useLocale hook
+jest.mock('@/hooks/useLocale', () => ({
+  useLocale: () => ({
+    locale: 'ja',
+    t: (key, ...args) => {
+      const translations = {
+        'knowledge.list.kind.list': 'ナレッジ一覧',
+        'knowledge.list.kind.popular': '人気',
+        'knowledge.list.kind.stock': 'ストック',
+        'knowledge.list.kind.history': '履歴',
+        'knowledge.list.empty': 'ナレッジが登録されていません',
+        'label.unread': '未読',
+        'knowledge.view.info.insert': '%sが%sに登録',
+        'knowledge.view.info.update': '(%sが%sに更新)',
+        'knowledge.list.search': 'ナレッジを検索',
+        'knowledge.list.back': '一覧に戻る',
+        'label.backlist': '一覧に戻る',
+        'label.apply': '適用',
+        'knowledge.histories.title': '編集履歴',
+        'knowledge.histories.empty': '編集履歴はありません',
+        'knowledge.histories.back': '戻る',
+        'knowledge.history.title': '履歴詳細',
+        'label.previous': '前へ',
+        'label.next': '次へ',
+        'knowledge.search.groups': 'グループ',
+        'knowledge.search.keyword': 'キーワード',
+        'knowledge.search.tags': 'タグ',
+        'knowledge.search.creator': '作成者',
+        'knowledge.search.placeholder': 'キーワードを入力',
+        'knowledge.add.label.type': 'テンプレート',
+        'knowledge.add.label.tags': 'タグを入力',
+        'knowledge.navbar.search': '検索',
+        'label.search': '検索',
+        'label.clear': 'クリア',
+        'label.search.tags': 'タグ検索',
+        'label.search.groups': 'グループ検索',
+      };
+      
+      let translation = translations[key] || key;
+      
+      // パラメータの置換
+      if (args.length > 0) {
+        args.forEach((arg) => {
+          translation = translation.replace('%s', String(arg));
+        });
+      }
+      
+      return translation;
+    },
+  }),
+}))
+
+// Mock useAuth hook
+jest.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    login: jest.fn(),
+    logout: jest.fn(),
+  }),
+}))
+
+// Mock Next.js Web API (Request, Response, etc.) for API route tests
+if (typeof global.Request === 'undefined') {
+  global.Request = class Request {
+    constructor(input, init) {
+      this.url = typeof input === 'string' ? input : input.url;
+      this.method = init?.method || 'GET';
+      this.headers = new Headers(init?.headers);
+      this.body = init?.body;
+    }
+    
+    async json() {
+      return JSON.parse(this.body || '{}');
+    }
+  };
+}
+
+if (typeof global.Response === 'undefined') {
+  global.Response = class Response {
+    constructor(body, init) {
+      this.body = body;
+      this.status = init?.status || 200;
+      this.headers = new Headers(init?.headers);
+      this.ok = this.status >= 200 && this.status < 300;
+    }
+    
+    async json() {
+      return JSON.parse(this.body || '{}');
+    }
+    
+    static json(data, init) {
+      return new Response(JSON.stringify(data), {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init?.headers || {}),
+        },
+      });
+    }
+  };
+}
+
+if (typeof global.Headers === 'undefined') {
+  global.Headers = class Headers {
+    constructor(init) {
+      this._headers = new Map();
+      if (init) {
+        Object.entries(init).forEach(([key, value]) => {
+          this._headers.set(key.toLowerCase(), value);
+        });
+      }
+    }
+    
+    get(name) {
+      return this._headers.get(name.toLowerCase());
+    }
+    
+    set(name, value) {
+      this._headers.set(name.toLowerCase(), value);
+    }
+    
+    has(name) {
+      return this._headers.has(name.toLowerCase());
+    }
+  };
+}
+
+// Mock react-markdown for components that use it
+jest.mock('react-markdown', () => {
+  return function ReactMarkdown({ children }) {
+    return React.createElement('div', { 
+      className: 'mock-react-markdown',
+      dangerouslySetInnerHTML: { __html: children }
+    });
+  };
+});
+
+// Mock Next.js NextResponse for API route tests
+jest.mock('next/server', () => ({
+  NextResponse: {
+    json: (data, init) => {
+      return new Response(JSON.stringify(data), {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init?.headers || {}),
+        },
+      });
+    },
+  },
+}));

@@ -67,9 +67,9 @@ const customJestConfig = {
     'lcov'
   ],
   
-  // 変換除外パターン
+  // 変換除外パターン（ESM ライブラリを変換対象に含める）
   transformIgnorePatterns: [
-    '/node_modules/(?!(react-markdown|remark-gfm|rehype-highlight|highlight.js))',
+    '/node_modules/(?!(react-markdown|remark-.*|rehype-.*|micromark|decode-uri-component|split-on-first|filter-obj|query-string|unified|bail|is-plain-obj|trough|vfile|unist-.*|mdast-.*|hast-.*|property-information|space-separated-tokens|comma-separated-tokens|zwitch|html-void-elements|ccount|escape-string-regexp|markdown-table|trim-lines))',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
   
