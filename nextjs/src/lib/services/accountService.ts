@@ -200,15 +200,29 @@ export class AccountService {
    * @returns ポイント数
    */
   async getUserPoint(userId: number): Promise<number> {
-    // アクティビティポイントの集計（実装予定）
-    // 実際にはactivitiesテーブルから集計
-    const activities = await prisma.$queryRaw<{ total: bigint }[]>`
-      SELECT COALESCE(SUM(point), 0) as total 
-      FROM activities 
-      WHERE user_id = ${userId}
-    `;
+    // ポイント計算ロジック（実装予定）
+    // 実際のポイント計算は複雑なロジックが必要
+    // 現在は暫定的に0を返すが、後で以下を実装予定：
+    // - ナレッジ投稿数 × 10ポイント
+    // - いいね獲得数 × 5ポイント
+    // - コメント数 × 2ポイント
+    // - その他アクティビティボーナス
     
-    return Number(activities[0]?.total || 0);
+    try {
+      // ナレッジ投稿数をカウント
+      const knowledgeCount = await prisma.knowledge.count({
+        where: {
+          insertUser: userId,
+          deleteFlag: 0
+        }
+      });
+
+      // 暫定的なポイント計算（後で詳細実装）
+      return knowledgeCount * 10; // ナレッジ1件あたり10ポイント
+    } catch (error) {
+      console.error('Error calculating user points:', error);
+      return 0;
+    }
   }
 
   /**
