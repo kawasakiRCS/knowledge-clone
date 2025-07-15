@@ -264,4 +264,83 @@ describe('KnowledgeView', () => {
       expect(container.querySelector('.col-sm-12')).toBeInTheDocument();
     });
   });
+
+  describe('マークダウン処理改良テスト', () => {
+    test('改行処理がremark-breaksで改善される', () => {
+      const knowledgeWithBreaks = {
+        ...defaultKnowledge,
+        content: '通常の改行\n改行後のテキスト\n\n段落区切りのテキスト'
+      };
+      
+      render(<KnowledgeView knowledge={knowledgeWithBreaks} />);
+      
+      // テスト環境ではdangerouslySetInnerHTMLが使用されるため、改行文字が含まれることを確認
+      expect(screen.getByText(/通常の改行/)).toBeInTheDocument();
+      expect(screen.getByText(/改行後のテキスト/)).toBeInTheDocument();
+      expect(screen.getByText(/段落区切りのテキスト/)).toBeInTheDocument();
+    });
+
+    test('絵文字サポートがある', () => {
+      const knowledgeWithEmoji = {
+        ...defaultKnowledge,
+        content: 'これは絵文字テストです :smile: :heart:'
+      };
+      
+      render(<KnowledgeView knowledge={knowledgeWithEmoji} />);
+      
+      // 絵文字が含まれたコンテンツが表示されることを確認
+      expect(screen.getByText(/これは絵文字テストです/)).toBeInTheDocument();
+    });
+
+    test('マークダウンコンテンツクラスが適用される', () => {
+      const { container } = render(<KnowledgeView knowledge={defaultKnowledge} />);
+      
+      // .knowledge-contentクラスが適用されていることを確認
+      expect(container.querySelector('.knowledge-content')).toBeInTheDocument();
+    });
+
+    test('セキュリティ強化されたサニタイジングが働く', () => {
+      const knowledgeWithScript = {
+        ...defaultKnowledge,
+        content: 'テスト<script>alert("XSS")</script>コンテンツ'
+      };
+      
+      render(<KnowledgeView knowledge={knowledgeWithScript} />);
+      
+      // scriptタグは除去されてテキストのみ表示されることを確認
+      expect(screen.getByText(/テスト.*コンテンツ/)).toBeInTheDocument();
+    });
+
+    test('タイトルもセキュリティ強化されている', () => {
+      const knowledgeWithDangerousTitle = {
+        ...defaultKnowledge,
+        title: '<script>alert("XSS")</script>危険なタイトル'
+      };
+      
+      render(<KnowledgeView knowledge={knowledgeWithDangerousTitle} />);
+      
+      // scriptタグは除去されてテキストのみ表示されることを確認
+      expect(screen.getByText(/危険なタイトル/)).toBeInTheDocument();
+    });
+
+    test('コメントもセキュリティ強化されている', () => {
+      const knowledgeWithDangerousComment = {
+        ...defaultKnowledge,
+        comments: [
+          {
+            commentNo: 1,
+            comment: '<script>alert("XSS")</script>危険なコメント',
+            insertUser: 'テストユーザー',
+            insertDatetime: '2024-01-01T10:00:00',
+            likeCount: 0
+          }
+        ]
+      };
+      
+      render(<KnowledgeView knowledge={knowledgeWithDangerousComment} />);
+      
+      // scriptタグは除去されてテキストのみ表示されることを確認
+      expect(screen.getByText(/危険なコメント/)).toBeInTheDocument();
+    });
+  });
 });

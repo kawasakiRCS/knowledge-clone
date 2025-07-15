@@ -75,31 +75,34 @@
 /* コンテンツ */
 .knowledge-content {
   min-height: 200px;
-  line-height: 1.8;
+  line-height: 2.0em; /* 旧システム互換: 2.0em */
 }
 
 .knowledge-content h1 {
-  padding: 0.5em 0;
+  margin: 20px 0 10px;
+  padding: 0;
+  padding-bottom: 8px;
   border-bottom: 3px solid #eee;
   font-size: 28px;
-  margin-top: 30px;
-  margin-bottom: 20px;
+  color: black; /* 旧システム互換 */
 }
 
 .knowledge-content h2 {
-  padding: 0.5em 0;
+  margin: 20px 0 10px;
+  margin-top: 40px;
+  padding: 0;
+  padding-bottom: 8px;
   border-bottom: 2px solid #eee;
   font-size: 24px;
-  margin-top: 25px;
-  margin-bottom: 15px;
+  color: black; /* 旧システム互換 */
 }
 
 .knowledge-content h3 {
-  padding: 0.3em 0;
+  margin: 20px 0 10px;
+  padding: 0;
+  padding-bottom: 8px;
   border-bottom: 1px solid #eee;
-  font-size: 20px;
-  margin-top: 20px;
-  margin-bottom: 10px;
+  font-size: 18px; /* 旧システム互換: 20px → 18px */
 }
 
 .knowledge-content pre {
@@ -145,10 +148,22 @@
 }
 
 .knowledge-content blockquote {
-  border-left: 4px solid #ddd;
-  padding-left: 15px;
+  border-left: 4px solid #dddddd;
+  padding: 0 15px;
   margin: 15px 0;
-  color: #666;
+  color: #777777;
+  font-size: 15px; /* 旧システム互換 */
+}
+
+/* 段落スタイル - 旧システム互換 */
+.knowledge-content p {
+  margin: 15px 0;
+}
+
+/* リストスタイル - 旧システム互換 */
+.knowledge-content ul,
+.knowledge-content ol {
+  padding-left: 30px;
 }
 
 /* 添付ファイル */

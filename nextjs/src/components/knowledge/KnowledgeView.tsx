@@ -4,17 +4,23 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/lib/utils';
+import { useSafeHTMLProps } from '@/hooks/useSafeHTML';
+import { convertEmoji } from '@/lib/emoji';
 // React Markdown imports - conditionally loaded to avoid Jest ESM issues
 let ReactMarkdown: any = null;
 let remarkGfm: any = null;
+let remarkBreaks: any = null;
 let rehypeHighlight: any = null;
+let rehypeSanitize: any = null;
 
 // Only import these in non-test environment
 if (process.env.NODE_ENV !== 'test') {
   try {
     ReactMarkdown = require('react-markdown').default;
     remarkGfm = require('remark-gfm').default;
+    remarkBreaks = require('remark-breaks').default;
     rehypeHighlight = require('rehype-highlight').default;
+    rehypeSanitize = require('rehype-sanitize').default;
     require('@/styles/knowledge-view.css');
     require('highlight.js/styles/default.css');
   } catch (error) {
@@ -130,7 +136,7 @@ const KnowledgeView: React.FC<Props> = ({ knowledge }) => {
               #{knowledge.knowledgeId}
             </span>
             {' '}
-            <span dangerouslySetInnerHTML={{ __html: knowledge.title }} />
+            <span dangerouslySetInnerHTML={useSafeHTMLProps(knowledge.title)} />
           </h4>
 
           <div className="meta-info">
@@ -314,8 +320,14 @@ const KnowledgeView: React.FC<Props> = ({ knowledge }) => {
           <div className="knowledge-content">
             {ReactMarkdown ? (
               <ReactMarkdown
-                remarkPlugins={remarkGfm ? [remarkGfm] : []}
-                rehypePlugins={rehypeHighlight ? [rehypeHighlight] : []}
+                remarkPlugins={[
+                  ...(remarkGfm ? [remarkGfm] : []),
+                  ...(remarkBreaks ? [remarkBreaks] : [])
+                ]}
+                rehypePlugins={[
+                  ...(rehypeHighlight ? [rehypeHighlight] : []),
+                  ...(rehypeSanitize ? [rehypeSanitize] : [])
+                ]}
                 components={{
                   // 見出しにIDを付与（旧システム互換）
                   h1: ({ children, ...props }) => (
@@ -354,13 +366,19 @@ const KnowledgeView: React.FC<Props> = ({ knowledge }) => {
                       {children}
                     </a>
                   ),
+                  // テキストノードの絵文字変換
+                  p: ({ children, ...props }) => (
+                    <p {...props}>
+                      {typeof children === 'string' ? convertEmoji(children) : children}
+                    </p>
+                  ),
                 }}
               >
-                {knowledge.content}
+                {convertEmoji(knowledge.content)}
               </ReactMarkdown>
             ) : (
-              // Test environment fallback - just show raw content
-              <div dangerouslySetInnerHTML={{ __html: knowledge.content }} />
+              // Test environment fallback - use safe HTML with emoji conversion
+              <div dangerouslySetInnerHTML={useSafeHTMLProps(convertEmoji(knowledge.content))} />
             )}
           </div>
         </div>
@@ -399,7 +417,7 @@ const KnowledgeView: React.FC<Props> = ({ knowledge }) => {
                   <i className="fa fa-thumbs-o-up"></i> {comment.likeCount}
                 </span>
               </div>
-              <div className="comment-body" dangerouslySetInnerHTML={{ __html: comment.comment }} />
+              <div className="comment-body" dangerouslySetInnerHTML={useSafeHTMLProps(comment.comment)} />
             </div>
           ))}
         </div>
