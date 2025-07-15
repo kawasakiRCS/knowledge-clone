@@ -19,8 +19,8 @@
 ### ✅ Issue #49: ナレッジ一覧ページUI改善 (open/knowledge/list.jsp)
 - **完了日**: 2025-07-14
 - **カテゴリ**: 技術的改善
-- **実装内容**: タグ表示・アイコン・ナビゲーション改善
-- **技術**: ReactMarkdown、LazyLoad、Bootstrap 3互換
+- **実装内容**: タグ表示・アイコン・ナビゲーション・レイアウト改善
+- **技術**: ReactMarkdown、LazyLoad、Bootstrap 3互換、App Router Layout
 - **改善項目**: 
   - タグ表示の実装（knowledge.tagNamesを使用）
   - ユーザーアイコン画像のLazyLoad実装
@@ -29,6 +29,8 @@
   - 更新者情報の表示（投稿者と異なる場合）
   - Bootstrap 3互換のスタイル適用
   - フィルター機能の基本実装
+  - `/open/layout.tsx`による共通レイアウト適用
+  - 全ての`/open`配下ページでナビゲーションバー統一
   - 旧システムとの見た目互換性向上
 - **Status**: CLOSED
 

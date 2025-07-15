@@ -22,7 +22,32 @@ const nextConfig: NextConfig = {
       }
     }
     return config
-  }
+  },
+  // 旧システムのURL構造との互換性のためのリライトルール
+  async rewrites() {
+    return [
+      // アカウントアイコン表示
+      {
+        source: '/open/account/icon/:id',
+        destination: '/api/open/account/:id?action=icon',
+      },
+      // ファイルダウンロード
+      {
+        source: '/open/files/download/:id',
+        destination: '/api/open/files?action=download&fileNo=:id',
+      },
+      // 画像表示
+      {
+        source: '/open/files/image/:id',
+        destination: '/api/open/files?action=download&fileNo=:id&inline=true',
+      },
+      // スライド表示
+      {
+        source: '/open/files/slide/:id/:page',
+        destination: '/api/open/files?action=slide&fileNo=:id&page=:page',
+      },
+    ]
+  },
 };
 
 export default nextConfig;

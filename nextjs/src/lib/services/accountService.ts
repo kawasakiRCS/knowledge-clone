@@ -6,6 +6,7 @@
 import { prisma } from '@/lib/db';
 import { User } from '@prisma/client';
 import { KnowledgeService } from './knowledgeService';
+import { IdenticonService } from './identiconService';
 import crypto from 'crypto';
 
 export interface IconData {
@@ -73,7 +74,8 @@ export class AccountService {
    */
   async getUserIcon(userId: number): Promise<IconData | null> {
     if (userId === -1) {
-      return null; // デフォルトアイコンを使用
+      // 匿名ユーザーにはデフォルトアイコンを返す
+      return await this.getDefaultIcon();
     }
 
     // アカウント画像テーブルから取得（実装予定）
@@ -90,8 +92,9 @@ export class AccountService {
     //   };
     // }
 
-    // カスタムアイコンがない場合はidenticonを生成
-    return await this.generateIdenticon(userId);
+    // カスタムアイコンがない場合はIdenticonを生成
+    const identiconService = new IdenticonService();
+    return await identiconService.generateIdenticon(userId);
   }
 
   /**
@@ -101,13 +104,16 @@ export class AccountService {
    * @returns デフォルトアイコンデータ
    */
   async getDefaultIcon(): Promise<IconData> {
-    // デフォルトアイコンのデータ（実装予定）
-    // 実際にはファイルシステムから読み込む
+    // 一時的にIdenticonでデフォルトアイコンを生成（固定パターン）
+    // 後でTDD段階で実際のデフォルトアイコンファイル読み込みに変更
+    const identiconService = new IdenticonService();
+    const defaultIcon = await identiconService.generateIdenticon(-1);
+    
     return {
       fileName: 'icon.png',
       contentType: 'image/png',
-      size: 12140,
-      data: Buffer.from('') // 実際のアイコンデータ
+      size: defaultIcon.size,
+      data: defaultIcon.data
     };
   }
 

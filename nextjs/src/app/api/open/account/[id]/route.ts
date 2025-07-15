@@ -17,9 +17,18 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
+    const { pathname } = new URL(request.url);
+    
+    // /open/account/icon/X の場合はアイコン処理
+    if (pathname.match(/\/open\/account\/icon\/\d+/)) {
+      const userId = parseInt(resolvedParams.id);
+      const accountService = new AccountService();
+      return await handleIconRequest(userId, accountService);
+    }
+    
     const userId = parseInt(resolvedParams.id);
-    const pathname = request.nextUrl.pathname;
-    const action = pathname.split('/').pop(); // 最後のパスセグメントを取得
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action') || 'info'; // デフォルトはinfo
 
     // ユーザーIDバリデーション
     if (isNaN(userId) && userId !== -1) {
