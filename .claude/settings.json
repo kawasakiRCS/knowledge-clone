@@ -10,10 +10,16 @@
       },
       {
         "matcher": "Edit|MultiEdit|Write",
-        "hooks": [{
-          "type": "command",
-          "command": "bash -c 'if [ -f .claude/scripts/enforce-issue-workflow.sh ]; then .claude/scripts/enforce-issue-workflow.sh; fi'"
-        }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -f .claude/scripts/tdd-post-check.sh ]; then .claude/scripts/tdd-post-check.sh \"$TOOL_INPUT\"; fi'"
+          },
+          {
+            "type": "command", 
+            "command": "bash -c 'if [ -f .claude/scripts/enforce-issue-workflow.sh ]; then .claude/scripts/enforce-issue-workflow.sh; fi'"
+          }
+        ]
       }
     ],
     "Stop": [{
@@ -28,6 +34,13 @@
         "hooks": [{
           "type": "command",
           "command": "bash -c 'if [ -f .claude/scripts/check-git-commit.sh ]; then echo \"$TOOL_INPUT\" | .claude/scripts/check-git-commit.sh; fi'"
+        }]
+      },
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [{
+          "type": "command",
+          "command": "bash -c 'if [ -f .claude/scripts/tdd-pre-check.sh ]; then .claude/scripts/tdd-pre-check.sh \"$TOOL_INPUT\"; fi'"
         }]
       }
     ]

@@ -53,6 +53,38 @@ This is my global Claude Code configuration directory (`~/.claude`) that sets up
 7. コミット許可
 ```
 
+#### 🛡️ TDD技術的強制システム（2025年7月実装）
+**⚡ 重要**: 上記のTDDルールは、技術的なhooksシステムにより物理的に強制されています。
+
+✅ **実装済み強制機能**
+- **PreToolUse hooks**: Edit/Write前のテストファイル存在チェック（テストなし実装を物理ブロック）
+- **PostToolUse hooks**: ファイル編集後の自動テスト実行・結果表示  
+- **Git pre-commit hooks**: テスト失敗時のコミット物理拒否
+- **自動テンプレート生成**: 新コンポーネント作成時の`.test.tsx`自動作成
+- **TDDサイクル追跡**: Red→Green→Refactorの自動管理・統計
+
+🔧 **技術仕様**
+- **設定ファイル**: `.claude/settings.json` にhooks設定
+- **スクリプト群**: `.claude/scripts/tdd-*.sh` で各機能実装
+- **状態管理**: `.claude/tdd-state/` でサイクル履歴・統計記録
+- **詳細ドキュメント**: `TDD_ENFORCEMENT_SYSTEM.md` 参照
+
+🚨 **緊急回避**
+```bash
+# 本番環境では絶対使用禁止
+TDD_BYPASS=1 git commit -m "緊急修正"
+```
+
+💡 **使用コマンド**
+```bash
+# TDD環境チェック
+./.claude/scripts/tdd-setup.sh --check
+
+# TDDサイクル管理
+./.claude/scripts/tdd-cycle-manager.sh red "新機能テスト"
+./.claude/scripts/tdd-cycle-manager.sh status
+```
+
 ### YOU MUST: Always Suggest Improvements
 **Every interaction should include proactive suggestions to save engineer time**
 

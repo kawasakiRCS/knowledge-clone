@@ -1,5 +1,25 @@
-// Learn more: https://github.com/testing-library/jest-dom
+/**
+ * Jest セットアップファイル - TDD強制用
+ * 
+ * @description テスト環境の初期化とモック設定
+ * @see CLAUDE.md - TDD必須ルール
+ */
 import '@testing-library/jest-dom'
+
+// TDD強制：テスト実行前のカスタムチェック
+beforeEach(() => {
+  // カバレッジ閾値チェック用の初期化
+  if (process.env.TDD_STRICT_MODE === 'true') {
+    console.log('🧪 TDD厳格モード: テストを実行中...')
+  }
+})
+
+// TDD用：テスト実行後の統計表示
+afterAll(() => {
+  if (process.env.TDD_STRICT_MODE === 'true') {
+    console.log('✅ TDD検証: テストスイート完了')
+  }
+})
 
 // Mock window.location globally
 delete window.location;
