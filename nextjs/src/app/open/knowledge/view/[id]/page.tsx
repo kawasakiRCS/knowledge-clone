@@ -21,10 +21,18 @@ const KnowledgeViewPage: React.FC<Props> = ({ params }) => {
   const [knowledgeId, setKnowledgeId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Promise型のparamsを解決
-    params.then((resolvedParams) => {
-      setKnowledgeId(resolvedParams.id);
-    });
+    // Promise型のparamsを解決（テスト環境対応）
+    const resolveParams = async () => {
+      try {
+        // paramsがPromiseかどうかを確認
+        const resolvedParams = await Promise.resolve(params);
+        setKnowledgeId(resolvedParams.id);
+      } catch (error) {
+        console.error('Failed to resolve params:', error);
+      }
+    };
+    
+    resolveParams();
   }, [params]);
 
   useEffect(() => {

@@ -21,6 +21,14 @@ afterAll(() => {
   }
 })
 
+// Mock fetch globally
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  })
+);
+
 // Mock window.location globally
 delete window.location;
 window.location = {

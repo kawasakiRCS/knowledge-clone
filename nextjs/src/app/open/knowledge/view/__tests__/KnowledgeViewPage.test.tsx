@@ -190,7 +190,7 @@ describe('KnowledgeViewPage', () => {
 
   describe('基本レンダリング', () => {
     test('ナレッジ詳細が表示される', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByText('#1')).toBeInTheDocument();
@@ -200,7 +200,7 @@ describe('KnowledgeViewPage', () => {
     });
 
     test('メタ情報が表示される', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         // ポイント
@@ -218,7 +218,7 @@ describe('KnowledgeViewPage', () => {
     });
 
     test('タグが表示される', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByText('テストタグ1')).toBeInTheDocument();
@@ -227,7 +227,7 @@ describe('KnowledgeViewPage', () => {
     });
 
     test('ストック情報が表示される', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByText('お気に入り')).toBeInTheDocument();
@@ -235,7 +235,7 @@ describe('KnowledgeViewPage', () => {
     });
 
     test('作成者・更新者情報が表示される', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByText(/作成: テストユーザー/)).toBeInTheDocument();
@@ -246,7 +246,7 @@ describe('KnowledgeViewPage', () => {
 
   describe('操作ボタン', () => {
     test('編集権限がない場合、編集ボタンが表示されない', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.queryByText('編集')).not.toBeInTheDocument();
@@ -283,7 +283,7 @@ describe('KnowledgeViewPage', () => {
         })
       );
 
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByText('編集')).toBeInTheDocument();
@@ -291,7 +291,7 @@ describe('KnowledgeViewPage', () => {
     });
 
     test('いいねボタンが表示される', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /いいね/ })).toBeInTheDocument();
@@ -299,7 +299,7 @@ describe('KnowledgeViewPage', () => {
     });
 
     test('ストックボタンが表示される', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /ストック/ })).toBeInTheDocument();
@@ -309,7 +309,7 @@ describe('KnowledgeViewPage', () => {
 
   describe('添付ファイル', () => {
     test('添付ファイルが表示される', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByText('test.pdf')).toBeInTheDocument();
@@ -319,7 +319,7 @@ describe('KnowledgeViewPage', () => {
 
   describe('コメント', () => {
     test('コメントが表示される', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByText('テストコメント')).toBeInTheDocument();
@@ -328,7 +328,7 @@ describe('KnowledgeViewPage', () => {
     });
 
     test('コメント投稿フォームが表示される', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('コメントを入力...')).toBeInTheDocument();
@@ -346,7 +346,7 @@ describe('KnowledgeViewPage', () => {
         })
       );
 
-      render(<KnowledgeViewPage params={{ id: '999' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '999' })} />);
 
       await waitFor(() => {
         expect(screen.getByText('404')).toBeInTheDocument();
@@ -362,7 +362,7 @@ describe('KnowledgeViewPage', () => {
         })
       );
 
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByText('403')).toBeInTheDocument();
@@ -373,7 +373,7 @@ describe('KnowledgeViewPage', () => {
 
   describe('公開範囲表示', () => {
     test('公開ナレッジの場合、公開アイコンが表示される', async () => {
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByTitle('公開')).toBeInTheDocument();
@@ -410,7 +410,7 @@ describe('KnowledgeViewPage', () => {
         })
       );
 
-      render(<KnowledgeViewPage params={{ id: '1' }} />);
+      render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         expect(screen.getByTitle('非公開')).toBeInTheDocument();
@@ -420,14 +420,14 @@ describe('KnowledgeViewPage', () => {
 
   describe('旧システム互換性', () => {
     test('URL構造が旧システムと同じ', () => {
-      const { container } = render(<KnowledgeViewPage params={{ id: '1' }} />);
+      const { container } = render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
       
       // URL: /open/knowledge/view/1
       expect(mockRouter.pathname).toBe('/open/knowledge/view/1');
     });
 
     test('CSS構造が旧システムと同等', async () => {
-      const { container } = render(<KnowledgeViewPage params={{ id: '1' }} />);
+      const { container } = render(<KnowledgeViewPage params={Promise.resolve({ id: '1' })} />);
 
       await waitFor(() => {
         // ヘッダー部分
