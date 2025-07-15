@@ -1,0 +1,18 @@
+{
+  "autoStop": false,
+  "autoCleanup": false,
+  "cleanupTimeout": 10,
+  "logLevel": 2,
+  "monitoredPorts": [3000, 3001, 3002, 3003, 3004, 3005],
+  "excludePatterns": [
+    "grep",
+    "dev-server"
+  ],
+  "systemSettings": {
+    "enableHooks": true,
+    "sessionTracking": true,
+    "processMonitoring": true
+  },
+  "lastUpdated": "$(date -Iseconds)",
+  "version": "1.0.0"
+}

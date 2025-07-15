@@ -3,10 +3,12 @@
     "PostToolUse": [
       {
         "matcher": "TodoWrite",
-        "hooks": [{
-          "type": "command",
-          "command": "bash -c 'if [ -f .claude/scripts/check-todo-completion.sh ]; then .claude/scripts/check-todo-completion.sh; fi'"
-        }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -f .claude/scripts/check-todo-completion.sh ]; then .claude/scripts/check-todo-completion.sh; fi'"
+          }
+        ]
       },
       {
         "matcher": "Edit|MultiEdit|Write",
@@ -16,32 +18,57 @@
             "command": "bash -c 'if [ -f .claude/scripts/tdd-post-check.sh ]; then .claude/scripts/tdd-post-check.sh \"$TOOL_INPUT\"; fi'"
           },
           {
-            "type": "command", 
+            "type": "command",
             "command": "bash -c 'if [ -f .claude/scripts/enforce-issue-workflow.sh ]; then .claude/scripts/enforce-issue-workflow.sh; fi'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -f .claude/scripts/dev-server-monitor.sh ]; then echo \"$TOOL_INPUT\" | .claude/scripts/dev-server-monitor.sh post; fi'"
           }
         ]
       }
     ],
-    "Stop": [{
-      "hooks": [{
-        "type": "command",
-        "command": "bash -c 'if [ -f .claude/scripts/check-session-end.sh ]; then .claude/scripts/check-session-end.sh; fi'"
-      }]
-    }],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -f .claude/scripts/check-session-end.sh ]; then .claude/scripts/check-session-end.sh; fi'"
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -f .claude/scripts/dev-server-cleanup.sh ]; then .claude/scripts/dev-server-cleanup.sh session-end; fi'"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "hooks": [{
-          "type": "command",
-          "command": "bash -c 'if [ -f .claude/scripts/check-git-commit.sh ]; then echo \"$TOOL_INPUT\" | .claude/scripts/check-git-commit.sh; fi'"
-        }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -f .claude/scripts/check-git-commit.sh ]; then echo \"$TOOL_INPUT\" | .claude/scripts/check-git-commit.sh; fi'"
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -f .claude/scripts/dev-server-monitor.sh ]; then echo \"$TOOL_INPUT\" | .claude/scripts/dev-server-monitor.sh pre; fi'"
+          }
+        ]
       },
       {
         "matcher": "Edit|MultiEdit|Write",
-        "hooks": [{
-          "type": "command",
-          "command": "bash -c 'if [ -f .claude/scripts/tdd-pre-check.sh ]; then .claude/scripts/tdd-pre-check.sh \"$TOOL_INPUT\"; fi'"
-        }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -f .claude/scripts/tdd-pre-check.sh ]; then .claude/scripts/tdd-pre-check.sh \"$TOOL_INPUT\"; fi'"
+          }
+        ]
       }
     ]
   }

@@ -1,0 +1,6 @@
+{
+  "portHistory": [],
+  "defaultPorts": [3000, 3001, 3002, 3003, 3004, 3005],
+  "lastUpdated": "$(date -Iseconds)",
+  "version": "1.0.0"
+}

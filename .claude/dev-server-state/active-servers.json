@@ -1,0 +1,5 @@
+{
+  "activeServers": [],
+  "lastUpdated": "$(date -Iseconds)",
+  "version": "1.0.0"
+}
