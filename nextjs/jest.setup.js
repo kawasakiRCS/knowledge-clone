@@ -38,16 +38,16 @@ window.location = {
   port: '',
 };
 
-// Mock Next.js router
+// Mock Next.js router - App Router compatible
 jest.mock('next/navigation', () => ({
   useRouter() {
     return {
-      prefetch: () => null,
       push: jest.fn(),
       replace: jest.fn(),
-      pathname: '/',
-      query: {},
-      asPath: '/',
+      prefetch: jest.fn(),
+      back: jest.fn(),
+      forward: jest.fn(),
+      refresh: jest.fn(),
     }
   },
   usePathname() {
@@ -56,6 +56,11 @@ jest.mock('next/navigation', () => ({
   useSearchParams() {
     return new URLSearchParams()
   },
+  useParams() {
+    return {}
+  },
+  notFound: jest.fn(),
+  redirect: jest.fn(),
 }))
 
 // Mock Next.js Image component
