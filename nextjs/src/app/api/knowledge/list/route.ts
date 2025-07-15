@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         author: true,
       },
       orderBy: {
-        insertDatetime: 'desc',
+        updateDatetime: 'desc',
       },
       skip: offset,
       take: limit,

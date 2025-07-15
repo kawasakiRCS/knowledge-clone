@@ -84,7 +84,7 @@ export class KnowledgeRepository {
 
     return await prisma.knowledge.findMany({
       where,
-      orderBy: { insertDatetime: 'desc' },
+      orderBy: { updateDatetime: 'desc' },
       take: params.limit,
       skip: params.offset
     });
