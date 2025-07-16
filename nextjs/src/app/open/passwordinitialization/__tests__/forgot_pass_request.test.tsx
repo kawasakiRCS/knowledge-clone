@@ -5,7 +5,7 @@
  */
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ForgotPasswordRequestPage } from '../forgot_pass_request/page';
+import ForgotPasswordRequestPage from '../forgot_pass_request/page';
 import React from 'react';
 
 // モックの設定

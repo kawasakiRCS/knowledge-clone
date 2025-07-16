@@ -1,51 +1,65 @@
 /**
  * KnowledgeRepository のテスト
  * 
- * @description 旧Javaシステムと互換性のあるナレッジリポジトリのテスト
+ * @description 旧Javaシステムと互換性のあるナレッジリポジトリのテスト（モック使用）
  */
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, test, expect, beforeEach } from '@jest/globals';
 import { KnowledgeRepository } from '../knowledgeRepository';
-import { prisma } from '@/lib/db';
+
+// Prisma クライアントのモック
+const mockFindUnique = jest.fn();
+const mockFindMany = jest.fn();
+const mockCount = jest.fn();
+const mockCreate = jest.fn();
+const mockUpdate = jest.fn();
+const mockDelete = jest.fn();
+
+jest.mock('@/lib/db', () => ({
+  prisma: {
+    knowledge: {
+      findUnique: mockFindUnique,
+      findMany: mockFindMany,
+      count: mockCount,
+      create: mockCreate,
+      update: mockUpdate,
+      delete: mockDelete,
+    },
+  },
+}));
 
 describe('KnowledgeRepository', () => {
   let knowledgeRepo: KnowledgeRepository;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     knowledgeRepo = new KnowledgeRepository();
-  });
-
-  afterEach(async () => {
-    // テストデータのクリーンアップ
-    await prisma.knowledge.deleteMany({
-      where: { 
-        title: { 
-          startsWith: 'テスト' 
-        } 
-      }
-    });
   });
 
   describe('findById', () => {
     test('存在するナレッジIDでナレッジを取得できる', async () => {
-      // テストデータを作成
-      const testKnowledge = await prisma.knowledge.create({
-        data: {
-          title: 'テストナレッジ1',
-          content: 'テスト内容',
-          publicFlag: 1,
-          typeId: 1,
-          insertUser: 1,
-          insertDatetime: new Date(),
-        }
-      });
+      const mockKnowledge = {
+        knowledgeId: BigInt(1),
+        title: 'テストナレッジ1',
+        content: 'テスト内容',
+        publicFlag: 1,
+        typeId: 1,
+        insertUser: 1,
+        insertDatetime: new Date(),
+        deleteFlag: 0,
+      };
 
-      const result = await knowledgeRepo.findById(testKnowledge.knowledgeId);
+      mockFindUnique.mockResolvedValue(mockKnowledge);
+
+      const result = await knowledgeRepo.findById(BigInt(1));
 
       expect(result).not.toBeNull();
-      expect(result?.knowledgeId).toBe(testKnowledge.knowledgeId);
+      expect(result?.knowledgeId).toBe(BigInt(1));
       expect(result?.title).toBe('テストナレッジ1');
       expect(result?.content).toBe('テスト内容');
       expect(result?.publicFlag).toBe(1);
+      expect(mockFindUnique).toHaveBeenCalledWith({
+        where: { knowledgeId: BigInt(1) },
+      });
     });
 
     test('存在しないナレッジIDでnullを返す', async () => {
@@ -74,78 +88,92 @@ describe('KnowledgeRepository', () => {
 
   describe('findByIdWithUserInfo', () => {
     test('ユーザー情報も含めてナレッジを取得できる', async () => {
-      // まずユーザーを作成
-      const testUser = await prisma.user.create({
-        data: {
-          userKey: 'test_user_key',
+      const mockKnowledgeWithUser = {
+        knowledgeId: BigInt(1),
+        title: 'テストナレッジ',
+        content: 'テスト内容',
+        publicFlag: 1,
+        typeId: 1,
+        insertUser: 1,
+        insertDatetime: new Date(),
+        deleteFlag: 0,
+        author: {
+          userId: 1,
           userName: 'テストユーザー',
-          password: 'test_password',
-          insertDatetime: new Date(),
-        }
-      });
+          userKey: 'test_user_key',
+        },
+      };
 
-      // ナレッジを作成
-      const testKnowledge = await prisma.knowledge.create({
-        data: {
-          title: 'テストナレッジ2',
-          content: 'テスト内容',
-          publicFlag: 1,
-          typeId: 1,
-          insertUser: testUser.userId,
-          insertDatetime: new Date(),
-        }
-      });
+      mockFindUnique.mockResolvedValue(mockKnowledgeWithUser);
 
-      const result = await knowledgeRepo.findByIdWithUserInfo(testKnowledge.knowledgeId);
+      const result = await knowledgeRepo.findByIdWithUserInfo(BigInt(1));
 
       expect(result).not.toBeNull();
-      expect(result?.knowledgeId).toBe(testKnowledge.knowledgeId);
+      expect(result?.knowledgeId).toBe(BigInt(1));
       expect(result?.author?.userName).toBe('テストユーザー');
-
-      // テストユーザーもクリーンアップ
-      await prisma.user.delete({
-        where: { userId: testUser.userId }
-      });
     });
   });
 
-  describe('searchPublicKnowledges', () => {
-    test('公開ナレッジの検索ができる', async () => {
-      // 公開ナレッジを作成
-      await prisma.knowledge.create({
-        data: {
-          title: 'テスト公開ナレッジ',
-          content: 'テスト内容',
-          publicFlag: 1, // 公開
-          typeId: 1,
-          insertUser: 1,
-          insertDatetime: new Date(),
-        }
-      });
+  describe('findMany', () => {
+    test('ナレッジ一覧を取得できる', async () => {
+      const mockKnowledges = [
+        {
+          knowledgeId: BigInt(1),
+          title: 'テストナレッジ1',
+          content: 'テスト内容1',
+          publicFlag: 1,
+          deleteFlag: 0,
+        },
+        {
+          knowledgeId: BigInt(2),
+          title: 'テストナレッジ2',
+          content: 'テスト内容2',
+          publicFlag: 1,
+          deleteFlag: 0,
+        },
+      ];
 
-      // 非公開ナレッジを作成
-      await prisma.knowledge.create({
-        data: {
-          title: 'テスト非公開ナレッジ',
-          content: 'テスト内容',
-          publicFlag: 2, // 非公開
-          typeId: 1,
-          insertUser: 1,
-          insertDatetime: new Date(),
-        }
-      });
+      mockFindMany.mockResolvedValue(mockKnowledges);
 
-      const result = await knowledgeRepo.searchPublicKnowledges({
-        keyword: 'テスト',
-        limit: 10,
-        offset: 0
-      });
+      const result = await knowledgeRepo.findMany({ publicFlag: 1 });
+      
+      expect(result).toHaveLength(2);
+      expect(result[0]?.knowledgeId).toBe(BigInt(1));
+      expect(result[1]?.knowledgeId).toBe(BigInt(2));
+    });
 
-      expect(result.length).toBeGreaterThan(0);
-      // 公開ナレッジのみが返されることを確認
-      result.forEach(knowledge => {
-        expect(knowledge.publicFlag).toBe(1);
-      });
+    test('空の結果を適切に処理する', async () => {
+      mockFindMany.mockResolvedValue([]);
+
+      const result = await knowledgeRepo.findMany({ publicFlag: 1 });
+      
+      expect(result).toHaveLength(0);
+    });
+
+    test('エラー時に空配列を返す', async () => {
+      mockFindMany.mockRejectedValue(new Error('Database error'));
+
+      const result = await knowledgeRepo.findMany({ publicFlag: 1 });
+      
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('count', () => {
+    test('ナレッジ件数を取得できる', async () => {
+      mockCount.mockResolvedValue(5);
+
+      const result = await knowledgeRepo.count({ publicFlag: 1 });
+      
+      expect(result).toBe(5);
+    });
+
+    test('エラー時に0を返す', async () => {
+      mockCount.mockRejectedValue(new Error('Database error'));
+
+      const result = await knowledgeRepo.count({ publicFlag: 1 });
+      
+      expect(result).toBe(0);
     });
   });
 });

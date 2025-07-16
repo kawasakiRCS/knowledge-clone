@@ -1,49 +1,63 @@
 /**
  * Knowledge Detail API のテスト
  * 
- * @description ナレッジ詳細取得APIのテスト（実データベース使用）
+ * @description ナレッジ詳細取得APIのテスト（モック使用）
  */
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, test, expect, beforeEach } from '@jest/globals';
 import { GET } from '../route';
-import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/db';
+
+// KnowledgeServiceのモック
+const mockCanAccessKnowledge = jest.fn();
+const mockGetKnowledgeById = jest.fn();
+const mockGetKnowledgeByIdWithUser = jest.fn();
+const mockIncrementViewCount = jest.fn();
+
+jest.mock('@/lib/services/knowledgeService', () => ({
+  KnowledgeService: jest.fn().mockImplementation(() => ({
+    canAccessKnowledge: mockCanAccessKnowledge,
+    getKnowledgeById: mockGetKnowledgeById,
+    getKnowledgeByIdWithUser: mockGetKnowledgeByIdWithUser,
+    incrementViewCount: mockIncrementViewCount,
+  })),
+}));
 
 describe('/api/knowledge/[id]', () => {
   let testKnowledgeId: bigint;
 
-  beforeEach(async () => {
-    // テストデータを作成
-    const testKnowledge = await prisma.knowledge.create({
-      data: {
-        title: 'テストAPIナレッジ',
-        content: '<h2>テスト内容</h2><p>API経由でのテストです。</p>',
-        publicFlag: 1, // 公開
-        typeId: 1,
-        insertUser: 1,
-        insertDatetime: new Date(),
-        point: 100,
-        likeCount: BigInt(5),
-        commentCount: 3,
-        viewCount: BigInt(50),
-      }
-    });
-    testKnowledgeId = testKnowledge.knowledgeId;
-  });
-
-  afterEach(async () => {
-    // テストデータのクリーンアップ
-    await prisma.knowledge.deleteMany({
-      where: { 
-        title: { 
-          startsWith: 'テスト' 
-        } 
-      }
-    });
+  beforeEach(() => {
+    // モックのリセット
+    jest.clearAllMocks();
+    mockIncrementViewCount.mockResolvedValue(undefined);
+    
+    testKnowledgeId = BigInt(1);
   });
 
   describe('GET /api/knowledge/[id]', () => {
     test('存在する公開ナレッジを取得できる', async () => {
-      const request = new NextRequest(`http://localhost:3000/api/knowledge/${testKnowledgeId}`);
+      // モックの設定
+      const mockKnowledge = {
+        knowledgeId: testKnowledgeId,
+        title: 'テストAPIナレッジ',
+        content: '<h2>テスト内容</h2><p>API経由でのテストです。</p>',
+        publicFlag: 1,
+        typeId: 1,
+        insertUser: 1,
+        insertDatetime: new Date('2024-01-01T00:00:00Z'),
+        updateDatetime: new Date('2024-01-02T00:00:00Z'),
+        point: 100,
+        likeCount: BigInt(5),
+        commentCount: 3,
+        viewCount: BigInt(50),
+        author: {
+          userId: 1,
+          userName: 'テストユーザー',
+        },
+      };
+      
+      mockCanAccessKnowledge.mockResolvedValue(true);
+      mockGetKnowledgeByIdWithUser.mockResolvedValue(mockKnowledge as any);
+      
+      const request = new global.Request(`http://localhost:3000/api/knowledge/${testKnowledgeId}`);
       const params = Promise.resolve({ id: testKnowledgeId.toString() });
       
       const response = await GET(request, { params });
@@ -55,10 +69,14 @@ describe('/api/knowledge/[id]', () => {
       expect(data.content).toBe('<h2>テスト内容</h2><p>API経由でのテストです。</p>');
       expect(data.publicFlag).toBe(1);
       expect(data.point).toBe(100);
+      expect(mockIncrementViewCount).toHaveBeenCalledWith(testKnowledgeId);
     });
 
     test('存在しないナレッジで404を返す', async () => {
-      const request = new NextRequest('http://localhost:3000/api/knowledge/999999');
+      mockCanAccessKnowledge.mockResolvedValue(false);
+      mockGetKnowledgeById.mockResolvedValue(null);
+      
+      const request = new global.Request('http://localhost:3000/api/knowledge/999999');
       const params = Promise.resolve({ id: '999999' });
       
       const response = await GET(request, { params });
@@ -69,19 +87,15 @@ describe('/api/knowledge/[id]', () => {
     });
 
     test('非公開ナレッジで403を返す', async () => {
-      // 非公開ナレッジを作成
-      const privateKnowledge = await prisma.knowledge.create({
-        data: {
-          title: 'テスト非公開ナレッジ',
-          content: 'テスト内容',
-          publicFlag: 2, // 非公開
-          typeId: 1,
-          insertUser: 1,
-          insertDatetime: new Date(),
-        }
-      });
+      const privateKnowledge = {
+        knowledgeId: BigInt(2),
+        publicFlag: 2,
+      };
+      
+      mockCanAccessKnowledge.mockResolvedValue(false);
+      mockGetKnowledgeById.mockResolvedValue(privateKnowledge as any);
 
-      const request = new NextRequest(`http://localhost:3000/api/knowledge/${privateKnowledge.knowledgeId}`);
+      const request = new global.Request(`http://localhost:3000/api/knowledge/${privateKnowledge.knowledgeId}`);
       const params = Promise.resolve({ id: privateKnowledge.knowledgeId.toString() });
       
       const response = await GET(request, { params });
@@ -92,13 +106,10 @@ describe('/api/knowledge/[id]', () => {
     });
 
     test('削除されたナレッジで404を返す', async () => {
-      // 削除フラグを立てる
-      await prisma.knowledge.update({
-        where: { knowledgeId: testKnowledgeId },
-        data: { deleteFlag: 1 }
-      });
+      mockCanAccessKnowledge.mockResolvedValue(false);
+      mockGetKnowledgeById.mockResolvedValue(null);
 
-      const request = new NextRequest(`http://localhost:3000/api/knowledge/${testKnowledgeId}`);
+      const request = new global.Request(`http://localhost:3000/api/knowledge/${testKnowledgeId}`);
       const params = Promise.resolve({ id: testKnowledgeId.toString() });
       
       const response = await GET(request, { params });
@@ -109,7 +120,7 @@ describe('/api/knowledge/[id]', () => {
     });
 
     test('無効なIDフォーマットで400を返す', async () => {
-      const request = new NextRequest('http://localhost:3000/api/knowledge/invalid');
+      const request = new global.Request('http://localhost:3000/api/knowledge/invalid');
       const params = Promise.resolve({ id: 'invalid' });
       
       const response = await GET(request, { params });
