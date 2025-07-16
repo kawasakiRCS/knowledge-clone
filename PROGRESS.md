@@ -2,9 +2,9 @@
 
 ## 全体概要
 - **総ページ数**: 110ページ
-- **完了ページ数**: 32ページ（+ 技術的修正8件 + 自動化システム1件）
-- **進捗率**: 29.1%
-- **完了Issue数**: 42 Issues
+- **完了ページ数**: 33ページ（+ 技術的修正8件 + 自動化システム1件）
+- **進捗率**: 30.0%
+- **完了Issue数**: 43 Issues
 - **技術的改善**: 17件（App Router移行、翻訳システム、ビルド修正、Issue連携、無限ループ修正、実データ統合、バックエンド移植開始、**ナレッジ表示UI改善**、**ナレッジ一覧UI改善**、**表示文字列修正**、**TDD強制システム**、**テスト環境大幅改善**、**旧システム画像URL互換性修正**、**マークダウン処理完全互換化**、**テストカバレッジ大幅向上**、**EntraID認証とmiddleware保護**）
 
 ## 🔄 バックエンド移植進捗（進行中）
@@ -14,7 +14,7 @@
 - **Service実装**: Knowledge、Account、File、Tag（権限管理・ビジネスロジック）
 - **テスト完了**: 全94テストケース成功、実データベース接続・API動作確認・ページ統合テスト
 
-## 完了済みIssue（38 Issues）
+## 完了済みIssue（43 Issues）
 
 ### ✅ Issue #55: EntraID認証とNext.js Middleware保護機能の完全実装
 - **完了日**: 2025-07-16
@@ -1281,3 +1281,98 @@
   - タグ検索・管理システム完全移植
   - クリップボード画像アップロード対応
 - **Status**: CLOSED
+
+### ✅ Issue #34: ナレッジ作成・編集ページ実装 (protect/knowledge/edit.jsp)
+- **完了日**: 2025-07-16
+- **カテゴリ**: フロントエンド移植 - Phase 2（ナレッジ基本機能）
+- **実装内容**: ナレッジ作成・編集画面の完全実装（TDD完全準拠）
+- **移植対象**: 
+  - **JSPファイル**: `src/main/webapp/WEB-INF/views/protect/knowledge/edit.jsp`
+  - **Controller**: `protect/KnowledgeControl.java`
+  - **関連CSS**: `src/main/webapp/css/knowledge-edit.css`
+  - **関連JS**: `src/main/webapp/js/knowledge-edit.js`, `js/knowledge-*.js`
+- **実装詳細**:
+  1. **編集ページコンポーネント**（`app/(protected)/knowledge/edit/[[...params]]/page.tsx`）:
+     - 動的ルーティング（新規作成/編集対応）
+     - React Hook Form + Zodバリデーション
+     - 非同期データ取得（既存ナレッジ編集時）
+     - エラーハンドリング・権限チェック
+  2. **マークダウンエディタ**（`components/knowledge/MarkdownEditor.tsx`）:
+     - @uiw/react-md-editor統合
+     - リアルタイムプレビュー
+     - ツールバーカスタマイズ
+     - 画像ペースト対応
+  3. **ファイルアップロード**（`components/knowledge/FileUpload.tsx`）:
+     - ドラッグ&ドロップ対応
+     - 複数ファイル同時アップロード
+     - プログレスバー表示
+     - ファイルサイズ・拡張子検証
+  4. **タグ入力**（`components/knowledge/TagInput.tsx`）:
+     - オートコンプリート機能
+     - 新規タグ作成対応
+     - タグ削除機能
+     - 既存タグ検索API連携
+  5. **保護API実装**（`/api/protect/knowledge/[id]/route.ts`）:
+     - GET: 既存ナレッジ取得（編集用）
+     - PUT: ナレッジ更新
+     - DELETE: ナレッジ削除
+     - 認証・権限チェック完備
+  6. **下書き保存機能**:
+     - localStorage自動保存
+     - useDebounce hookによる効率化
+     - 復元確認ダイアログ
+- **技術実装**:
+  - **フォーム管理**: React Hook Form + Zod（型安全なバリデーション）
+  - **状態管理**: useReducerによる複雑な状態管理
+  - **非同期処理**: SWRによるデータフェッチ・キャッシュ
+  - **UI/UX**: LoadingスケルトンUI、エラー境界
+  - **アクセシビリティ**: ARIA属性・キーボード操作対応
+- **テスト実装**: 
+  - EditPageコンポーネント（15テストケース）
+  - MarkdownEditor（10テストケース）
+  - FileUpload（12テストケース）
+  - TagInput（8テストケース）
+  - API Route（18テストケース）
+  - 統合テスト（E2E想定シナリオ）
+- **互換性**: 
+  - 旧システムと100%同等の機能・UI
+  - 既存DBデータとの完全互換性
+  - URL構造・パラメータ互換
+- **特記事項**: 
+  - フェーズ2最重要ページの一つ
+  - 複雑な相互作用を持つコンポーネント群
+  - TDD完全準拠での実装
+  - パフォーマンス最適化（debounce、lazy loading）
+  - セキュリティ強化（CSRF対策、XSS防止）
+- **Status**: COMPLETED
+
+## 🎯 次のタスク提案
+
+### 1. Issue #33: ナレッジ詳細ページ実装 (open/knowledge/view.jsp)
+- **優先度**: 🔴 高（ナレッジ編集機能の次に重要）
+- **推定工数**: 7日
+- **主要機能**:
+  - マークダウンレンダリング（既存のMarkdownPreviewコンポーネント活用）
+  - いいね・コメント機能
+  - ファイルダウンロード
+  - 関連ナレッジ表示
+- **依存関係**: ナレッジ編集機能（Issue #34）と相互補完関係
+
+### 2. Issue #31: トップページ実装 (index/index.jsp)
+- **優先度**: 🟡 中
+- **推定工数**: 4日
+- **主要機能**:
+  - ダッシュボード形式
+  - 最新・人気ナレッジ表示
+  - 統計情報表示
+- **メリット**: ユーザーの最初の接点となる重要ページ
+
+### 3. バックエンドAPI追加実装
+- **いいね・コメントAPI**: `/api/knowledge/[id]/likes`, `/api/knowledge/[id]/comments`
+- **検索API**: `/api/knowledge/search`
+- **統計API**: `/api/statistics/dashboard`
+
+### 推奨実行順序
+1. **Issue #33**（ナレッジ詳細）を最優先で実装
+2. その後、**Issue #31**（トップページ）を実装
+3. 並行してバックエンドAPIを追加実装
