@@ -156,6 +156,14 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // カスタムコールバックURLが指定されている場合はそれを使用
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      // デフォルトはナレッジ一覧に遷移（旧システムと同等）
+      return baseUrl + '/open/knowledge/list';
+    },
   },
   pages: {
     signIn: '/signin',

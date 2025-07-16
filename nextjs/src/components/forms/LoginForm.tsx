@@ -43,7 +43,7 @@ export function LoginForm({
   const handleEntraIdSignIn = async () => {
     try {
       await signIn('azure-ad', {
-        callbackUrl: redirectTo || '/index',
+        callbackUrl: redirectTo || '/open/knowledge/list',
       });
     } catch (error) {
       console.error('EntraID sign-in error:', error);
