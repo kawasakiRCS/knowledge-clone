@@ -30,24 +30,16 @@ function LoginPageContent() {
   const handleSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      // TODO: 認証API実装後に実際の認証処理を実装
-      console.log('Login attempt:', data);
+      // NextAuthのsignIn関数を使用して認証
+      const { signIn } = await import('next-auth/react');
       
-      // 仮実装: フォーム送信処理
-      const formData = new FormData();
-      formData.append('username', data.username);
-      formData.append('password', data.password);
-      if (data.page) {
-        formData.append('page', data.page);
-      }
-      
-      // 旧システムと同じエンドポイントに送信
-      const response = await fetch('/signin', {
-        method: 'POST',
-        body: formData,
+      const result = await signIn('credentials', {
+        loginId: data.username,
+        password: data.password,
+        redirect: false,
       });
-      
-      if (response.ok) {
+
+      if (result?.ok) {
         // ログイン成功時の処理
         const redirectTo = data.page || '/index';
         window.location.href = redirectTo;
@@ -61,6 +53,10 @@ function LoginPageContent() {
     } catch (error) {
       console.error('Login error:', error);
       // エラー処理
+      const url = new URL(window.location.href);
+      url.searchParams.set('error', 'true');
+      url.searchParams.set('username', data.username);
+      window.location.href = url.toString();
     } finally {
       setIsLoading(false);
     }

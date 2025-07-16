@@ -33,6 +33,26 @@ model User {
   @@map("users")
 }
 
+// User Alias table
+model UserAlias {
+  userId         Int       @map("user_id")
+  authKey        String    @map("auth_key") @db.VarChar(64)
+  aliasKey       String    @map("alias_key") @db.VarChar(256)
+  aliasName      String    @map("alias_name") @db.VarChar(256)
+  aliasMail      String?   @map("alias_mail") @db.VarChar(256)
+  userInfoUpdate Int?      @map("user_info_update")
+  rowId          String?   @map("row_id") @db.VarChar(64)
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @default(0) @map("delete_flag")
+
+  @@id([userId, authKey])
+  @@unique([authKey, aliasKey])
+  @@map("user_alias")
+}
+
 // Knowledges table
 model Knowledge {
   knowledgeId    BigInt    @id @default(autoincrement()) @map("knowledge_id")

@@ -7,20 +7,11 @@
  * - DELETE: アカウント削除（退会）
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/auth/middleware';
+import { withAuth, createErrorResponse } from '@/lib/auth/serverAuth';
 import { AccountService } from '@/lib/services/accountService';
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, user) => {
   try {
-    // 認証チェック
-    const user = await getAuthenticatedUser(request);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
 
@@ -41,25 +32,12 @@ export async function GET(request: NextRequest) {
         return await handleGetAccountInfo(user, accountService);
     }
   } catch (error) {
-    console.error('Account GET error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error);
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, user) => {
   try {
-    // 認証チェック
-    const user = await getAuthenticatedUser(request);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const body = await request.json();
@@ -84,25 +62,12 @@ export async function POST(request: NextRequest) {
         return await handleAccountUpdate(user, body, accountService);
     }
   } catch (error) {
-    console.error('Account POST error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error);
   }
-}
+});
 
-export async function DELETE(request: NextRequest) {
+export const DELETE = withAuth(async (request: NextRequest, user) => {
   try {
-    // 認証チェック
-    const user = await getAuthenticatedUser(request);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const { knowledge_remove } = body;
 
@@ -119,13 +84,9 @@ export async function DELETE(request: NextRequest) {
       message: 'アカウントを削除しました'
     });
   } catch (error) {
-    console.error('Account DELETE error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse(error as Error);
   }
-}
+});
 
 /**
  * アカウント情報取得処理

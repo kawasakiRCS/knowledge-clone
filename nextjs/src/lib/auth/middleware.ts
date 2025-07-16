@@ -69,31 +69,34 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
 /**
  * セッションからユーザーIDを取得
  * 
- * @description セッション管理システム（実装予定）
+ * @description NextAuthのセッションからユーザーIDを取得
  * @param request Next.jsリクエスト
  * @returns ユーザーIDまたはnull
  */
 async function getUserIdFromSession(request: NextRequest): Promise<number | null> {
-  // TODO: セッション管理システムの実装
-  // 1. CookieからセッションIDを取得
-  // 2. セッションストア（Redis/Database）からユーザーIDを取得
-  // 3. JWTトークンの検証とペイロード解析
-  
-  // 開発用: Authorization ヘッダーからuser-idを取得
-  const authHeader = request.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer user-')) {
-    const userId = parseInt(authHeader.replace('Bearer user-', ''));
-    return isNaN(userId) ? null : userId;
-  }
+  try {
+    // NextAuthのgetServerSessionを使用してセッション情報を取得
+    const { getServerSession } = await import('next-auth');
+    const { authOptions } = await import('./authOptions');
+    
+    const session = await getServerSession(authOptions);
+    
+    if (session?.user && 'userId' in session.user) {
+      return session.user.userId as number;
+    }
 
-  // Cookie からセッションIDを取得する実装（仮）
-  const sessionCookie = request.cookies.get('session-id');
-  if (sessionCookie) {
-    // セッションストアからユーザーIDを取得（実装予定）
+    // 開発用: Authorization ヘッダーからuser-idを取得
+    const authHeader = request.headers.get('authorization');
+    if (authHeader?.startsWith('Bearer user-')) {
+      const userId = parseInt(authHeader.replace('Bearer user-', ''));
+      return isNaN(userId) ? null : userId;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Session retrieval error:', error);
     return null;
   }
-
-  return null;
 }
 
 /**

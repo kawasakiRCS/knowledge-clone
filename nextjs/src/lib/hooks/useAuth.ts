@@ -1,11 +1,14 @@
 /**
  * 認証状態管理フック
  * 
- * @description ユーザーの認証状態とメタデータを管理
+ * @description NextAuthセッションを使用したユーザー認証状態管理
  * @since 1.0.0
  */
 
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { LoginedUser } from '@/types/auth';
 
 export interface User {
   id: number;
@@ -23,53 +26,38 @@ export interface AuthState {
 }
 
 export function useAuth(): AuthState {
-  const [authState, setAuthState] = useState<AuthState>({
+  const { data: session, status } = useSession();
+
+  if (status === 'loading') {
+    return {
+      isLoggedIn: false,
+      user: null,
+      unreadCount: 0,
+      loading: true,
+    };
+  }
+
+  if (session?.user && 'userId' in session.user) {
+    const loginedUser = session.user as LoginedUser;
+    
+    return {
+      isLoggedIn: true,
+      user: {
+        id: loginedUser.userId,
+        name: loginedUser.userName,
+        email: `${loginedUser.userKey}@knowledge.local`, // 仮想メールアドレス
+        isAdmin: loginedUser.role === 'admin',
+        icon: undefined, // TODO: ユーザーアイコンの実装
+      },
+      unreadCount: loginedUser.unreadCount || 0,
+      loading: false,
+    };
+  }
+
+  return {
     isLoggedIn: false,
     user: null,
     unreadCount: 0,
-    loading: true,
-  });
-
-  useEffect(() => {
-    // TODO: 実際の認証API呼び出しを実装
-    // 現在はモック実装
-    const checkAuth = async () => {
-      try {
-        // APIから認証状態を取得
-        // const response = await fetch('/api/auth/me');
-        // const data = await response.json();
-        
-        // 一時的なモック実装
-        const mockUser = localStorage.getItem('mockUser');
-        if (mockUser) {
-          const user = JSON.parse(mockUser);
-          setAuthState({
-            isLoggedIn: true,
-            user,
-            unreadCount: 0, // TODO: API経由で取得
-            loading: false,
-          });
-        } else {
-          setAuthState({
-            isLoggedIn: false,
-            user: null,
-            unreadCount: 0,
-            loading: false,
-          });
-        }
-      } catch (error) {
-        console.error('認証状態の確認に失敗:', error);
-        setAuthState({
-          isLoggedIn: false,
-          user: null,
-          unreadCount: 0,
-          loading: false,
-        });
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  return authState;
+    loading: false,
+  };
 }

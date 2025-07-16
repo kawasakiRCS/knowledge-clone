@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 import { LoginFormProps, LoginFormData } from '@/types/auth';
 
 /**
@@ -37,6 +38,17 @@ export function LoginForm({
 
   const handleCloseError = () => {
     setShowError(false);
+  };
+
+  const handleEntraIdSignIn = async () => {
+    try {
+      await signIn('azure-ad', {
+        callbackUrl: redirectTo || '/index',
+      });
+    } catch (error) {
+      console.error('EntraID sign-in error:', error);
+      setShowError(true);
+    }
   };
 
   return (
@@ -122,6 +134,18 @@ export function LoginForm({
             )}
             
             <br /><br />
+            
+            {/* EntraID認証ボタン */}
+            <button 
+              type="button" 
+              className="btn btn-success"
+              onClick={handleEntraIdSignIn}
+              style={{ marginBottom: '10px' }}
+            >
+              <i className="fa fa-microsoft"></i>&nbsp;EntraID でサインイン
+            </button>
+            
+            <br />
             <a href="/open.PasswordInitialization/view" className="text-primary">
               <i className="fa fa-key"></i>&nbsp;パスワードを忘れましたか？
             </a>
