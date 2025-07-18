@@ -32,5 +32,5 @@ test-results/
 playwright-report/
 playwright/.cache/
 
-# 開発状態ファイル
-.claude/dev-server-state/active-servers.json
+# Claude Code 開発サーバー管理システム
+.claude/dev-server-state/
