@@ -409,4 +409,175 @@ describe('KnowledgeSearchPage', () => {
       });
     });
   });
+
+  describe('追加のエッジケース', () => {
+    test('テンプレート取得エラー時もページは表示される', async () => {
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/templates')) {
+          return Promise.reject(new Error('Network error'));
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('knowledge.navbar.search')).toBeInTheDocument();
+      });
+
+      // エラーでもページが表示されることを確認
+      expect(screen.getByLabelText('knowledge.search.keyword')).toBeInTheDocument();
+    });
+
+    test('タグ取得エラー時の処理', async () => {
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/tags')) {
+          return Promise.resolve({
+            ok: false,
+            status: 500,
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('knowledge.navbar.search')).toBeInTheDocument();
+      });
+
+      // タグ入力フィールドは表示される
+      expect(screen.getByPlaceholderText('knowledge.add.label.tags')).toBeInTheDocument();
+    });
+
+    test('空のキーワードで検索した場合', async () => {
+      const user = userEvent.setup();
+      
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      const searchButton = screen.getByRole('button', { name: /label.search/i });
+      await user.click(searchButton);
+
+      expect(mockRouter.push).toHaveBeenCalledWith('/open/knowledge/list');
+    });
+
+    test('テンプレートが取得できない場合', async () => {
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/templates')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => [],
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('knowledge.navbar.search')).toBeInTheDocument();
+      });
+
+      // テンプレートがなくても検索フォームは表示される
+      expect(screen.getByLabelText('knowledge.search.keyword')).toBeInTheDocument();
+    });
+
+    test('特殊文字を含むキーワードが正しくエンコードされる', async () => {
+      const user = userEvent.setup();
+      
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      const searchInput = await screen.findByPlaceholderText('knowledge.search.placeholder');
+      await user.type(searchInput, 'テスト & 検索');
+
+      const searchButton = screen.getByRole('button', { name: /label.search/i });
+      await user.click(searchButton);
+
+      expect(mockRouter.push).toHaveBeenCalledWith(
+        expect.stringContaining(encodeURIComponent('テスト & 検索').replace(/%20/g, '+'))
+      );
+    });
+
+    test('Enterキーで検索が実行される', async () => {
+      const user = userEvent.setup();
+      
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      const searchInput = await screen.findByPlaceholderText('knowledge.search.placeholder');
+      await user.type(searchInput, 'test keyword');
+      await user.keyboard('{Enter}');
+
+      expect(mockRouter.push).toHaveBeenCalledWith(
+        '/open/knowledge/list?keyword=test+keyword'
+      );
+    });
+
+    test('複数の検索条件を組み合わせた検索', async () => {
+      const user = userEvent.setup();
+      
+      const mockTemplates = [
+        { typeId: 1, typeIcon: 'fa-file-text-o', typeName: '記事' },
+        { typeId: 2, typeIcon: 'fa-code', typeName: 'コード' },
+      ];
+
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/templates')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockTemplates,
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      // キーワード入力
+      const searchInput = await screen.findByPlaceholderText('knowledge.search.placeholder');
+      await user.type(searchInput, 'test keyword');
+
+      // テンプレート選択
+      const codeCheckbox = await screen.findByRole('checkbox', { name: /コード/i });
+      await user.click(codeCheckbox);
+
+      // タグ入力
+      const tagInput = screen.getByPlaceholderText('knowledge.add.label.tags');
+      await user.type(tagInput, 'React, TypeScript');
+
+      // 検索実行
+      const searchButton = screen.getByRole('button', { name: /label.search/i });
+      await user.click(searchButton);
+
+      expect(mockRouter.push).toHaveBeenCalledWith(
+        expect.stringContaining('keyword=test+keyword')
+      );
+    });
+  });
 });

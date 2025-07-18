@@ -3,16 +3,20 @@
  * 
  * @description useAuthフックのテストケース
  */
-import { describe, test, expect, jest } from '@jest/globals';
 import { renderHook } from '@testing-library/react';
-import { useAuth } from '../useAuth';
 
-// next-auth/reactのモック
+// jest.setup.jsのモックを解除
+jest.unmock('@/hooks/useAuth');
+jest.unmock('@/lib/hooks/useAuth');
+
+// next-auth/reactのモック - importの前にモックを設定
 const mockUseSession = jest.fn();
-
-jest.doMock('next-auth/react', () => ({
-  useSession: mockUseSession,
+jest.mock('next-auth/react', () => ({
+  useSession: () => mockUseSession(),
 }));
+
+// useAuthのインポート - モック設定後
+import { useAuth } from '../useAuth';
 
 describe('useAuth', () => {
   test('ローディング状態', () => {
@@ -70,7 +74,7 @@ describe('useAuth', () => {
       user: {
         id: 1,
         name: 'テストユーザー',
-        email: 'testuser@knowledge.local',
+        email: 'テストユーザー@knowledge.local',
         isAdmin: false,
         icon: undefined,
       },
@@ -102,7 +106,7 @@ describe('useAuth', () => {
       user: {
         id: 2,
         name: '管理者',
-        email: 'admin@knowledge.local',
+        email: '管理者@knowledge.local',
         isAdmin: true,
         icon: undefined,
       },
@@ -153,5 +157,154 @@ describe('useAuth', () => {
     const { result } = renderHook(() => useAuth());
 
     expect(result.current.unreadCount).toBe(0);
+  });
+
+  test('不明なステータスの場合は未認証として扱う', () => {
+    mockUseSession.mockReturnValue({
+      data: null,
+      status: 'unknown' as any,
+    });
+
+    const { result } = renderHook(() => useAuth());
+
+    expect(result.current).toEqual({
+      isLoggedIn: false,
+      user: null,
+      unreadCount: 0,
+      loading: false,
+    });
+  });
+
+  test('ロールが管理者でも一般ユーザーでもない場合', () => {
+    const mockSession = {
+      user: {
+        userId: 3,
+        userName: '特殊ユーザー',
+        userKey: 'special',
+        role: 'guest',
+        unreadCount: 2,
+      },
+    };
+
+    mockUseSession.mockReturnValue({
+      data: mockSession,
+      status: 'authenticated',
+    });
+
+    const { result } = renderHook(() => useAuth());
+
+    expect(result.current).toEqual({
+      isLoggedIn: true,
+      user: {
+        id: 3,
+        name: '特殊ユーザー',
+        email: '特殊ユーザー@knowledge.local',
+        isAdmin: false, // admin以外はすべてfalse
+        icon: undefined,
+      },
+      unreadCount: 2,
+      loading: false,
+    });
+  });
+
+  test('userIdが0の場合', () => {
+    const mockSession = {
+      user: {
+        userId: 0,
+        userName: 'ゼロユーザー',
+        userKey: 'zero',
+        role: 'user',
+        unreadCount: 0,
+      },
+    };
+
+    mockUseSession.mockReturnValue({
+      data: mockSession,
+      status: 'authenticated',
+    });
+
+    const { result } = renderHook(() => useAuth());
+
+    expect(result.current).toEqual({
+      isLoggedIn: true,
+      user: {
+        id: 0,
+        name: 'ゼロユーザー',
+        email: 'ゼロユーザー@knowledge.local',
+        isAdmin: false,
+        icon: undefined,
+      },
+      unreadCount: 0,
+      loading: false,
+    });
+  });
+
+  test('ユーザー名が空文字列の場合', () => {
+    const mockSession = {
+      user: {
+        userId: 4,
+        userName: '',
+        userKey: 'empty',
+        role: 'user',
+        unreadCount: 1,
+      },
+    };
+
+    mockUseSession.mockReturnValue({
+      data: mockSession,
+      status: 'authenticated',
+    });
+
+    const { result } = renderHook(() => useAuth());
+
+    expect(result.current).toEqual({
+      isLoggedIn: true,
+      user: {
+        id: 4,
+        name: '',
+        email: '@knowledge.local',
+        isAdmin: false,
+        icon: undefined,
+      },
+      unreadCount: 1,
+      loading: false,
+    });
+  });
+
+  test('セッションかnullでステータスおauthenticatedの場合', () => {
+    mockUseSession.mockReturnValue({
+      data: null,
+      status: 'authenticated',
+    });
+
+    const { result } = renderHook(() => useAuth());
+
+    expect(result.current).toEqual({
+      isLoggedIn: false,
+      user: null,
+      unreadCount: 0,
+      loading: false,
+    });
+  });
+
+  test('マイナスの未読数が設定されている場合', () => {
+    const mockSession = {
+      user: {
+        userId: 5,
+        userName: 'マイナスユーザー',
+        userKey: 'negative',
+        role: 'user',
+        unreadCount: -5,
+      },
+    };
+
+    mockUseSession.mockReturnValue({
+      data: mockSession,
+      status: 'authenticated',
+    });
+
+    const { result } = renderHook(() => useAuth());
+
+    expect(result.current.unreadCount).toBe(-5); // マイナス値もそのまま返す
   });
 });
