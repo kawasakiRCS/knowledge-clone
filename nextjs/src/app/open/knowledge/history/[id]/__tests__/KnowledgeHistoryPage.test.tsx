@@ -11,6 +11,15 @@ import { notFound } from 'next/navigation';
 jest.mock('next/navigation', () => ({
   notFound: jest.fn(),
   useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({
+    push: jest.fn(),
+    refresh: jest.fn(),
+  }),
+}));
+
+// CommonNavbarのモック
+jest.mock('@/components/layout/CommonNavbar', () => ({
+  CommonNavbar: () => <div>CommonNavbar</div>,
 }));
 
 // グローバルfetchのモック

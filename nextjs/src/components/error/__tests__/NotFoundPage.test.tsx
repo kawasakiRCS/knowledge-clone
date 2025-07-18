@@ -29,14 +29,15 @@ describe('NotFoundPage', () => {
       render(<NotFoundPage />);
       
       expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('Error');
-      expect(screen.getByText(/404/)).toBeInTheDocument();
+      // ページが見つからないメッセージを確認
+      expect(screen.getByText(/お探しのページが見つかりませんでした/)).toBeInTheDocument();
     });
 
     test('エラーメッセージが表示される', () => {
       render(<NotFoundPage />);
       
-      // 404メッセージキー対応
-      expect(screen.getByText(/message.httpstatus.404/)).toBeInTheDocument();
+      // URL確認メッセージ
+      expect(screen.getByText(/指定されたURLが正しいかご確認ください/)).toBeInTheDocument();
     });
 
     test('トップページへのリンクが表示される', () => {
