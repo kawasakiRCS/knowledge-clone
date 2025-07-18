@@ -312,25 +312,82 @@ register_new_server() {
 }
 
 # =============================================================================
+# 入力解析ユーティリティ
+# =============================================================================
+
+extract_command_from_tool_input() {
+  local raw_input="$1"
+  local extracted_command=""
+  
+  log_debug "raw_input: '$raw_input'"
+  
+  # $TOOL_INPUT の形式を解析
+  # 1. JSON形式の場合: {"command": "npm run dev", "description": "..."}
+  if echo "$raw_input" | jq -e '.command' >/dev/null 2>&1; then
+    extracted_command=$(echo "$raw_input" | jq -r '.command')
+    log_debug "JSON形式から抽出: '$extracted_command'"
+  # 2. 単純な文字列の場合
+  elif [[ -n "$raw_input" ]]; then
+    # 複数行の場合は最初の行を取得
+    extracted_command=$(echo "$raw_input" | head -n1 | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+    log_debug "文字列から抽出: '$extracted_command'"
+  fi
+  
+  echo "$extracted_command"
+}
+
+is_valid_command() {
+  local command="$1"
+  
+  # 空文字チェック
+  [[ -n "$command" ]] || return 1
+  
+  # コマンドらしい文字列かチェック（英数字、ハイフン、スラッシュ、ドット、スペースのみ）
+  [[ "$command" =~ ^[a-zA-Z0-9._/-]+([[:space:]]+[a-zA-Z0-9._/-]+)*$ ]] || return 1
+  
+  return 0
+}
+
+# =============================================================================
 # メイン処理
 # =============================================================================
 
 main() {
+  local raw_input
   local input_command
   
   # 標準入力からコマンドを読み取り
   if [[ -t 0 ]]; then
     # 対話モード（テスト用）
     shift || true  # MODEをスキップ
-    input_command="${*}"
+    raw_input="${*}"
+    log_debug "対話モード入力: '$raw_input'"
   else
     # パイプモード（hooks から呼び出し）
-    input_command=$(cat)
+    raw_input=$(cat)
+    log_debug "パイプモード入力: '$raw_input'"
   fi
   
-  if [[ -z "$input_command" ]]; then
-    log_error "コマンドが指定されていません"
-    return 1
+  # デバッグ情報出力
+  log_debug "===== dev-server-monitor.sh デバッグ開始 ====="
+  log_debug "MODE: $MODE"
+  log_debug "raw_input 長さ: ${#raw_input}"
+  log_debug "raw_input 内容: '$raw_input'"
+  
+  # 入力が空の場合は静かに終了（エラーではない）
+  if [[ -z "$raw_input" ]]; then
+    log_debug "入力が空です。処理をスキップします。"
+    return 0
+  fi
+  
+  # コマンド抽出
+  input_command=$(extract_command_from_tool_input "$raw_input")
+  log_debug "抽出されたコマンド: '$input_command'"
+  
+  # コマンドが有効でない場合は静かに終了
+  if ! is_valid_command "$input_command"; then
+    log_debug "有効なコマンドではありません。処理をスキップします。"
+    return 0
   fi
   
   # モードに応じて処理分岐
