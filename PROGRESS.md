@@ -1431,3 +1431,94 @@
 1. **Issue #33**（ナレッジ詳細）を最優先で実装
 2. その後、**Issue #31**（トップページ）を実装
 3. 並行してバックエンドAPIを追加実装
+
+---
+
+## 📋 Issue #61: テストカバレッジ改善（2025年7月18日作業）
+
+### 🔨 実装内容
+- **テストカバレッジ向上対応**
+  - 初期カバレッジ: 38.81%
+  - 目標カバレッジ: 50%以上
+
+### 📝 追加したテスト
+
+#### コンポーネントテスト
+1. **KnowledgeCard** (`src/components/knowledge/__tests__/KnowledgeCard.test.tsx`)
+   - ナレッジカード表示の基本動作
+   - メタデータ表示（日時、コメント数、いいね数）
+   - タグ表示と色設定
+   - いいね状態の表示
+   - イベントハンドラのテスト
+
+2. **TagList** (`src/components/knowledge/__tests__/TagList.test.tsx`)
+   - タグリスト表示
+   - サイズバリアント（small/medium/large）
+   - タグクリックイベント
+   - 背景色に応じたテキストカラー自動調整
+   - カスタムクラスの適用
+
+3. **KnowledgeSearchForm** (`src/components/knowledge/__tests__/KnowledgeSearchForm.test.tsx`)
+   - 基本フォーム表示
+   - 詳細検索の開閉
+   - 検索パラメータの設定と送信
+   - リセット機能
+   - ナレッジタイプ選択
+   - Enterキーでの検索実行
+
+4. **StatsContent** (`src/components/stats/__tests__/StatsContent.test.tsx`)
+   - 統計情報の表示
+   - ユーザーランキング
+   - 人気タグ表示
+   - 月別投稿数グラフ
+   - ローディング・エラー状態
+   - 期間フィルタ機能
+
+#### サービステスト
+1. **knowledgeService** (`src/lib/services/__tests__/knowledgeService.test.ts`)
+   - ナレッジの検索・取得・作成・更新・削除
+   - いいね機能の追加・削除
+   - コメント追加
+   - 履歴取得
+   - 閲覧数カウント
+
+2. **accountService** (`src/lib/services/__tests__/accountService.test.ts`)
+   - ユーザー作成・更新・削除
+   - パスワード変更
+   - ユーザーエイリアス管理
+   - プロフィール・統計情報取得
+
+3. **tagService** (`src/lib/services/__tests__/tagService.test.ts`)
+   - タグ検索・人気タグ取得
+   - タグ統計情報
+   - タグの作成・更新・マージ
+   - タグ提案機能
+
+4. **fileService** (`src/lib/services/__tests__/fileService.test.ts`)
+   - ファイルアップロード・削除
+   - ファイル情報取得
+   - 署名付きURL生成
+   - ファイル検証
+   - 孤立ファイルのクリーンアップ
+
+### 🛠️ 技術的改善点
+- Next.js環境でのモック設定追加（useRouter、useAuth）
+- エラーハンドリングのテストカバレッジ向上
+- エッジケースの網羅的なテスト
+- 旧システムとの互換性確認テスト
+
+### 📊 カバレッジ改善結果
+- 追加前: 38.81%
+- 追加後: 測定予定（コミット後に確認）
+
+### ⚠️ 残課題
+- 一部のテストでuseRouterモックエラーが発生
+- カバレッジ目標80%に向けた追加テスト作成が必要
+- E2Eテストの追加検討
+
+### 🎯 次のステップ
+1. テストエラーの修正完了
+2. カバレッジ50%以上の達成確認
+3. 継続的なテスト追加による品質向上
+
+- **Status**: IN_PROGRESS（テスト修正中）
