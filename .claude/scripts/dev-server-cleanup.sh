@@ -59,16 +59,23 @@ EOF
 
 handle_session_end() {
   local force="${1:-false}"
+  local exit_code=0
   
   log_info "セッション終了処理を開始"
   
   # アクティブサーバーの確認
   local active_servers
-  active_servers=$(get_active_servers)
+  if ! active_servers=$(get_active_servers); then
+    log_warn "アクティブサーバーの取得に失敗しましたが、処理を継続します"
+    active_servers="[]"
+  fi
   
   if [[ "$active_servers" == "[]" ]] || [[ -z "$active_servers" ]]; then
     log_info "アクティブな開発サーバーはありません"
-    cleanup_state_files
+    cleanup_state_files || {
+      log_warn "状態ファイルのクリーンアップで警告が発生しましたが、正常終了します"
+    }
+    log_debug "セッション終了処理が正常に完了しました (exit_code=0)"
     return 0
   fi
   
@@ -100,7 +107,10 @@ handle_session_end() {
   # 自動クリーンアップ設定確認
   if [[ "${DEV_SERVER_AUTO_CLEANUP:-}" == "true" ]] || [[ "$force" == "true" ]]; then
     echo "🤖 自動クリーンアップを実行します..."
-    stop_all_servers "true"
+    if ! stop_all_servers "true"; then
+      log_warn "一部のサーバー停止で問題が発生しましたが、処理を継続します"
+      exit_code=0  # 警告レベルのため正常終了とする
+    fi
   else
     echo "💡 ヒント: 自動クリーンアップを有効にするには DEV_SERVER_AUTO_CLEANUP=true を設定してください"
     echo "⚠️  開発サーバーが起動したままです。手動で停止するには:"
@@ -108,7 +118,13 @@ handle_session_end() {
     echo ""
   fi
   
-  cleanup_state_files
+  # 最終的な状態ファイルクリーンアップ
+  cleanup_state_files || {
+    log_warn "状態ファイルのクリーンアップで警告が発生しましたが、正常終了します"
+  }
+  
+  log_debug "セッション終了処理が完了しました (exit_code=$exit_code)"
+  return $exit_code
 }
 
 # =============================================================================
@@ -433,12 +449,15 @@ main() {
   case "$command" in
     "session-end")
       handle_session_end "$force"
+      local result=$?
+      log_debug "session-end command completed with exit code: $result"
+      exit $result
       ;;
     "stop")
       if [[ $# -eq 0 ]]; then
         log_error "PIDを指定してください"
         echo "使用例: $0 stop 12345"
-        return 1
+        exit 1
       fi
       stop_server "$1" "$timeout"
       ;;
@@ -458,6 +477,9 @@ main() {
       show_usage
       ;;
   esac
+  
+  # 明示的な正常終了
+  exit 0
 }
 
 # =============================================================================

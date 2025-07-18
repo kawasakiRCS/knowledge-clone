@@ -90,10 +90,18 @@ handle_pre_hook() {
   fi
   
   # 既存プロセス情報表示
+  log_debug "display_existing_servers を呼び出し中"
   display_existing_servers "$existing_processes" "$input_command"
+  local display_result=$?
+  log_debug "display_existing_servers 完了 (exit_code=$display_result)"
   
   # ユーザー選択処理
+  log_debug "handle_user_choice を呼び出し中"
   handle_user_choice "$existing_processes" "$input_command"
+  local choice_result=$?
+  log_debug "handle_user_choice 完了 (exit_code=$choice_result)"
+  
+  return $choice_result
 }
 
 display_existing_servers() {
@@ -160,6 +168,8 @@ display_existing_servers() {
       break
     fi
   done
+  
+  return 0
 }
 
 handle_user_choice() {
@@ -206,6 +216,7 @@ stop_existing_servers() {
   done <<< "$processes"
   
   echo ""
+  return 0
 }
 
 # =============================================================================
@@ -257,6 +268,8 @@ handle_post_hook() {
   if [[ -n "$latest_pid" ]]; then
     register_new_server "$latest_pid" "$input_command"
   fi
+  
+  return 0
 }
 
 register_new_server() {
@@ -294,6 +307,8 @@ register_new_server() {
   echo ""
   echo "💡 サーバーを停止するには: .claude/scripts/dev-server-cleanup.sh stop $pid"
   echo ""
+  
+  return 0
 }
 
 # =============================================================================
@@ -322,9 +337,15 @@ main() {
   case "$MODE" in
     "pre")
       handle_pre_hook "$input_command"
+      local result=$?
+      log_debug "プリフック処理完了 (exit_code=$result)"
+      return $result
       ;;
     "post")
       handle_post_hook "$input_command"
+      local result=$?
+      log_debug "ポストフック処理完了 (exit_code=$result)"
+      return $result
       ;;
     *)
       log_error "無効なモード: $MODE"
@@ -340,4 +361,5 @@ main() {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   main "$@"
+  exit $?
 fi

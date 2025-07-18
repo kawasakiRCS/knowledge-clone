@@ -40,18 +40,22 @@ LOG_LEVEL=${DEV_SERVER_LOG_LEVEL:-2}
 
 log_error() {
   [[ $LOG_LEVEL -ge $LOG_ERROR ]] && echo "❌ ERROR: $*" >&2
+  return 0
 }
 
 log_warn() {
   [[ $LOG_LEVEL -ge $LOG_WARN ]] && echo "⚠️  WARNING: $*" >&2
+  return 0
 }
 
 log_info() {
   [[ $LOG_LEVEL -ge $LOG_INFO ]] && echo "ℹ️  INFO: $*" >&2
+  return 0
 }
 
 log_debug() {
   [[ $LOG_LEVEL -ge $LOG_DEBUG ]] && echo "🔍 DEBUG: $*" >&2
+  return 0
 }
 
 # =============================================================================
@@ -67,7 +71,9 @@ init_dev_server_state() {
   
   # 初期状態ファイル作成
   if [[ ! -f "$ACTIVE_SERVERS_FILE" ]]; then
-    echo '{"activeServers": []}' > "$ACTIVE_SERVERS_FILE"
+    local timestamp
+    timestamp=$(date -Iseconds)
+    jq -n --arg timestamp "$timestamp" '{"activeServers": [], "lastUpdated": $timestamp, "version": "1.0.0"}' > "$ACTIVE_SERVERS_FILE"
     log_debug "初期化: $ACTIVE_SERVERS_FILE を作成"
   fi
   
@@ -91,16 +97,19 @@ detect_dev_servers() {
   done
   
   printf '%s\n' "${processes[@]}"
+  return 0
 }
 
 get_process_pid() {
   local process_line="$1"
   echo "$process_line" | awk '{print $2}'
+  return 0
 }
 
 get_process_command() {
   local process_line="$1"
   echo "$process_line" | awk '{for(i=11;i<=NF;i++) printf "%s ", $i; print ""}'
+  return 0
 }
 
 is_dev_server_process() {
@@ -137,11 +146,13 @@ get_used_ports() {
   done
   
   printf '%s\n' "${ports[@]}"
+  return 0
 }
 
 is_port_in_use() {
   local port="$1"
   ss -tlnp | grep -q ":${port} " 2>/dev/null
+  return $?
 }
 
 get_port_process() {
@@ -152,6 +163,7 @@ get_port_process() {
   if [[ -n "$result" ]]; then
     echo "$result" | sed -n 's/.*users:(("\([^"]*\)",pid=\([0-9]*\),.*/\1:\2/p'
   fi
+  return 0
 }
 
 find_available_port() {
@@ -249,14 +261,32 @@ update_active_servers_list() {
 }
 
 get_active_servers() {
-  init_dev_server_state "$DEV_SERVER_STATE_DIR"
-  update_active_servers_list
+  # 初期化処理でエラーが発生してもスクリプトを継続
+  if ! init_dev_server_state "$DEV_SERVER_STATE_DIR"; then
+    log_warn "状態ディレクトリの初期化で警告が発生しました"
+  fi
   
+  # リスト更新でエラーが発生してもスクリプトを継続
+  if ! update_active_servers_list; then
+    log_warn "アクティブサーバーリストの更新で警告が発生しました"
+  fi
+  
+  # ファイル読み込みでエラーが発生した場合は空の配列を返す
   if [[ -f "$ACTIVE_SERVERS_FILE" ]]; then
-    jq -r '.activeServers[]?' "$ACTIVE_SERVERS_FILE" 2>/dev/null || echo "[]"
+    local result
+    if result=$(jq -r '.activeServers[]?' "$ACTIVE_SERVERS_FILE" 2>/dev/null); then
+      echo "$result"
+    else
+      log_debug "アクティブサーバーファイルの読み込みに失敗、空の配列を返します"
+      echo "[]"
+    fi
   else
+    log_debug "アクティブサーバーファイルが存在しません、空の配列を返します"
     echo "[]"
   fi
+  
+  # 常に正常終了
+  return 0
 }
 
 # =============================================================================
@@ -324,6 +354,7 @@ format_duration() {
   else
     echo "$((duration / 3600))時間$((duration % 3600 / 60))分"
   fi
+  return 0
 }
 
 extract_command_type() {
@@ -349,6 +380,7 @@ extract_command_type() {
       echo "unknown"
       ;;
   esac
+  return 0
 }
 
 # =============================================================================
