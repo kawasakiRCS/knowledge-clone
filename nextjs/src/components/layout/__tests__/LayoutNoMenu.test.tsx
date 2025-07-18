@@ -26,7 +26,7 @@ jest.mock('next/router', () => ({
   }),
 }));
 
-jest.mock('@/lib/hooks/useLocale', () => ({
+jest.mock('@/hooks/useLocale', () => ({
   useLocale: () => ({
     t: (key: string) => {
       const translations: { [key: string]: string } = {

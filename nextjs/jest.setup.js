@@ -29,9 +29,8 @@ global.fetch = jest.fn(() =>
   })
 );
 
-// Mock window.location globally
-delete window.location;
-window.location = {
+// Mock window.location globally (safer approach)
+const locationMock = {
   href: '',
   assign: jest.fn(),
   replace: jest.fn(),
@@ -45,6 +44,35 @@ window.location = {
   hostname: 'localhost',
   port: '',
 };
+
+// Only delete and redefine if not already mocked
+if (typeof window !== 'undefined' && !window.location.assign.mockClear) {
+  delete window.location;
+  window.location = locationMock;
+}
+
+// Mock Next.js router - Both old and new router compatibility
+jest.mock('next/router', () => ({
+  useRouter() {
+    return {
+      push: jest.fn(),
+      replace: jest.fn(),
+      prefetch: jest.fn(),
+      back: jest.fn(),
+      forward: jest.fn(),
+      refresh: jest.fn(),
+      pathname: '/',
+      query: {},
+      asPath: '/',
+      route: '/',
+      events: {
+        on: jest.fn(),
+        off: jest.fn(),
+        emit: jest.fn(),
+      },
+    }
+  },
+}))
 
 // Mock Next.js router - App Router compatible
 jest.mock('next/navigation', () => ({
@@ -143,12 +171,28 @@ jest.mock('@/hooks/useLocale', () => ({
   }),
 }))
 
-// Mock useAuth hook
+// Mock useAuth hook - both paths
 jest.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
     user: null,
+    isLoggedIn: false,
     isAuthenticated: false,
     isLoading: false,
+    loading: false,
+    unreadCount: 0,
+    login: jest.fn(),
+    logout: jest.fn(),
+  }),
+}))
+
+jest.mock('@/lib/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: null,
+    isLoggedIn: false,
+    isAuthenticated: false,
+    isLoading: false,
+    loading: false,
+    unreadCount: 0,
     login: jest.fn(),
     logout: jest.fn(),
   }),

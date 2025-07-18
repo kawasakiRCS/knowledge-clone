@@ -24,10 +24,11 @@ export function CommonNavbar({
   serviceLabel = 'Knowledge',
   serviceIcon = 'fa-book'
 }: CommonNavbarProps) {
-  const { isLoggedIn, user, unreadCount } = useAuth();
+  const { isLoggedIn, user, unreadCount, loading } = useAuth();
   const router = useRouter();
   const [keyword, setKeyword] = useState(searchKeyword);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -100,7 +101,7 @@ export function CommonNavbar({
                   <div className="btn-group">
                     <button 
                       type="button" 
-                      onClick={() => router.push('/protect.knowledge/view_add')} 
+                      onClick={() => router.push('/protect/knowledge/edit')} 
                       className="btn btn-info" 
                       id="navAddButtonLink" 
                       tabIndex={-1}
@@ -119,7 +120,7 @@ export function CommonNavbar({
                     </a>
                     <ul className="dropdown-menu" role="menu">
                       <li>
-                        <a className="dropdown-item" href="/protect.knowledge/view_add">
+                        <a className="dropdown-item" href="/protect/knowledge/edit">
                           <i className="fa fa-plus-circle"></i>&nbsp;ナレッジ追加
                         </a>
                       </li>

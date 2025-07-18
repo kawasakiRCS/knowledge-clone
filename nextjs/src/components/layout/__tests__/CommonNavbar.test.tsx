@@ -124,9 +124,23 @@ describe('CommonNavbar', () => {
       // ナレッジ追加ボタン（メインボタンのみ確認）
       const addButton = screen.getByRole('button', { name: /ナレッジ追加/i });
       expect(addButton).toBeInTheDocument();
+      expect(addButton).toHaveClass('btn', 'btn-info');
       
-      // マイストックボタン
-      expect(screen.getByText(/マイストック/i)).toBeInTheDocument();
+      // ストックボタン
+      expect(screen.getByText(/ストック/i)).toBeInTheDocument();
+      
+      // ポイント表示
+      expect(screen.getByText('0')).toBeInTheDocument(); // デフォルトポイント
+    });
+
+    test('ナレッジ追加ボタンのクリック動作', async () => {
+      const user = userEvent.setup();
+      render(<CommonNavbar />);
+      
+      const addButton = screen.getByRole('button', { name: /ナレッジ追加/i });
+      await user.click(addButton);
+      
+      expect(mockPush).toHaveBeenCalledWith('/protect/knowledge/edit');
     });
 
     test('通知バッジが表示される', () => {

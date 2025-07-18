@@ -28,6 +28,8 @@ export interface AuthState {
 export function useAuth(): AuthState {
   const { data: session, status } = useSession();
 
+
+
   if (status === 'loading') {
     return {
       isLoggedIn: false,
@@ -38,14 +40,14 @@ export function useAuth(): AuthState {
   }
 
   if (session?.user && 'userId' in session.user) {
-    const loginedUser = session.user as LoginedUser;
+    const loginedUser = session.user as any; // NextAuthのセッション構造
     
     return {
       isLoggedIn: true,
       user: {
         id: loginedUser.userId,
         name: loginedUser.userName,
-        email: `${loginedUser.userKey}@knowledge.local`, // 仮想メールアドレス
+        email: `${loginedUser.userName}@knowledge.local`, // 仮想メールアドレス
         isAdmin: loginedUser.role === 'admin',
         icon: undefined, // TODO: ユーザーアイコンの実装
       },

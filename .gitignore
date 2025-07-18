@@ -21,3 +21,16 @@ laravel_old/
 laravel/
 .claude/logs/
 .claude/settings.local.json
+
+# 開発ログファイル
+nextjs/dev.log
+
+# テスト結果
+test-results/
+
+# Playwright結果
+playwright-report/
+playwright/.cache/
+
+# 開発状態ファイル
+.claude/dev-server-state/active-servers.json
