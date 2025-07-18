@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from '@/components/providers/SessionProvider';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/authOptions";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,11 +20,13 @@ export const metadata: Metadata = {
   description: "Knowledge is a free information sharing service of open source",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en">
       <head>
@@ -44,7 +48,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider>
+        <SessionProvider session={session}>
           {children}
         </SessionProvider>
       </body>

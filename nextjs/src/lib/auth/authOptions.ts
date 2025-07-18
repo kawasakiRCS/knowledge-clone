@@ -8,7 +8,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import AzureADProvider from 'next-auth/providers/azure-ad';
 import { LoginFormData, LoginedUser } from '@/types/auth';
 import { findEntraIdUserAlias, createEntraIdUserAlias, ENTRAID_AUTH_KEY } from '@/repositories/userAliasRepository';
-import { findUserByEmail, findUserByLoginId } from '@/repositories/userRepository';
+import { findUserByEmail, findUserByLoginId, findUserById } from '@/repositories/userRepository';
 import { convertEntraIdToLegacy } from './domainMapping';
 
 /**
@@ -124,7 +124,7 @@ export const authOptions: NextAuthOptions = {
         try {
           const userAlias = await findEntraIdUserAlias(entraIdEmail);
           if (userAlias) {
-            const existingUser = await findUserByLoginId(userAlias.userId.toString());
+            const existingUser = await findUserById(userAlias.userId);
             if (existingUser) {
               token.userId = existingUser.userId;
               token.userName = existingUser.userName;
@@ -147,12 +147,12 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token) {
-        (session as any).user = {
+        session.user = {
           userId: token.userId as number,
           userName: token.userName as string,
           role: token.role as string,
           unreadCount: token.unreadCount as number,
-        } as any;
+        };
       }
       return session;
     },
