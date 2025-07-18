@@ -1,363 +1,435 @@
 /**
- * knowledgeServiceテスト
+ * KnowledgeServiceテスト
  * 
- * @description ナレッジサービスのビジネスロジックテスト
+ * @description ナレッジサービスの単体テスト
  */
-import { knowledgeService } from '../knowledgeService';
-import * as knowledgeRepository from '../../repositories/knowledgeRepository';
-import { db } from '../../db';
+import { KnowledgeService } from '../knowledgeService';
+import { KnowledgeRepository } from '@/lib/repositories/knowledgeRepository';
+import { Knowledge } from '@prisma/client';
 
-// モック設定
-jest.mock('../../repositories/knowledgeRepository');
-jest.mock('../../db');
+// モック
+jest.mock('@/lib/repositories/knowledgeRepository');
 
-describe('knowledgeService', () => {
-  const mockDb = db as jest.MockedObject<typeof db>;
-  const mockRepository = knowledgeRepository as jest.MockedObject<typeof knowledgeRepository>;
+describe('KnowledgeService', () => {
+  let service: KnowledgeService;
+  let mockKnowledgeRepo: jest.Mocked<KnowledgeRepository>;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    service = new KnowledgeService();
+    mockKnowledgeRepo = (service as any).knowledgeRepo as jest.Mocked<KnowledgeRepository>;
   });
 
-  describe('searchKnowledge', () => {
-    const mockKnowledgeData = [
-      {
-        knowledgeId: 1,
-        title: 'Test Knowledge',
-        content: 'Test content',
-        userName: 'testuser',
+  describe('getKnowledgeById', () => {
+    test('ナレッジをIDで取得できる', async () => {
+      const mockKnowledge: Knowledge = {
+        knowledgeId: BigInt(1),
+        title: 'テストナレッジ',
+        content: 'テスト内容',
         publicFlag: 1,
-        updateDate: '2024-01-15T10:00:00',
-        viewCount: 10,
-        likeCount: 5,
-        commentCount: 3,
-        typeId: 1,
-        typeName: '技術メモ',
-        tags: 'React,TypeScript',
-      },
-    ];
+        typeId: BigInt(1),
+        likeCount: BigInt(0),
+        commentCount: BigInt(0),
+        viewCount: BigInt(0),
+        insertUser: 1,
+        insertDatetime: new Date(),
+        updateUser: 1,
+        updateDatetime: new Date(),
+        deleteFlag: 0,
+        notifyStatus: 0,
+        point: 0,
+      };
 
-    test('検索条件でナレッジを検索できる', async () => {
-      mockRepository.searchKnowledge.mockResolvedValue(mockKnowledgeData);
-      mockRepository.formatKnowledgeData.mockReturnValue({
-        knowledgeId: 1,
-        title: 'Test Knowledge',
-        content: 'Test content',
-        userName: 'testuser',
-        knowledgeType: { typeId: 1, typeName: '技術メモ' },
-        publicFlag: 1,
-        updateDate: '2024-01-15T10:00:00',
-        viewCount: 10,
-        likeCount: 5,
-        commentCount: 3,
-        userLike: 0,
-        tagList: [
-          { tagName: 'React', tagColorType: { colorCode: '#61DAFB' } },
-          { tagName: 'TypeScript', tagColorType: { colorCode: '#3178C6' } },
-        ],
-      });
+      mockKnowledgeRepo.findById.mockResolvedValue(mockKnowledge);
 
-      const result = await knowledgeService.searchKnowledge(mockDb, {
-        keyword: 'Test',
-        userId: 'user1',
-      });
+      const result = await service.getKnowledgeById(BigInt(1));
 
-      expect(mockRepository.searchKnowledge).toHaveBeenCalledWith(
-        mockDb,
-        { keyword: 'Test', userId: 'user1' }
-      );
-      expect(result).toHaveLength(1);
-      expect(result[0].title).toBe('Test Knowledge');
-    });
-
-    test('空の結果を処理できる', async () => {
-      mockRepository.searchKnowledge.mockResolvedValue([]);
-
-      const result = await knowledgeService.searchKnowledge(mockDb, {});
-
-      expect(result).toEqual([]);
-    });
-
-    test('エラーをスローする', async () => {
-      mockRepository.searchKnowledge.mockRejectedValue(new Error('DB Error'));
-
-      await expect(
-        knowledgeService.searchKnowledge(mockDb, {})
-      ).rejects.toThrow('DB Error');
-    });
-  });
-
-  describe('getKnowledge', () => {
-    const mockKnowledgeDetail = {
-      knowledgeId: 1,
-      title: 'Test Knowledge',
-      content: 'Test content',
-      userName: 'testuser',
-      publicFlag: 1,
-      updateDate: '2024-01-15T10:00:00',
-      viewCount: 10,
-      likeCount: 5,
-      commentCount: 3,
-      typeId: 1,
-      typeName: '技術メモ',
-      tags: 'React,TypeScript',
-      comments: [],
-    };
-
-    test('IDでナレッジを取得できる', async () => {
-      mockRepository.getKnowledge.mockResolvedValue(mockKnowledgeDetail);
-      mockRepository.formatKnowledgeData.mockReturnValue({
-        knowledgeId: 1,
-        title: 'Test Knowledge',
-        content: 'Test content',
-        userName: 'testuser',
-        knowledgeType: { typeId: 1, typeName: '技術メモ' },
-        publicFlag: 1,
-        updateDate: '2024-01-15T10:00:00',
-        viewCount: 10,
-        likeCount: 5,
-        commentCount: 3,
-        userLike: 0,
-        tagList: [
-          { tagName: 'React', tagColorType: { colorCode: '#61DAFB' } },
-          { tagName: 'TypeScript', tagColorType: { colorCode: '#3178C6' } },
-        ],
-      });
-
-      const result = await knowledgeService.getKnowledge(mockDb, 1, 'user1');
-
-      expect(mockRepository.getKnowledge).toHaveBeenCalledWith(mockDb, 1, 'user1');
-      expect(result.knowledgeId).toBe(1);
-      expect(result.tagList).toHaveLength(2);
+      expect(mockKnowledgeRepo.findById).toHaveBeenCalledWith(BigInt(1));
+      expect(result).toEqual(mockKnowledge);
     });
 
     test('存在しないIDの場合nullを返す', async () => {
-      mockRepository.getKnowledge.mockResolvedValue(null);
+      mockKnowledgeRepo.findById.mockResolvedValue(null);
 
-      const result = await knowledgeService.getKnowledge(mockDb, 999, 'user1');
+      const result = await service.getKnowledgeById(BigInt(999));
 
+      expect(mockKnowledgeRepo.findById).toHaveBeenCalledWith(BigInt(999));
       expect(result).toBeNull();
     });
   });
 
-  describe('createKnowledge', () => {
-    const mockKnowledgeInput = {
-      title: 'New Knowledge',
-      content: 'New content',
-      knowledgeType: 1,
-      publicFlag: 1,
-      tagList: ['React', 'TypeScript'],
-      userId: 'user1',
-    };
-
-    test('新しいナレッジを作成できる', async () => {
-      mockRepository.createKnowledge.mockResolvedValue(1);
-
-      const result = await knowledgeService.createKnowledge(
-        mockDb,
-        mockKnowledgeInput
-      );
-
-      expect(mockRepository.createKnowledge).toHaveBeenCalledWith(
-        mockDb,
-        mockKnowledgeInput
-      );
-      expect(result).toBe(1);
-    });
-
-    test('必須フィールドがない場合エラーをスロー', async () => {
-      const invalidInput = {
-        content: 'Content only',
-        userId: 'user1',
+  describe('getKnowledgeWithAuthor', () => {
+    test('ユーザー情報付きでナレッジを取得できる', async () => {
+      const mockKnowledgeWithAuthor = {
+        knowledgeId: BigInt(1),
+        title: 'テストナレッジ',
+        content: 'テスト内容',
+        publicFlag: 1,
+        typeId: BigInt(1),
+        likeCount: BigInt(0),
+        commentCount: BigInt(0),
+        viewCount: BigInt(0),
+        insertUser: 1,
+        insertDatetime: new Date(),
+        updateUser: 1,
+        updateDatetime: new Date(),
+        deleteFlag: 0,
+        notifyStatus: 0,
+        point: 0,
+        user: {
+          userId: 1,
+          userName: 'Test User',
+        },
       };
 
-      await expect(
-        knowledgeService.createKnowledge(mockDb, invalidInput as any)
-      ).rejects.toThrow();
+      mockKnowledgeRepo.findByIdWithAuthor.mockResolvedValue(mockKnowledgeWithAuthor);
+
+      const result = await service.getKnowledgeWithAuthor(BigInt(1));
+
+      expect(mockKnowledgeRepo.findByIdWithAuthor).toHaveBeenCalledWith(BigInt(1));
+      expect(result).toEqual(mockKnowledgeWithAuthor);
+    });
+  });
+
+  describe('searchKnowledges', () => {
+    test('検索条件に従ってナレッジを検索できる', async () => {
+      const mockResults = {
+        knowledges: [],
+        total: 0,
+      };
+
+      mockKnowledgeRepo.search.mockResolvedValue(mockResults);
+
+      const searchParams = {
+        keyword: 'test',
+        tagNames: ['tag1', 'tag2'],
+        offset: 0,
+        limit: 10,
+      };
+
+      const result = await service.searchKnowledges(searchParams);
+
+      expect(mockKnowledgeRepo.search).toHaveBeenCalledWith(searchParams);
+      expect(result).toEqual(mockResults);
+    });
+
+    test('ユーザー情報を含めて検索できる', async () => {
+      const mockResults = {
+        knowledges: [],
+        total: 0,
+      };
+
+      mockKnowledgeRepo.search.mockResolvedValue(mockResults);
+
+      const searchParams = {
+        keyword: 'test',
+        userId: 1,
+        offset: 0,
+        limit: 10,
+      };
+
+      const user = { userId: 1 };
+
+      const result = await service.searchKnowledges(searchParams, user);
+
+      expect(mockKnowledgeRepo.search).toHaveBeenCalledWith({
+        ...searchParams,
+        userId: 1,
+      });
+      expect(result).toEqual(mockResults);
+    });
+  });
+
+  describe('createKnowledge', () => {
+    test('ナレッジを作成できる', async () => {
+      const input = {
+        title: '新規ナレッジ',
+        content: '新規内容',
+        publicFlag: 1,
+        typeId: 1,
+        tags: ['tag1', 'tag2'],
+        groups: [1, 2],
+        editors: [1, 2],
+      };
+
+      const user = { userId: 1 };
+
+      const mockCreatedKnowledge = {
+        knowledgeId: BigInt(1),
+        ...input,
+        typeId: BigInt(input.typeId),
+        likeCount: BigInt(0),
+        commentCount: BigInt(0),
+        viewCount: BigInt(0),
+        insertUser: 1,
+        insertDatetime: new Date(),
+        updateUser: 1,
+        updateDatetime: new Date(),
+        deleteFlag: 0,
+        notifyStatus: 0,
+        point: 0,
+      };
+
+      mockKnowledgeRepo.create.mockResolvedValue(mockCreatedKnowledge);
+
+      const result = await service.createKnowledge(input, user);
+
+      expect(mockKnowledgeRepo.create).toHaveBeenCalledWith({
+        title: input.title,
+        content: input.content,
+        publicFlag: input.publicFlag,
+        typeId: BigInt(input.typeId),
+        insertUser: user.userId,
+        updateUser: user.userId,
+      });
+      expect(result).toEqual(mockCreatedKnowledge);
     });
   });
 
   describe('updateKnowledge', () => {
-    const mockUpdateData = {
-      knowledgeId: 1,
-      title: 'Updated Knowledge',
-      content: 'Updated content',
-      knowledgeType: 1,
-      publicFlag: 1,
-      tagList: ['React', 'Next.js'],
-      userId: 'user1',
-    };
-
     test('ナレッジを更新できる', async () => {
-      mockRepository.updateKnowledge.mockResolvedValue(true);
+      const input = {
+        knowledgeId: BigInt(1),
+        title: '更新ナレッジ',
+        content: '更新内容',
+        publicFlag: 1,
+        typeId: 1,
+        tags: ['tag1', 'tag2'],
+        groups: [1, 2],
+        editors: [1, 2],
+      };
 
-      const result = await knowledgeService.updateKnowledge(
-        mockDb,
-        mockUpdateData
-      );
+      const user = { userId: 1 };
 
-      expect(mockRepository.updateKnowledge).toHaveBeenCalledWith(
-        mockDb,
-        mockUpdateData
-      );
-      expect(result).toBe(true);
-    });
+      const mockUpdatedKnowledge = {
+        ...input,
+        typeId: BigInt(input.typeId),
+        likeCount: BigInt(0),
+        commentCount: BigInt(0),
+        viewCount: BigInt(0),
+        insertUser: 1,
+        insertDatetime: new Date(),
+        updateUser: 1,
+        updateDatetime: new Date(),
+        deleteFlag: 0,
+        notifyStatus: 0,
+        point: 0,
+      };
 
-    test('権限がない場合falseを返す', async () => {
-      mockRepository.updateKnowledge.mockResolvedValue(false);
+      mockKnowledgeRepo.update.mockResolvedValue(mockUpdatedKnowledge);
 
-      const result = await knowledgeService.updateKnowledge(
-        mockDb,
-        mockUpdateData
-      );
+      const result = await service.updateKnowledge(input, user);
 
-      expect(result).toBe(false);
+      expect(mockKnowledgeRepo.update).toHaveBeenCalledWith(input.knowledgeId, {
+        title: input.title,
+        content: input.content,
+        publicFlag: input.publicFlag,
+        typeId: BigInt(input.typeId),
+        updateUser: user.userId,
+      });
+      expect(result).toEqual(mockUpdatedKnowledge);
     });
   });
 
   describe('deleteKnowledge', () => {
     test('ナレッジを削除できる', async () => {
-      mockRepository.deleteKnowledge.mockResolvedValue(true);
+      mockKnowledgeRepo.delete.mockResolvedValue(true);
 
-      const result = await knowledgeService.deleteKnowledge(
-        mockDb,
-        1,
-        'user1'
-      );
+      const result = await service.deleteKnowledge(BigInt(1));
 
-      expect(mockRepository.deleteKnowledge).toHaveBeenCalledWith(
-        mockDb,
-        1,
-        'user1'
-      );
+      expect(mockKnowledgeRepo.delete).toHaveBeenCalledWith(BigInt(1));
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('canUserViewKnowledge', () => {
+    test('公開ナレッジは誰でも閲覧可能', async () => {
+      const knowledge = {
+        knowledgeId: BigInt(1),
+        publicFlag: 1,
+        insertUser: 2,
+      } as Knowledge;
+
+      const user = { userId: 1 };
+
+      const result = await service.canUserViewKnowledge(knowledge, user);
+
       expect(result).toBe(true);
     });
 
-    test('権限がない場合falseを返す', async () => {
-      mockRepository.deleteKnowledge.mockResolvedValue(false);
+    test('非公開ナレッジは作成者のみ閲覧可能', async () => {
+      const knowledge = {
+        knowledgeId: BigInt(1),
+        publicFlag: 0,
+        insertUser: 1,
+      } as Knowledge;
 
-      const result = await knowledgeService.deleteKnowledge(
-        mockDb,
-        1,
-        'wronguser'
-      );
+      const user = { userId: 1 };
 
-      expect(result).toBe(false);
-    });
-  });
+      const result = await service.canUserViewKnowledge(knowledge, user);
 
-  describe('addLike', () => {
-    test('いいねを追加できる', async () => {
-      mockRepository.addLike.mockResolvedValue(true);
-
-      const result = await knowledgeService.addLike(mockDb, 1, 'user1');
-
-      expect(mockRepository.addLike).toHaveBeenCalledWith(mockDb, 1, 'user1');
       expect(result).toBe(true);
     });
 
-    test('既にいいね済みの場合falseを返す', async () => {
-      mockRepository.addLike.mockResolvedValue(false);
+    test('非公開ナレッジは他ユーザーは閲覧不可', async () => {
+      const knowledge = {
+        knowledgeId: BigInt(1),
+        publicFlag: 0,
+        insertUser: 2,
+      } as Knowledge;
 
-      const result = await knowledgeService.addLike(mockDb, 1, 'user1');
+      const user = { userId: 1 };
+
+      const result = await service.canUserViewKnowledge(knowledge, user);
 
       expect(result).toBe(false);
     });
+
+    test('ログインしていない場合は公開ナレッジのみ閲覧可能', async () => {
+      const publicKnowledge = {
+        knowledgeId: BigInt(1),
+        publicFlag: 1,
+        insertUser: 2,
+      } as Knowledge;
+
+      const privateKnowledge = {
+        knowledgeId: BigInt(2),
+        publicFlag: 0,
+        insertUser: 2,
+      } as Knowledge;
+
+      const publicResult = await service.canUserViewKnowledge(publicKnowledge, null);
+      const privateResult = await service.canUserViewKnowledge(privateKnowledge, null);
+
+      expect(publicResult).toBe(true);
+      expect(privateResult).toBe(false);
+    });
   });
 
-  describe('removeLike', () => {
-    test('いいねを削除できる', async () => {
-      mockRepository.removeLike.mockResolvedValue(true);
+  describe('canUserEditKnowledge', () => {
+    test('作成者は編集可能', async () => {
+      const knowledge = {
+        knowledgeId: BigInt(1),
+        insertUser: 1,
+      } as Knowledge;
 
-      const result = await knowledgeService.removeLike(mockDb, 1, 'user1');
+      const user = { userId: 1 };
 
-      expect(mockRepository.removeLike).toHaveBeenCalledWith(mockDb, 1, 'user1');
+      const result = await service.canUserEditKnowledge(knowledge, user);
+
       expect(result).toBe(true);
     });
 
-    test('いいねしていない場合falseを返す', async () => {
-      mockRepository.removeLike.mockResolvedValue(false);
+    test('管理者は編集可能', async () => {
+      const knowledge = {
+        knowledgeId: BigInt(1),
+        insertUser: 2,
+      } as Knowledge;
 
-      const result = await knowledgeService.removeLike(mockDb, 1, 'user1');
+      const user = { userId: 1, isAdmin: true };
+
+      const result = await service.canUserEditKnowledge(knowledge, user);
+
+      expect(result).toBe(true);
+    });
+
+    test('他ユーザーは編集不可', async () => {
+      const knowledge = {
+        knowledgeId: BigInt(1),
+        insertUser: 2,
+      } as Knowledge;
+
+      const user = { userId: 1 };
+
+      const result = await service.canUserEditKnowledge(knowledge, user);
 
       expect(result).toBe(false);
     });
-  });
 
-  describe('addComment', () => {
-    test('コメントを追加できる', async () => {
-      mockRepository.addComment.mockResolvedValue(1);
+    test('ログインしていない場合は編集不可', async () => {
+      const knowledge = {
+        knowledgeId: BigInt(1),
+        insertUser: 1,
+      } as Knowledge;
 
-      const result = await knowledgeService.addComment(
-        mockDb,
-        1,
-        'user1',
-        'Great knowledge!'
-      );
+      const result = await service.canUserEditKnowledge(knowledge, null);
 
-      expect(mockRepository.addComment).toHaveBeenCalledWith(
-        mockDb,
-        1,
-        'user1',
-        'Great knowledge!'
-      );
-      expect(result).toBe(1);
-    });
-
-    test('空のコメントはエラーをスロー', async () => {
-      await expect(
-        knowledgeService.addComment(mockDb, 1, 'user1', '')
-      ).rejects.toThrow();
-    });
-  });
-
-  describe('getKnowledgeHistory', () => {
-    const mockHistory = [
-      {
-        historyId: 1,
-        knowledgeId: 1,
-        title: 'Test Knowledge v1',
-        content: 'Test content v1',
-        updateDate: '2024-01-15T10:00:00',
-        userName: 'testuser',
-      },
-      {
-        historyId: 2,
-        knowledgeId: 1,
-        title: 'Test Knowledge v2',
-        content: 'Test content v2',
-        updateDate: '2024-01-16T10:00:00',
-        userName: 'testuser',
-      },
-    ];
-
-    test('ナレッジの履歴を取得できる', async () => {
-      mockRepository.getKnowledgeHistory.mockResolvedValue(mockHistory);
-
-      const result = await knowledgeService.getKnowledgeHistory(mockDb, 1);
-
-      expect(mockRepository.getKnowledgeHistory).toHaveBeenCalledWith(mockDb, 1);
-      expect(result).toHaveLength(2);
-      expect(result[0].historyId).toBe(1);
-    });
-
-    test('履歴がない場合空配列を返す', async () => {
-      mockRepository.getKnowledgeHistory.mockResolvedValue([]);
-
-      const result = await knowledgeService.getKnowledgeHistory(mockDb, 999);
-
-      expect(result).toEqual([]);
+      expect(result).toBe(false);
     });
   });
 
   describe('incrementViewCount', () => {
     test('閲覧数を増やせる', async () => {
-      mockRepository.incrementViewCount.mockResolvedValue(true);
+      mockKnowledgeRepo.incrementViewCount.mockResolvedValue(true);
 
-      const result = await knowledgeService.incrementViewCount(mockDb, 1);
+      const result = await service.incrementViewCount(BigInt(1));
 
-      expect(mockRepository.incrementViewCount).toHaveBeenCalledWith(mockDb, 1);
+      expect(mockKnowledgeRepo.incrementViewCount).toHaveBeenCalledWith(BigInt(1));
       expect(result).toBe(true);
+    });
+  });
+
+  describe('getPopularKnowledges', () => {
+    test('人気ナレッジ一覧を取得できる', async () => {
+      const mockKnowledges = [
+        { knowledgeId: BigInt(1), viewCount: BigInt(100) },
+        { knowledgeId: BigInt(2), viewCount: BigInt(50) },
+      ];
+
+      mockKnowledgeRepo.findPopular.mockResolvedValue(mockKnowledges as any);
+
+      const result = await service.getPopularKnowledges(10);
+
+      expect(mockKnowledgeRepo.findPopular).toHaveBeenCalledWith(10);
+      expect(result).toEqual(mockKnowledges);
+    });
+  });
+
+  describe('getRecentKnowledges', () => {
+    test('最新ナレッジ一覧を取得できる', async () => {
+      const mockKnowledges = [
+        { knowledgeId: BigInt(1), insertDatetime: new Date() },
+        { knowledgeId: BigInt(2), insertDatetime: new Date() },
+      ];
+
+      mockKnowledgeRepo.findRecent.mockResolvedValue(mockKnowledges as any);
+
+      const result = await service.getRecentKnowledges(10);
+
+      expect(mockKnowledgeRepo.findRecent).toHaveBeenCalledWith(10);
+      expect(result).toEqual(mockKnowledges);
+    });
+  });
+
+  describe('getUserKnowledges', () => {
+    test('ユーザーのナレッジ一覧を取得できる', async () => {
+      const mockKnowledges = [
+        { knowledgeId: BigInt(1), insertUser: 1 },
+        { knowledgeId: BigInt(2), insertUser: 1 },
+      ];
+
+      mockKnowledgeRepo.findByUserId.mockResolvedValue(mockKnowledges as any);
+
+      const result = await service.getUserKnowledges(1, 0, 10);
+
+      expect(mockKnowledgeRepo.findByUserId).toHaveBeenCalledWith(1, 0, 10);
+      expect(result).toEqual(mockKnowledges);
+    });
+  });
+
+  describe('getDraftKnowledges', () => {
+    test('ユーザーの下書き一覧を取得できる', async () => {
+      const mockKnowledges = [
+        { knowledgeId: BigInt(1), publicFlag: 0, typeId: BigInt(99) },
+        { knowledgeId: BigInt(2), publicFlag: 0, typeId: BigInt(99) },
+      ];
+
+      mockKnowledgeRepo.findDraftsByUserId.mockResolvedValue(mockKnowledges as any);
+
+      const result = await service.getDraftKnowledges(1, 0, 10);
+
+      expect(mockKnowledgeRepo.findDraftsByUserId).toHaveBeenCalledWith(1, 0, 10);
+      expect(result).toEqual(mockKnowledges);
     });
   });
 });

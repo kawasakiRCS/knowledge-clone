@@ -1,343 +1,416 @@
 /**
- * tagServiceテスト
+ * タグサービステスト
  * 
- * @description タグサービスのビジネスロジックテスト
+ * @description tagService.tsの包括的なテストカバレッジ
  */
-import { tagService } from '../tagService';
-import { db } from '../../db';
+import { TagService } from '../tagService';
+import { PrismaClient } from '@prisma/client';
+import { AuthenticatedUser } from '@/lib/auth/middleware';
 
-// モック設定
-jest.mock('../../db');
+// Prismaのモック
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn().mockImplementation(() => ({
+    $queryRawUnsafe: jest.fn(),
+    tag: {
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    knowledgeTag: {
+      updateMany: jest.fn(),
+      create: jest.fn(),
+    },
+  })),
+}));
 
-describe('tagService', () => {
-  const mockDb = db as jest.MockedObject<typeof db>;
+describe('TagService', () => {
+  let tagService: TagService;
+  let mockPrisma: any;
+  
+  const mockUser: AuthenticatedUser = {
+    userId: 1,
+    email: 'test@example.com',
+    userInfoName: 'Test User',
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    tagService = new TagService();
+    mockPrisma = new PrismaClient();
   });
 
-  describe('searchTags', () => {
-    const mockTags = [
-      { tagName: 'React', colorCode: '#61DAFB', usageCount: 25 },
-      { tagName: 'TypeScript', colorCode: '#3178C6', usageCount: 20 },
-      { tagName: 'Next.js', colorCode: '#000000', usageCount: 15 },
-    ];
+  describe('getTagsWithCount', () => {
+    test('認証ユーザーでタグ一覧取得', async () => {
+      const mockTags = [
+        { tag_id: BigInt(1), tag_name: 'React', knowledge_count: BigInt(10) },
+        { tag_id: BigInt(2), tag_name: 'TypeScript', knowledge_count: BigInt(5) },
+      ];
 
-    test('キーワードでタグを検索できる', async () => {
-      mockDb.query.mockResolvedValue({ rows: mockTags } as any);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue(mockTags);
 
-      const result = await tagService.searchTags(mockDb, 'React');
+      const result = await tagService.getTagsWithCount(mockUser, 0, 10);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE LOWER(tag_name) LIKE LOWER'),
-        ['%React%']
-      );
       expect(result).toEqual([
-        { 
-          tagName: 'React', 
-          tagColorType: { colorCode: '#61DAFB' },
-          usageCount: 25 
-        },
+        { tagId: 1, tagName: 'React', knowledgeCount: 10 },
+        { tagId: 2, tagName: 'TypeScript', knowledgeCount: 5 },
       ]);
-    });
 
-    test('すべてのタグを取得できる', async () => {
-      mockDb.query.mockResolvedValue({ rows: mockTags } as any);
-
-      const result = await tagService.searchTags(mockDb);
-
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.not.stringContaining('WHERE'),
-        []
+      expect(mockPrisma.$queryRawUnsafe).toHaveBeenCalledWith(
+        expect.any(String),
+        1,
+        0,
+        10
       );
-      expect(result).toHaveLength(3);
     });
 
-    test('空の結果を処理できる', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] } as any);
+    test('未認証ユーザーでタグ一覧取得', async () => {
+      const mockTags = [
+        { tag_id: BigInt(3), tag_name: 'JavaScript', knowledge_count: BigInt(8) },
+      ];
 
-      const result = await tagService.searchTags(mockDb, 'NonExistent');
+      mockPrisma.$queryRawUnsafe.mockResolvedValue(mockTags);
+
+      const result = await tagService.getTagsWithCount(null, 0, 20);
+
+      expect(result).toEqual([
+        { tagId: 3, tagName: 'JavaScript', knowledgeCount: 8 },
+      ]);
+
+      expect(mockPrisma.$queryRawUnsafe).toHaveBeenCalledWith(
+        expect.any(String),
+        -1, // 未認証ユーザーのID
+        0,
+        20
+      );
+    });
+
+    test('空の結果', async () => {
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
+
+      const result = await tagService.getTagsWithCount(mockUser, 0, 10);
+
+      expect(result).toEqual([]);
+    });
+
+    test('エラー処理', async () => {
+      mockPrisma.$queryRawUnsafe.mockRejectedValue(new Error('DB Error'));
+
+      const result = await tagService.getTagsWithCount(mockUser, 0, 10);
 
       expect(result).toEqual([]);
     });
   });
 
-  describe('getPopularTags', () => {
-    const mockPopularTags = [
-      { tagName: 'React', colorCode: '#61DAFB', usageCount: 50 },
-      { tagName: 'JavaScript', colorCode: '#F7DF1E', usageCount: 45 },
-      { tagName: 'Node.js', colorCode: '#339933', usageCount: 40 },
-    ];
+  describe('getTagsWithKeyword', () => {
+    test('キーワード検索成功', async () => {
+      const mockTags = [
+        { tag_id: BigInt(1), tag_name: 'React', knowledge_count: BigInt(10) },
+        { tag_id: BigInt(2), tag_name: 'React Native', knowledge_count: BigInt(3) },
+      ];
 
-    test('人気タグを取得できる', async () => {
-      mockDb.query.mockResolvedValue({ rows: mockPopularTags } as any);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue(mockTags);
 
-      const result = await tagService.getPopularTags(mockDb);
+      const result = await tagService.getTagsWithKeyword('React', 0, 10);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('ORDER BY usage_count DESC'),
-        []
+      expect(result).toEqual([
+        { tagId: 1, tagName: 'React', knowledgeCount: 10 },
+        { tagId: 2, tagName: 'React Native', knowledgeCount: 3 },
+      ]);
+
+      expect(mockPrisma.$queryRawUnsafe).toHaveBeenCalledWith(
+        expect.any(String),
+        '%React%',
+        0,
+        10
       );
-      expect(result).toHaveLength(3);
-      expect(result[0].tagName).toBe('React');
-      expect(result[0].usageCount).toBe(50);
     });
 
-    test('取得数を制限できる', async () => {
-      mockDb.query.mockResolvedValue({ rows: mockPopularTags.slice(0, 2) } as any);
+    test('特殊文字を含むキーワードのサニタイズ', async () => {
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
-      const result = await tagService.getPopularTags(mockDb, 2);
+      await tagService.getTagsWithKeyword('React%_<script>', 0, 10);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('LIMIT'),
-        [2]
+      expect(mockPrisma.$queryRawUnsafe).toHaveBeenCalledWith(
+        expect.any(String),
+        '%React\\%\\_script%',
+        0,
+        10
       );
-      expect(result).toHaveLength(2);
     });
 
-    test('タグがない場合空配列を返す', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] } as any);
+    test('空のキーワード', async () => {
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
-      const result = await tagService.getPopularTags(mockDb);
+      const result = await tagService.getTagsWithKeyword('', 0, 10);
 
       expect(result).toEqual([]);
-    });
-  });
-
-  describe('getTagStats', () => {
-    const mockTagStats = [
-      { tagName: 'React', colorCode: '#61DAFB', usageCount: 30, knowledgeCount: 15 },
-      { tagName: 'Vue', colorCode: '#4FC08D', usageCount: 25, knowledgeCount: 12 },
-    ];
-
-    test('タグ統計を取得できる', async () => {
-      mockDb.query.mockResolvedValue({ rows: mockTagStats } as any);
-
-      const result = await tagService.getTagStats(mockDb);
-
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('COUNT(DISTINCT'),
-        []
+      expect(mockPrisma.$queryRawUnsafe).toHaveBeenCalledWith(
+        expect.any(String),
+        '%%',
+        0,
+        10
       );
-      expect(result).toEqual([
-        {
-          tagName: 'React',
-          tagColorType: { colorCode: '#61DAFB' },
-          usageCount: 30,
-          knowledgeCount: 15,
-        },
-        {
-          tagName: 'Vue',
-          tagColorType: { colorCode: '#4FC08D' },
-          usageCount: 25,
-          knowledgeCount: 12,
-        },
-      ]);
     });
 
-    test('期間フィルタを適用できる', async () => {
-      mockDb.query.mockResolvedValue({ rows: mockTagStats } as any);
+    test('長いキーワードの切り詰め', async () => {
+      const longKeyword = 'a'.repeat(150);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
-      const result = await tagService.getTagStats(mockDb, 'monthly');
+      await tagService.getTagsWithKeyword(longKeyword, 0, 10);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('AND k.create_date >='),
-        expect.any(Array)
+      expect(mockPrisma.$queryRawUnsafe).toHaveBeenCalledWith(
+        expect.any(String),
+        '%' + 'a'.repeat(100) + '%',
+        0,
+        10
       );
-      expect(result).toHaveLength(2);
-    });
-  });
-
-  describe('getUserTags', () => {
-    const mockUserTags = [
-      { tagName: 'Python', colorCode: '#3776AB', usageCount: 10 },
-      { tagName: 'Django', colorCode: '#092E20', usageCount: 8 },
-    ];
-
-    test('ユーザーが使用したタグを取得できる', async () => {
-      mockDb.query.mockResolvedValue({ rows: mockUserTags } as any);
-
-      const result = await tagService.getUserTags(mockDb, 'testuser');
-
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE k.user_id = '),
-        ['testuser']
-      );
-      expect(result).toEqual([
-        {
-          tagName: 'Python',
-          tagColorType: { colorCode: '#3776AB' },
-          usageCount: 10,
-        },
-        {
-          tagName: 'Django',
-          tagColorType: { colorCode: '#092E20' },
-          usageCount: 8,
-        },
-      ]);
     });
 
-    test('ユーザーがタグを使用していない場合空配列を返す', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] } as any);
+    test('エラー処理', async () => {
+      mockPrisma.$queryRawUnsafe.mockRejectedValue(new Error('DB Error'));
 
-      const result = await tagService.getUserTags(mockDb, 'newuser');
+      const result = await tagService.getTagsWithKeyword('React', 0, 10);
 
       expect(result).toEqual([]);
-    });
-  });
-
-  describe('getTagColor', () => {
-    test('タグの色を取得できる', async () => {
-      mockDb.query.mockResolvedValue({ 
-        rows: [{ colorCode: '#61DAFB' }] 
-      } as any);
-
-      const result = await tagService.getTagColor(mockDb, 'React');
-
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE t.tag_name = '),
-        ['React']
-      );
-      expect(result).toBe('#61DAFB');
-    });
-
-    test('タグが存在しない場合デフォルト色を返す', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] } as any);
-
-      const result = await tagService.getTagColor(mockDb, 'NewTag');
-
-      expect(result).toBe('#808080'); // デフォルトのグレー
     });
   });
 
   describe('createTag', () => {
-    test('新しいタグを作成できる', async () => {
-      mockDb.query.mockResolvedValueOnce({ rows: [] } as any); // 既存チェック
-      mockDb.query.mockResolvedValueOnce({ rows: [] } as any); // 挿入
+    test('新規タグ作成成功', async () => {
+      mockPrisma.tag.findFirst.mockResolvedValue(null);
+      mockPrisma.tag.create.mockResolvedValue({
+        tagId: 100,
+        tagName: 'NewTag',
+        insertUser: 1,
+        insertDatetime: new Date(),
+        updateUser: 1,
+        updateDatetime: new Date(),
+        deleteFlag: 0,
+      });
 
-      const result = await tagService.createTag(mockDb, 'NewTag', '#FF0000');
+      const result = await tagService.createTag('NewTag', 1);
 
-      expect(mockDb.query).toHaveBeenNthCalledWith(1,
-        expect.stringContaining('SELECT 1 FROM tags WHERE tag_name = '),
-        ['NewTag']
-      );
-      expect(mockDb.query).toHaveBeenNthCalledWith(2,
-        expect.stringContaining('INSERT INTO tags'),
-        expect.arrayContaining(['NewTag', expect.any(Number)])
-      );
-      expect(result).toBe(true);
+      expect(result).toEqual({
+        tagId: 100,
+        tagName: 'NewTag',
+        knowledgeCount: 0,
+      });
+
+      expect(mockPrisma.tag.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          tagName: 'NewTag',
+          insertUser: 1,
+          deleteFlag: 0,
+        }),
+      });
     });
 
-    test('既存のタグ名の場合エラーをスロー', async () => {
-      mockDb.query.mockResolvedValue({ 
-        rows: [{ exists: true }] 
-      } as any);
+    test('既存タグが存在する場合', async () => {
+      const existingTag = {
+        tagId: 50,
+        tagName: 'ExistingTag',
+        deleteFlag: 0,
+      };
 
-      await expect(
-        tagService.createTag(mockDb, 'React', '#000000')
-      ).rejects.toThrow('Tag already exists');
-    });
-  });
+      mockPrisma.tag.findFirst.mockResolvedValue(existingTag);
 
-  describe('updateTagColor', () => {
-    test('タグの色を更新できる', async () => {
-      mockDb.query.mockResolvedValueOnce({ rows: [{ tagId: 1 }] } as any); // タグ存在確認
-      mockDb.query.mockResolvedValueOnce({ rows: [] } as any); // 更新
+      const result = await tagService.createTag('ExistingTag', 1);
 
-      const result = await tagService.updateTagColor(mockDb, 'React', '#0000FF');
+      expect(result).toEqual({
+        tagId: 50,
+        tagName: 'ExistingTag',
+        knowledgeCount: 0,
+      });
 
-      expect(mockDb.query).toHaveBeenNthCalledWith(2,
-        expect.stringContaining('UPDATE tag_color_types SET color_code = '),
-        ['#0000FF', expect.any(Number)]
-      );
-      expect(result).toBe(true);
+      expect(mockPrisma.tag.create).not.toHaveBeenCalled();
     });
 
-    test('タグが存在しない場合エラーをスロー', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] } as any);
+    test('エラー処理', async () => {
+      mockPrisma.tag.findFirst.mockRejectedValue(new Error('DB Error'));
 
-      await expect(
-        tagService.updateTagColor(mockDb, 'NonExistent', '#000000')
-      ).rejects.toThrow('Tag not found');
-    });
-  });
+      const result = await tagService.createTag('ErrorTag', 1);
 
-  describe('mergeTag', () => {
-    test('タグをマージできる', async () => {
-      // 両タグの存在確認
-      mockDb.query.mockResolvedValueOnce({ rows: [{ tagId: 1 }] } as any);
-      mockDb.query.mockResolvedValueOnce({ rows: [{ tagId: 2 }] } as any);
-      // マージ実行
-      mockDb.query.mockResolvedValueOnce({ rows: [] } as any);
-      // 古いタグ削除
-      mockDb.query.mockResolvedValueOnce({ rows: [] } as any);
-
-      const result = await tagService.mergeTag(mockDb, 'OldTag', 'NewTag');
-
-      expect(mockDb.query).toHaveBeenCalledTimes(4);
-      expect(result).toBe(true);
-    });
-
-    test('元タグが存在しない場合エラーをスロー', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] } as any);
-
-      await expect(
-        tagService.mergeTag(mockDb, 'NonExistent', 'React')
-      ).rejects.toThrow('Source tag not found');
-    });
-
-    test('対象タグが存在しない場合エラーをスロー', async () => {
-      mockDb.query.mockResolvedValueOnce({ rows: [{ tagId: 1 }] } as any);
-      mockDb.query.mockResolvedValueOnce({ rows: [] } as any);
-
-      await expect(
-        tagService.mergeTag(mockDb, 'React', 'NonExistent')
-      ).rejects.toThrow('Target tag not found');
+      expect(result).toBeNull();
     });
   });
 
-  describe('getTagSuggestions', () => {
-    const mockSuggestions = [
-      { tagName: 'JavaScript', score: 0.9 },
-      { tagName: 'TypeScript', score: 0.8 },
-      { tagName: 'React', score: 0.7 },
-    ];
+  describe('deleteTag', () => {
+    test('タグ削除成功', async () => {
+      const mockTag = {
+        tagId: 10,
+        tagName: 'DeleteMe',
+        deleteFlag: 0,
+      };
 
-    test('コンテンツに基づくタグ提案を取得できる', async () => {
-      mockDb.query.mockResolvedValue({ rows: mockSuggestions } as any);
+      mockPrisma.tag.findUnique.mockResolvedValue(mockTag);
+      mockPrisma.tag.update.mockResolvedValue({
+        ...mockTag,
+        deleteFlag: 1,
+      });
 
-      const result = await tagService.getTagSuggestions(
-        mockDb,
-        'JavaScriptとTypeScriptでReactを使う'
-      );
+      const result = await tagService.deleteTag(10, 1);
 
-      expect(mockDb.query).toHaveBeenCalled();
-      expect(result).toEqual(['JavaScript', 'TypeScript', 'React']);
+      expect(result).toBe(true);
+      expect(mockPrisma.tag.update).toHaveBeenCalledWith({
+        where: { tagId: 10 },
+        data: {
+          deleteFlag: 1,
+          updateUser: 1,
+          updateDatetime: expect.any(Date),
+        },
+      });
     });
 
-    test('提案数を制限できる', async () => {
-      mockDb.query.mockResolvedValue({ 
-        rows: mockSuggestions.slice(0, 2) 
-      } as any);
+    test('タグが存在しない場合', async () => {
+      mockPrisma.tag.findUnique.mockResolvedValue(null);
 
-      const result = await tagService.getTagSuggestions(
-        mockDb,
-        'テストコンテンツ',
-        2
-      );
+      const result = await tagService.deleteTag(999, 1);
 
-      expect(result).toHaveLength(2);
+      expect(result).toBe(false);
+      expect(mockPrisma.tag.update).not.toHaveBeenCalled();
     });
 
-    test('提案がない場合空配列を返す', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] } as any);
+    test('既に削除済みの場合', async () => {
+      const deletedTag = {
+        tagId: 10,
+        tagName: 'Deleted',
+        deleteFlag: 1,
+      };
 
-      const result = await tagService.getTagSuggestions(
-        mockDb,
-        '無関係なコンテンツ'
-      );
+      mockPrisma.tag.findUnique.mockResolvedValue(deletedTag);
 
-      expect(result).toEqual([]);
+      const result = await tagService.deleteTag(10, 1);
+
+      expect(result).toBe(false);
+      expect(mockPrisma.tag.update).not.toHaveBeenCalled();
+    });
+
+    test('エラー処理', async () => {
+      mockPrisma.tag.findUnique.mockRejectedValue(new Error('DB Error'));
+
+      const result = await tagService.deleteTag(10, 1);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('attachTagsToKnowledge', () => {
+    test('タグ紐づけ成功', async () => {
+      mockPrisma.knowledgeTag.updateMany.mockResolvedValue({ count: 2 });
+      mockPrisma.knowledgeTag.create.mockResolvedValue({});
+
+      const result = await tagService.attachTagsToKnowledge(1, [10, 20, 30], 1);
+
+      expect(result).toBe(true);
+
+      // 既存の紐づけを削除
+      expect(mockPrisma.knowledgeTag.updateMany).toHaveBeenCalledWith({
+        where: {
+          knowledgeId: BigInt(1),
+          deleteFlag: 0,
+        },
+        data: {
+          deleteFlag: 1,
+          updateUser: 1,
+          updateDatetime: expect.any(Date),
+        },
+      });
+
+      // 新しい紐づけを作成（3回呼ばれる）
+      expect(mockPrisma.knowledgeTag.create).toHaveBeenCalledTimes(3);
+      expect(mockPrisma.knowledgeTag.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          knowledgeId: BigInt(1),
+          tagId: 10,
+          insertUser: 1,
+          deleteFlag: 0,
+        }),
+      });
+    });
+
+    test('空のタグID配列', async () => {
+      mockPrisma.knowledgeTag.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await tagService.attachTagsToKnowledge(1, [], 1);
+
+      expect(result).toBe(true);
+      expect(mockPrisma.knowledgeTag.updateMany).toHaveBeenCalled();
+      expect(mockPrisma.knowledgeTag.create).not.toHaveBeenCalled();
+    });
+
+    test('エラー処理', async () => {
+      mockPrisma.knowledgeTag.updateMany.mockRejectedValue(new Error('DB Error'));
+
+      const result = await tagService.attachTagsToKnowledge(1, [10], 1);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('sanitizeKeyword', () => {
+    test('通常のキーワード', () => {
+      const result = (tagService as any).sanitizeKeyword('React');
+      expect(result).toBe('React');
+    });
+
+    test('LIKE演算子のエスケープ', () => {
+      const result = (tagService as any).sanitizeKeyword('React%Test_');
+      expect(result).toBe('React\\%Test\\_');
+    });
+
+    test('HTMLタグの除去', () => {
+      const result = (tagService as any).sanitizeKeyword('<script>alert()</script>');
+      expect(result).toBe('scriptalert()/script');
+    });
+
+    test('SQLインジェクション対策', () => {
+      const result = (tagService as any).sanitizeKeyword('React\'; DROP TABLE--;');
+      expect(result).toBe('React DROP TABLE--');
+    });
+
+    test('空文字列', () => {
+      const result = (tagService as any).sanitizeKeyword('');
+      expect(result).toBe('');
+    });
+
+    test('null/undefined', () => {
+      const result1 = (tagService as any).sanitizeKeyword(null);
+      expect(result1).toBe('');
+
+      const result2 = (tagService as any).sanitizeKeyword(undefined);
+      expect(result2).toBe('');
+    });
+
+    test('長い文字列の切り詰め', () => {
+      const longString = 'a'.repeat(150);
+      const result = (tagService as any).sanitizeKeyword(longString);
+      expect(result).toBe('a'.repeat(100));
+    });
+  });
+
+  describe('validateOffset', () => {
+    test('有効な数値', () => {
+      expect(tagService.validateOffset(10)).toBe(10);
+      expect(tagService.validateOffset('20')).toBe(20);
+      expect(tagService.validateOffset(0)).toBe(0);
+    });
+
+    test('負の数値', () => {
+      expect(tagService.validateOffset(-10)).toBe(0);
+      expect(tagService.validateOffset('-5')).toBe(0);
+    });
+
+    test('上限値超過', () => {
+      expect(tagService.validateOffset(15000)).toBe(10000);
+      expect(tagService.validateOffset('20000')).toBe(10000);
+    });
+
+    test('無効な値', () => {
+      expect(tagService.validateOffset('abc')).toBe(0);
+      expect(tagService.validateOffset(null)).toBe(0);
+      expect(tagService.validateOffset(undefined)).toBe(0);
+      expect(tagService.validateOffset(NaN)).toBe(0);
     });
   });
 });

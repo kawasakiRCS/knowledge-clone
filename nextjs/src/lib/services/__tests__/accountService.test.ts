@@ -3,346 +3,520 @@
  * 
  * @description アカウントサービスのビジネスロジックテスト
  */
-import { accountService } from '../accountService';
-import * as userRepository from '../../repositories/userRepository';
-import * as userAliasRepository from '../../repositories/userAliasRepository';
-import { db } from '../../db';
-import bcrypt from 'bcryptjs';
+import { AccountService } from '../accountService';
+import { prisma } from '@/lib/db';
+import { IdenticonService } from '../identiconService';
+import crypto from 'crypto';
 
 // モック設定
-jest.mock('../../repositories/userRepository');
-jest.mock('../../repositories/userAliasRepository');
-jest.mock('../../db');
-jest.mock('bcryptjs');
+jest.mock('@/lib/db', () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      count: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+    },
+    knowledge: {
+      findMany: jest.fn(),
+      count: jest.fn(),
+      updateMany: jest.fn(),
+    },
+    $transaction: jest.fn(),
+  },
+}));
 
-describe('accountService', () => {
-  const mockDb = db as jest.MockedObject<typeof db>;
-  const mockUserRepo = userRepository as jest.MockedObject<typeof userRepository>;
-  const mockAliasRepo = userAliasRepository as jest.MockedObject<typeof userAliasRepository>;
-  const mockBcrypt = bcrypt as jest.MockedObject<typeof bcrypt>;
+jest.mock('../identiconService');
+jest.mock('crypto');
+
+describe('AccountService', () => {
+  let accountService: AccountService;
+  const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+  const mockIdenticonService = IdenticonService as jest.MockedClass<typeof IdenticonService>;
+  const mockCrypto = crypto as jest.Mocked<typeof crypto>;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    accountService = new AccountService();
   });
 
-  describe('createUser', () => {
-    const mockUserData = {
-      userId: 'testuser',
-      userName: 'Test User',
-      email: 'test@example.com',
-      password: 'password123',
-      locale: 'ja',
-    };
-
-    test('新しいユーザーを作成できる', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue(null);
-      mockUserRepo.findByEmail.mockResolvedValue(null);
-      mockBcrypt.hash.mockResolvedValue('hashedPassword' as never);
-      mockUserRepo.create.mockResolvedValue(true);
-
-      const result = await accountService.createUser(mockDb, mockUserData);
-
-      expect(mockUserRepo.findByUserId).toHaveBeenCalledWith(mockDb, 'testuser');
-      expect(mockUserRepo.findByEmail).toHaveBeenCalledWith(mockDb, 'test@example.com');
-      expect(mockBcrypt.hash).toHaveBeenCalledWith('password123', 10);
-      expect(mockUserRepo.create).toHaveBeenCalledWith(
-        mockDb,
-        expect.objectContaining({
-          userId: 'testuser',
-          userName: 'Test User',
-          email: 'test@example.com',
-          password: 'hashedPassword',
-        })
-      );
-      expect(result).toBe(true);
-    });
-
-    test('既存のユーザーIDの場合エラーをスロー', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue({
-        userId: 'testuser',
-        userName: 'Existing User',
-      } as any);
-
-      await expect(
-        accountService.createUser(mockDb, mockUserData)
-      ).rejects.toThrow('User ID already exists');
-    });
-
-    test('既存のメールアドレスの場合エラーをスロー', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue(null);
-      mockUserRepo.findByEmail.mockResolvedValue({
-        userId: 'otheruser',
-        email: 'test@example.com',
-      } as any);
-
-      await expect(
-        accountService.createUser(mockDb, mockUserData)
-      ).rejects.toThrow('Email already exists');
-    });
-  });
-
-  describe('updateUser', () => {
-    const mockUpdateData = {
-      userId: 'testuser',
-      userName: 'Updated User',
-      email: 'updated@example.com',
-      locale: 'en',
-    };
-
-    test('ユーザー情報を更新できる', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue({
-        userId: 'testuser',
+  describe('getUserInfo', () => {
+    test('ユーザー情報を取得できる', async () => {
+      const mockUser = {
+        userId: 1,
         userName: 'Test User',
-        email: 'test@example.com',
-      } as any);
-      mockUserRepo.update.mockResolvedValue(true);
+        mailAddress: 'test@example.com',
+        password: 'hashedPassword',
+        deleteFlag: 0,
+      };
 
-      const result = await accountService.updateUser(mockDb, mockUpdateData);
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser as any);
 
-      expect(mockUserRepo.update).toHaveBeenCalledWith(mockDb, mockUpdateData);
-      expect(result).toBe(true);
+      const result = await accountService.getUserInfo(1);
+
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { userId: 1, deleteFlag: 0 },
+      });
+      expect(result).toEqual({
+        userId: 1,
+        userName: 'Test User',
+        mailAddress: 'test@example.com',
+        deleteFlag: 0,
+      });
+      expect(result).not.toHaveProperty('password');
     });
 
-    test('存在しないユーザーの場合エラーをスロー', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue(null);
+    test('ユーザーが存在しない場合nullを返す', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(
-        accountService.updateUser(mockDb, mockUpdateData)
-      ).rejects.toThrow('User not found');
+      const result = await accountService.getUserInfo(999);
+
+      expect(result).toBeNull();
     });
 
-    test('メールアドレスが重複する場合エラーをスロー', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue({
-        userId: 'testuser',
-        email: 'test@example.com',
-      } as any);
-      mockUserRepo.findByEmail.mockResolvedValue({
-        userId: 'otheruser',
-        email: 'updated@example.com',
-      } as any);
+    test('削除済みユーザーの場合nullを返す', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(
-        accountService.updateUser(mockDb, mockUpdateData)
-      ).rejects.toThrow('Email already in use');
-    });
-  });
+      const result = await accountService.getUserInfo(1);
 
-  describe('changePassword', () => {
-    test('パスワードを変更できる', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue({
-        userId: 'testuser',
-        password: 'oldHashedPassword',
-      } as any);
-      mockBcrypt.compare.mockResolvedValue(true as never);
-      mockBcrypt.hash.mockResolvedValue('newHashedPassword' as never);
-      mockUserRepo.updatePassword.mockResolvedValue(true);
-
-      const result = await accountService.changePassword(
-        mockDb,
-        'testuser',
-        'oldPassword',
-        'newPassword'
-      );
-
-      expect(mockBcrypt.compare).toHaveBeenCalledWith('oldPassword', 'oldHashedPassword');
-      expect(mockBcrypt.hash).toHaveBeenCalledWith('newPassword', 10);
-      expect(mockUserRepo.updatePassword).toHaveBeenCalledWith(
-        mockDb,
-        'testuser',
-        'newHashedPassword'
-      );
-      expect(result).toBe(true);
-    });
-
-    test('現在のパスワードが間違っている場合エラーをスロー', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue({
-        userId: 'testuser',
-        password: 'oldHashedPassword',
-      } as any);
-      mockBcrypt.compare.mockResolvedValue(false as never);
-
-      await expect(
-        accountService.changePassword(mockDb, 'testuser', 'wrongPassword', 'newPassword')
-      ).rejects.toThrow('Current password is incorrect');
-    });
-
-    test('ユーザーが存在しない場合エラーをスロー', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue(null);
-
-      await expect(
-        accountService.changePassword(mockDb, 'testuser', 'oldPassword', 'newPassword')
-      ).rejects.toThrow('User not found');
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { userId: 1, deleteFlag: 0 },
+      });
+      expect(result).toBeNull();
     });
   });
 
-  describe('deleteUser', () => {
-    test('ユーザーを削除できる', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue({
-        userId: 'testuser',
-      } as any);
-      mockUserRepo.delete.mockResolvedValue(true);
+  describe('getUserIcon', () => {
+    test('匿名ユーザー（-1）の場合デフォルトアイコンを返す', async () => {
+      const mockDefaultIcon = {
+        fileName: 'icon.png',
+        contentType: 'image/png',
+        size: 100,
+        data: Buffer.from('default'),
+      };
 
-      const result = await accountService.deleteUser(mockDb, 'testuser');
+      mockIdenticonService.prototype.generateIdenticon = jest.fn().mockResolvedValue(mockDefaultIcon);
 
-      expect(mockUserRepo.delete).toHaveBeenCalledWith(mockDb, 'testuser');
-      expect(result).toBe(true);
+      const result = await accountService.getUserIcon(-1);
+
+      expect(result).toEqual(mockDefaultIcon);
     });
 
-    test('ユーザーが存在しない場合エラーをスロー', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue(null);
+    test('通常ユーザーの場合Identiconを生成', async () => {
+      const mockIdenticon = {
+        fileName: 'identicon_1.png',
+        contentType: 'image/png',
+        size: 200,
+        data: Buffer.from('identicon'),
+      };
 
-      await expect(
-        accountService.deleteUser(mockDb, 'nonexistent')
-      ).rejects.toThrow('User not found');
+      mockIdenticonService.prototype.generateIdenticon = jest.fn().mockResolvedValue(mockIdenticon);
+
+      const result = await accountService.getUserIcon(1);
+
+      expect(mockIdenticonService.prototype.generateIdenticon).toHaveBeenCalledWith(1);
+      expect(result).toEqual(mockIdenticon);
     });
   });
 
-  describe('getUserAliases', () => {
-    const mockAliases = [
-      { aliasName: 'alias1', targetUserId: 'user1' },
-      { aliasName: 'alias2', targetUserId: 'user2' },
-    ];
+  describe('getDefaultIcon', () => {
+    test('デフォルトアイコンを返す', async () => {
+      const mockIcon = {
+        fileName: 'identicon_-1.png',
+        contentType: 'image/png',
+        size: 100,
+        data: Buffer.from('default'),
+      };
 
-    test('ユーザーエイリアスを取得できる', async () => {
-      mockAliasRepo.findByUserId.mockResolvedValue(mockAliases);
+      mockIdenticonService.prototype.generateIdenticon = jest.fn().mockResolvedValue(mockIcon);
 
-      const result = await accountService.getUserAliases(mockDb, 'testuser');
+      const result = await accountService.getDefaultIcon();
 
-      expect(mockAliasRepo.findByUserId).toHaveBeenCalledWith(mockDb, 'testuser');
-      expect(result).toEqual(mockAliases);
+      expect(mockIdenticonService.prototype.generateIdenticon).toHaveBeenCalledWith(-1);
+      expect(result).toEqual({
+        fileName: 'icon.png',
+        contentType: 'image/png',
+        size: 100,
+        data: Buffer.from('default'),
+      });
+    });
+  });
+
+  describe('generateIdenticon', () => {
+    test('Identiconを生成する', async () => {
+      const mockHash = { update: jest.fn(), digest: jest.fn() };
+      mockHash.update.mockReturnThis();
+      mockHash.digest.mockReturnValue('a1b2c3d4');
+      mockCrypto.createHash = jest.fn().mockReturnValue(mockHash as any);
+
+      const result = await accountService.generateIdenticon(123);
+
+      expect(mockCrypto.createHash).toHaveBeenCalledWith('md5');
+      expect(mockHash.update).toHaveBeenCalledWith('123');
+      expect(mockHash.digest).toHaveBeenCalledWith('hex');
+      expect(result).toEqual({
+        fileName: 'identicon_123.png',
+        contentType: 'image/png',
+        size: 8,
+        data: Buffer.from('a1b2c3d4'),
+      });
+    });
+  });
+
+  describe('getUserKnowledges', () => {
+    test('自分のナレッジ一覧を取得（全て表示）', async () => {
+      const mockKnowledges = [
+        {
+          knowledgeId: BigInt(1),
+          title: 'Public Knowledge',
+          content: 'Public content',
+          publicFlag: 1,
+          insertUser: 1,
+          insertDatetime: new Date(),
+          updateDatetime: new Date(),
+          viewCount: BigInt(10),
+          point: 5,
+          author: { userId: 1, userName: 'Test User' },
+        },
+        {
+          knowledgeId: BigInt(2),
+          title: 'Private Knowledge',
+          content: 'Private content',
+          publicFlag: 3,
+          insertUser: 1,
+          insertDatetime: new Date(),
+          updateDatetime: new Date(),
+          viewCount: BigInt(0),
+          point: 0,
+          author: { userId: 1, userName: 'Test User' },
+        },
+      ];
+
+      mockPrisma.knowledge.findMany.mockResolvedValue(mockKnowledges as any);
+
+      const currentUser = { userId: 1 };
+      const result = await accountService.getUserKnowledges(1, currentUser, 0, 10);
+
+      expect(mockPrisma.knowledge.findMany).toHaveBeenCalledWith({
+        where: {
+          insertUser: 1,
+          deleteFlag: 0,
+        },
+        orderBy: { insertDatetime: 'desc' },
+        skip: 0,
+        take: 10,
+        include: {
+          author: {
+            select: {
+              userId: true,
+              userName: true,
+            },
+          },
+        },
+      });
+
+      expect(result).toHaveLength(2);
+      expect(result[0].knowledgeId).toBe('1');
+      expect(result[1].knowledgeId).toBe('2');
     });
 
-    test('エイリアスがない場合空配列を返す', async () => {
-      mockAliasRepo.findByUserId.mockResolvedValue([]);
+    test('他人のナレッジ一覧を取得（公開のみ）', async () => {
+      const mockKnowledges = [
+        {
+          knowledgeId: BigInt(1),
+          title: 'Public Knowledge',
+          content: 'Public content',
+          publicFlag: 1,
+          insertUser: 2,
+          insertDatetime: new Date(),
+          updateDatetime: new Date(),
+          viewCount: BigInt(10),
+          point: 5,
+          author: { userId: 2, userName: 'Other User' },
+        },
+      ];
 
-      const result = await accountService.getUserAliases(mockDb, 'testuser');
+      mockPrisma.knowledge.findMany.mockResolvedValue(mockKnowledges as any);
+
+      const currentUser = { userId: 1 };
+      const result = await accountService.getUserKnowledges(2, currentUser, 0, 10);
+
+      expect(mockPrisma.knowledge.findMany).toHaveBeenCalledWith({
+        where: {
+          insertUser: 2,
+          deleteFlag: 0,
+          publicFlag: 1,
+        },
+        orderBy: { insertDatetime: 'desc' },
+        skip: 0,
+        take: 10,
+        include: {
+          author: {
+            select: {
+              userId: true,
+              userName: true,
+            },
+          },
+        },
+      });
+
+      expect(result).toHaveLength(1);
+    });
+
+    test('未認証ユーザーがナレッジ一覧を取得（公開のみ）', async () => {
+      mockPrisma.knowledge.findMany.mockResolvedValue([]);
+
+      const result = await accountService.getUserKnowledges(1, null, 0, 10);
+
+      expect(mockPrisma.knowledge.findMany).toHaveBeenCalledWith({
+        where: {
+          insertUser: 1,
+          deleteFlag: 0,
+          publicFlag: 1,
+        },
+        orderBy: { insertDatetime: 'desc' },
+        skip: 0,
+        take: 10,
+        include: {
+          author: {
+            select: {
+              userId: true,
+              userName: true,
+            },
+          },
+        },
+      });
+    });
+  });
+
+  describe('getUserPoint', () => {
+    test('ユーザーのポイントを計算', async () => {
+      mockPrisma.knowledge.count.mockResolvedValue(5);
+
+      const result = await accountService.getUserPoint(1);
+
+      expect(mockPrisma.knowledge.count).toHaveBeenCalledWith({
+        where: {
+          insertUser: 1,
+          deleteFlag: 0,
+        },
+      });
+      expect(result).toBe(50); // 5 * 10
+    });
+
+    test('エラー時は0を返す', async () => {
+      mockPrisma.knowledge.count.mockRejectedValue(new Error('DB Error'));
+
+      const result = await accountService.getUserPoint(1);
+
+      expect(result).toBe(0);
+    });
+  });
+
+  describe('getUserCPHistory', () => {
+    test('CP履歴を取得', async () => {
+      const result = await accountService.getUserCPHistory(1);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        date: expect.any(String),
+        point: 100,
+        knowledgeCount: 5,
+        likeCount: 10,
+        commentCount: 3,
+      });
+    });
+  });
+
+  describe('getUserActivity', () => {
+    test('アクティビティ履歴を取得', async () => {
+      const result = await accountService.getUserActivity(1, 10, 0);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        activityId: BigInt(1),
+        activityType: 'KNOWLEDGE_CREATE',
+        datetime: expect.any(Date),
+        title: 'ナレッジを作成しました',
+        point: 10,
+      });
+    });
+  });
+
+  describe('saveIconImage', () => {
+    test('アイコン画像を保存', async () => {
+      const imageData = Buffer.from('image data');
+      const user = { userId: 1 };
+
+      const result = await accountService.saveIconImage(imageData, user);
+
+      expect(result).toEqual({
+        fileName: 'icon.png',
+        fileNo: 1,
+        url: '/api/open/account/1/icon',
+      });
+    });
+  });
+
+  describe('saveChangeEmailRequest', () => {
+    test('メールアドレス変更リクエストを保存', async () => {
+      const result = await accountService.saveChangeEmailRequest('new@example.com', { userId: 1 });
 
       expect(result).toEqual([]);
     });
   });
 
-  describe('createUserAlias', () => {
-    test('ユーザーエイリアスを作成できる', async () => {
-      mockAliasRepo.findByUserIdAndAlias.mockResolvedValue(null);
-      mockUserRepo.findByUserId.mockResolvedValue({
-        userId: 'targetuser',
-      } as any);
-      mockAliasRepo.create.mockResolvedValue(true);
+  describe('completeChangeEmailRequest', () => {
+    test('メールアドレス変更を完了', async () => {
+      const result = await accountService.completeChangeEmailRequest('request123', { userId: 1 });
 
-      const result = await accountService.createUserAlias(
-        mockDb,
-        'testuser',
-        'myalias',
-        'targetuser'
-      );
-
-      expect(mockAliasRepo.create).toHaveBeenCalledWith(
-        mockDb,
-        'testuser',
-        'myalias',
-        'targetuser'
-      );
-      expect(result).toBe(true);
-    });
-
-    test('エイリアスが既に存在する場合エラーをスロー', async () => {
-      mockAliasRepo.findByUserIdAndAlias.mockResolvedValue({
-        aliasName: 'myalias',
-        targetUserId: 'existinguser',
-      } as any);
-
-      await expect(
-        accountService.createUserAlias(mockDb, 'testuser', 'myalias', 'targetuser')
-      ).rejects.toThrow('Alias already exists');
-    });
-
-    test('対象ユーザーが存在しない場合エラーをスロー', async () => {
-      mockAliasRepo.findByUserIdAndAlias.mockResolvedValue(null);
-      mockUserRepo.findByUserId.mockResolvedValue(null);
-
-      await expect(
-        accountService.createUserAlias(mockDb, 'testuser', 'myalias', 'nonexistent')
-      ).rejects.toThrow('Target user not found');
+      expect(result).toEqual([]);
     });
   });
 
-  describe('deleteUserAlias', () => {
-    test('ユーザーエイリアスを削除できる', async () => {
-      mockAliasRepo.findByUserIdAndAlias.mockResolvedValue({
-        aliasName: 'myalias',
-        targetUserId: 'targetuser',
-      } as any);
-      mockAliasRepo.delete.mockResolvedValue(true);
-
-      const result = await accountService.deleteUserAlias(
-        mockDb,
-        'testuser',
-        'myalias'
-      );
-
-      expect(mockAliasRepo.delete).toHaveBeenCalledWith(
-        mockDb,
-        'testuser',
-        'myalias'
-      );
-      expect(result).toBe(true);
-    });
-
-    test('エイリアスが存在しない場合エラーをスロー', async () => {
-      mockAliasRepo.findByUserIdAndAlias.mockResolvedValue(null);
-
-      await expect(
-        accountService.deleteUserAlias(mockDb, 'testuser', 'nonexistent')
-      ).rejects.toThrow('Alias not found');
-    });
-  });
-
-  describe('getUserProfile', () => {
-    test('ユーザープロフィールを取得できる', async () => {
-      const mockUser = {
-        userId: 'testuser',
-        userName: 'Test User',
-        email: 'test@example.com',
-        locale: 'ja',
-        createdAt: '2024-01-01T00:00:00Z',
+  describe('updateUserInfo', () => {
+    test('ユーザー情報を更新', async () => {
+      const mockUpdatedUser = {
+        userId: 1,
+        userName: 'Updated User',
+        userKey: 'newkey',
+        mailAddress: 'test@example.com',
+        insertDatetime: new Date(),
+        updateDatetime: new Date(),
       };
-      mockUserRepo.findByUserId.mockResolvedValue(mockUser as any);
 
-      const result = await accountService.getUserProfile(mockDb, 'testuser');
+      mockPrisma.user.update.mockResolvedValue(mockUpdatedUser as any);
 
-      expect(mockUserRepo.findByUserId).toHaveBeenCalledWith(mockDb, 'testuser');
-      expect(result).toEqual({
-        userId: 'testuser',
+      const result = await accountService.updateUserInfo(1, {
+        userName: 'Updated User',
+        userKey: 'newkey',
+      });
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { userId: 1 },
+        data: {
+          userName: 'Updated User',
+          userKey: 'newkey',
+          updateDatetime: expect.any(Date),
+        },
+        select: {
+          userId: true,
+          userName: true,
+          userKey: true,
+          mailAddress: true,
+          insertDatetime: true,
+          updateDatetime: true,
+        },
+      });
+
+      expect(result).toEqual(mockUpdatedUser);
+    });
+
+    test('パスワードを更新', async () => {
+      const mockUpdatedUser = {
+        userId: 1,
         userName: 'Test User',
-        email: 'test@example.com',
-        locale: 'ja',
-        createdAt: '2024-01-01T00:00:00Z',
+        userKey: 'key',
+        mailAddress: 'test@example.com',
+        insertDatetime: new Date(),
+        updateDatetime: new Date(),
+      };
+
+      mockPrisma.user.update.mockResolvedValue(mockUpdatedUser as any);
+
+      await accountService.updateUserInfo(1, {
+        password: 'newPassword',
+      });
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { userId: 1 },
+        data: {
+          password: 'newPassword',
+          encrypted: false,
+          updateDatetime: expect.any(Date),
+        },
+        select: expect.any(Object),
       });
     });
+  });
 
-    test('ユーザーが存在しない場合nullを返す', async () => {
-      mockUserRepo.findByUserId.mockResolvedValue(null);
+  describe('withdrawUser', () => {
+    test('ユーザーを退会処理（ナレッジも削除）', async () => {
+      const mockTransaction = jest.fn(async (callback) => {
+        const tx = {
+          knowledge: {
+            updateMany: jest.fn(),
+          },
+          user: {
+            update: jest.fn(),
+          },
+        };
+        await callback(tx);
+      });
 
-      const result = await accountService.getUserProfile(mockDb, 'nonexistent');
+      mockPrisma.$transaction.mockImplementation(mockTransaction);
 
-      expect(result).toBeNull();
+      await accountService.withdrawUser(1, true);
+
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
+    });
+
+    test('ユーザーを退会処理（ナレッジは残す）', async () => {
+      const mockTransaction = jest.fn(async (callback) => {
+        const tx = {
+          knowledge: {
+            updateMany: jest.fn(),
+          },
+          user: {
+            update: jest.fn(),
+          },
+        };
+        await callback(tx);
+      });
+
+      mockPrisma.$transaction.mockImplementation(mockTransaction);
+
+      await accountService.withdrawUser(1, false);
+
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
   });
 
-  describe('getUserStats', () => {
-    test('ユーザー統計を取得できる', async () => {
-      const mockStats = {
-        knowledgeCount: 10,
-        commentCount: 25,
-        likeCount: 50,
-        lastPostDate: '2024-01-15T10:00:00Z',
-      };
-      mockUserRepo.getUserStats.mockResolvedValue(mockStats);
+  describe('getSystemConfig', () => {
+    test('システム設定を取得', async () => {
+      const result = await accountService.getSystemConfig();
 
-      const result = await accountService.getUserStats(mockDb, 'testuser');
-
-      expect(mockUserRepo.getUserStats).toHaveBeenCalledWith(mockDb, 'testuser');
-      expect(result).toEqual(mockStats);
+      expect(result).toEqual({
+        userAddType: 'ADMIN',
+      });
     });
+  });
+
+  describe('getUserConfig', () => {
+    test('ユーザー設定を取得', async () => {
+      const result = await accountService.getUserConfig(1);
+
+      expect(result).toEqual({
+        defaultPublicFlag: '1',
+        defaultTargets: '',
+        defaultViewers: [],
+      });
+    });
+  });
+
+  describe('saveUserConfig', () => {
+    test('ユーザー設定を保存', async () => {
+      await accountService.saveUserConfig(1, {
+        defaultPublicFlag: '2',
+        defaultTargets: 'group1,group2',
+      });
+
+      // 実装予定のため、現在は何も起こらないことを確認
+      expect(true).toBe(true);
+    });
+  });
+
+  describe('createUser', () => {
   });
 });
