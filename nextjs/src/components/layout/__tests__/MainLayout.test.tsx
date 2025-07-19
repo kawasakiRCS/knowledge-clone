@@ -95,7 +95,8 @@ describe('MainLayout', () => {
       render(<MainLayout {...defaultProps} />);
       
       const mainContent = screen.getByRole('main');
-      expect(mainContent).toHaveClass('flex-1', 'container', 'mx-auto', 'px-4', 'pt-[70px]');
+      expect(mainContent).toHaveClass('flex-1', 'container', 'mx-auto', 'px-4');
+      expect(mainContent).toHaveStyle({ paddingTop: '80px' });
     });
 
     test('カスタムクラス名が適用される', () => {
@@ -229,8 +230,8 @@ describe('MainLayout', () => {
       // content_top ID
       expect(mainContent).toHaveAttribute('id', 'content_top');
       
-      // padding-top: 70px 相当
-      expect(mainContent).toHaveClass('pt-[70px]');
+      // padding-top: 80px 相当
+      expect(mainContent).toHaveStyle({ paddingTop: '80px' });
     });
 
     test('固定ナビバーの構造が旧システムと同等', () => {

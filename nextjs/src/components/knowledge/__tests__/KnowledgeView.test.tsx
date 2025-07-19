@@ -72,14 +72,16 @@ describe('KnowledgeView', () => {
 
   describe('基本表示', () => {
     test('ナレッジ情報が正しく表示される', () => {
-      render(<KnowledgeView knowledge={defaultKnowledge} />);
+      const { container } = render(<KnowledgeView knowledge={defaultKnowledge} />);
 
       // タイトル
       expect(screen.getByText('#1')).toBeInTheDocument();
       expect(screen.getByText('テストナレッジ')).toBeInTheDocument();
 
-      // コンテンツ
-      expect(screen.getByText('これはテストコンテンツです。')).toBeInTheDocument();
+      // コンテンツ（HTMLとして挿入されるため、container経由で確認）
+      const contentDiv = container.querySelector('.knowledge-content');
+      expect(contentDiv).toBeInTheDocument();
+      expect(contentDiv?.innerHTML).toContain('これはテストコンテンツです。');
 
       // メタ情報
       expect(screen.getByText('100')).toBeInTheDocument();
@@ -211,9 +213,13 @@ describe('KnowledgeView', () => {
 
   describe('コメント', () => {
     test('コメントが表示される', () => {
-      render(<KnowledgeView knowledge={defaultKnowledge} />);
+      const { container } = render(<KnowledgeView knowledge={defaultKnowledge} />);
 
-      expect(screen.getByText('テストコメント')).toBeInTheDocument();
+      // コメント内容はHTMLとして挿入されるため、container経由で確認
+      const commentDiv = container.querySelector('.comment-body');
+      expect(commentDiv).toBeInTheDocument();
+      expect(commentDiv?.innerHTML).toContain('テストコメント');
+      
       expect(screen.getByText('コメントユーザー')).toBeInTheDocument();
     });
 
