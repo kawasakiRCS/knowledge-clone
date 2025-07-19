@@ -5,41 +5,53 @@
  */
 import { KnowledgeService } from '../knowledgeService';
 import { KnowledgeRepository } from '@/lib/repositories/knowledgeRepository';
+import { AuthenticatedUser } from '@/lib/auth/middleware';
 import { Knowledge } from '@prisma/client';
 
-// モック
+// KnowledgeRepositoryをモック化
 jest.mock('@/lib/repositories/knowledgeRepository');
 
 describe('KnowledgeService', () => {
   let service: KnowledgeService;
   let mockKnowledgeRepo: jest.Mocked<KnowledgeRepository>;
 
+  // テスト用データ
+  const mockKnowledge: Knowledge = {
+    knowledgeId: BigInt(1),
+    title: 'テストナレッジ',
+    content: 'テストコンテンツ',
+    publicFlag: 1,
+    typeId: 1,
+    insertUser: 1,
+    insertDatetime: new Date('2024-01-01'),
+    updateUser: 1,
+    updateDatetime: new Date('2024-01-01'),
+    deleteFlag: 0,
+    viewCount: BigInt(10),
+    point: 100
+  };
+
+  const mockUser: AuthenticatedUser = {
+    userId: 1,
+    userName: 'testuser',
+    userInfoId: 1,
+    localeKey: 'ja',
+    isAdmin: false
+  };
+
   beforeEach(() => {
+    // モックをリセット
     jest.clearAllMocks();
+    
+    // サービスインスタンスを作成
     service = new KnowledgeService();
+    
+    // モックリポジトリを取得
     mockKnowledgeRepo = (service as any).knowledgeRepo as jest.Mocked<KnowledgeRepository>;
   });
 
   describe('getKnowledgeById', () => {
-    test('ナレッジをIDで取得できる', async () => {
-      const mockKnowledge: Knowledge = {
-        knowledgeId: BigInt(1),
-        title: 'テストナレッジ',
-        content: 'テスト内容',
-        publicFlag: 1,
-        typeId: BigInt(1),
-        likeCount: BigInt(0),
-        commentCount: BigInt(0),
-        viewCount: BigInt(0),
-        insertUser: 1,
-        insertDatetime: new Date(),
-        updateUser: 1,
-        updateDatetime: new Date(),
-        deleteFlag: 0,
-        notifyStatus: 0,
-        point: 0,
-      };
-
+    test('ナレッジIDで正しく取得できる', async () => {
       mockKnowledgeRepo.findById.mockResolvedValue(mockKnowledge);
 
       const result = await service.getKnowledgeById(BigInt(1));
@@ -48,388 +60,321 @@ describe('KnowledgeService', () => {
       expect(result).toEqual(mockKnowledge);
     });
 
-    test('存在しないIDの場合nullを返す', async () => {
+    test('存在しないナレッジの場合nullを返す', async () => {
       mockKnowledgeRepo.findById.mockResolvedValue(null);
 
       const result = await service.getKnowledgeById(BigInt(999));
 
-      expect(mockKnowledgeRepo.findById).toHaveBeenCalledWith(BigInt(999));
       expect(result).toBeNull();
     });
   });
 
-  describe('getKnowledgeWithAuthor', () => {
-    test('ユーザー情報付きでナレッジを取得できる', async () => {
-      const mockKnowledgeWithAuthor = {
-        knowledgeId: BigInt(1),
-        title: 'テストナレッジ',
-        content: 'テスト内容',
-        publicFlag: 1,
-        typeId: BigInt(1),
-        likeCount: BigInt(0),
-        commentCount: BigInt(0),
-        viewCount: BigInt(0),
-        insertUser: 1,
-        insertDatetime: new Date(),
-        updateUser: 1,
-        updateDatetime: new Date(),
-        deleteFlag: 0,
-        notifyStatus: 0,
-        point: 0,
-        user: {
+  describe('getKnowledgeByIdWithUser', () => {
+    test('ユーザー情報を含むナレッジを取得できる', async () => {
+      const mockKnowledgeWithUser = {
+        ...mockKnowledge,
+        insertUserInfo: {
           userId: 1,
-          userName: 'Test User',
-        },
+          userName: 'testuser'
+        }
       };
+      mockKnowledgeRepo.findByIdWithUserInfo.mockResolvedValue(mockKnowledgeWithUser as any);
 
-      mockKnowledgeRepo.findByIdWithAuthor.mockResolvedValue(mockKnowledgeWithAuthor);
+      const result = await service.getKnowledgeByIdWithUser(BigInt(1));
 
-      const result = await service.getKnowledgeWithAuthor(BigInt(1));
-
-      expect(mockKnowledgeRepo.findByIdWithAuthor).toHaveBeenCalledWith(BigInt(1));
-      expect(result).toEqual(mockKnowledgeWithAuthor);
+      expect(mockKnowledgeRepo.findByIdWithUserInfo).toHaveBeenCalledWith(BigInt(1));
+      expect(result).toEqual(mockKnowledgeWithUser);
     });
   });
 
-  describe('searchKnowledges', () => {
-    test('検索条件に従ってナレッジを検索できる', async () => {
-      const mockResults = {
-        knowledges: [],
-        total: 0,
-      };
-
-      mockKnowledgeRepo.search.mockResolvedValue(mockResults);
-
-      const searchParams = {
-        keyword: 'test',
-        tagNames: ['tag1', 'tag2'],
-        offset: 0,
-        limit: 10,
-      };
-
-      const result = await service.searchKnowledges(searchParams);
-
-      expect(mockKnowledgeRepo.search).toHaveBeenCalledWith(searchParams);
-      expect(result).toEqual(mockResults);
-    });
-
-    test('ユーザー情報を含めて検索できる', async () => {
-      const mockResults = {
-        knowledges: [],
-        total: 0,
-      };
-
-      mockKnowledgeRepo.search.mockResolvedValue(mockResults);
-
-      const searchParams = {
-        keyword: 'test',
-        userId: 1,
-        offset: 0,
-        limit: 10,
-      };
-
-      const user = { userId: 1 };
-
-      const result = await service.searchKnowledges(searchParams, user);
-
-      expect(mockKnowledgeRepo.search).toHaveBeenCalledWith({
-        ...searchParams,
-        userId: 1,
+  describe('canAccessKnowledge', () => {
+    test('公開ナレッジは誰でもアクセス可能', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue({
+        ...mockKnowledge,
+        publicFlag: 1
       });
-      expect(result).toEqual(mockResults);
-    });
-  });
 
-  describe('createKnowledge', () => {
-    test('ナレッジを作成できる', async () => {
-      const input = {
-        title: '新規ナレッジ',
-        content: '新規内容',
-        publicFlag: 1,
-        typeId: 1,
-        tags: ['tag1', 'tag2'],
-        groups: [1, 2],
-        editors: [1, 2],
-      };
-
-      const user = { userId: 1 };
-
-      const mockCreatedKnowledge = {
-        knowledgeId: BigInt(1),
-        ...input,
-        typeId: BigInt(input.typeId),
-        likeCount: BigInt(0),
-        commentCount: BigInt(0),
-        viewCount: BigInt(0),
-        insertUser: 1,
-        insertDatetime: new Date(),
-        updateUser: 1,
-        updateDatetime: new Date(),
-        deleteFlag: 0,
-        notifyStatus: 0,
-        point: 0,
-      };
-
-      mockKnowledgeRepo.create.mockResolvedValue(mockCreatedKnowledge);
-
-      const result = await service.createKnowledge(input, user);
-
-      expect(mockKnowledgeRepo.create).toHaveBeenCalledWith({
-        title: input.title,
-        content: input.content,
-        publicFlag: input.publicFlag,
-        typeId: BigInt(input.typeId),
-        insertUser: user.userId,
-        updateUser: user.userId,
-      });
-      expect(result).toEqual(mockCreatedKnowledge);
-    });
-  });
-
-  describe('updateKnowledge', () => {
-    test('ナレッジを更新できる', async () => {
-      const input = {
-        knowledgeId: BigInt(1),
-        title: '更新ナレッジ',
-        content: '更新内容',
-        publicFlag: 1,
-        typeId: 1,
-        tags: ['tag1', 'tag2'],
-        groups: [1, 2],
-        editors: [1, 2],
-      };
-
-      const user = { userId: 1 };
-
-      const mockUpdatedKnowledge = {
-        ...input,
-        typeId: BigInt(input.typeId),
-        likeCount: BigInt(0),
-        commentCount: BigInt(0),
-        viewCount: BigInt(0),
-        insertUser: 1,
-        insertDatetime: new Date(),
-        updateUser: 1,
-        updateDatetime: new Date(),
-        deleteFlag: 0,
-        notifyStatus: 0,
-        point: 0,
-      };
-
-      mockKnowledgeRepo.update.mockResolvedValue(mockUpdatedKnowledge);
-
-      const result = await service.updateKnowledge(input, user);
-
-      expect(mockKnowledgeRepo.update).toHaveBeenCalledWith(input.knowledgeId, {
-        title: input.title,
-        content: input.content,
-        publicFlag: input.publicFlag,
-        typeId: BigInt(input.typeId),
-        updateUser: user.userId,
-      });
-      expect(result).toEqual(mockUpdatedKnowledge);
-    });
-  });
-
-  describe('deleteKnowledge', () => {
-    test('ナレッジを削除できる', async () => {
-      mockKnowledgeRepo.delete.mockResolvedValue(true);
-
-      const result = await service.deleteKnowledge(BigInt(1));
-
-      expect(mockKnowledgeRepo.delete).toHaveBeenCalledWith(BigInt(1));
-      expect(result).toBe(true);
-    });
-  });
-
-  describe('canUserViewKnowledge', () => {
-    test('公開ナレッジは誰でも閲覧可能', async () => {
-      const knowledge = {
-        knowledgeId: BigInt(1),
-        publicFlag: 1,
-        insertUser: 2,
-      } as Knowledge;
-
-      const user = { userId: 1 };
-
-      const result = await service.canUserViewKnowledge(knowledge, user);
+      const result = await service.canAccessKnowledge(BigInt(1));
 
       expect(result).toBe(true);
     });
 
-    test('非公開ナレッジは作成者のみ閲覧可能', async () => {
-      const knowledge = {
-        knowledgeId: BigInt(1),
-        publicFlag: 0,
-        insertUser: 1,
-      } as Knowledge;
+    test('非公開ナレッジは作成者のみアクセス可能', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue({
+        ...mockKnowledge,
+        publicFlag: 2,
+        insertUser: 1
+      });
 
-      const user = { userId: 1 };
+      // 作成者の場合
+      const result1 = await service.canAccessKnowledge(BigInt(1), { userId: 1 });
+      expect(result1).toBe(true);
 
-      const result = await service.canUserViewKnowledge(knowledge, user);
+      // 他のユーザーの場合
+      const result2 = await service.canAccessKnowledge(BigInt(1), { userId: 2 });
+      expect(result2).toBe(false);
 
+      // ログインしていない場合
+      const result3 = await service.canAccessKnowledge(BigInt(1));
+      expect(result3).toBe(false);
+    });
+
+    test('非公開ナレッジは管理者もアクセス可能', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue({
+        ...mockKnowledge,
+        publicFlag: 2,
+        insertUser: 1
+      });
+
+      const result = await service.canAccessKnowledge(BigInt(1), { userId: 2, isAdmin: true });
       expect(result).toBe(true);
     });
 
-    test('非公開ナレッジは他ユーザーは閲覧不可', async () => {
-      const knowledge = {
-        knowledgeId: BigInt(1),
-        publicFlag: 0,
-        insertUser: 2,
-      } as Knowledge;
+    test('保護ナレッジはログインユーザーのみアクセス可能', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue({
+        ...mockKnowledge,
+        publicFlag: 3
+      });
 
-      const user = { userId: 1 };
+      // ログインしていない場合
+      const result1 = await service.canAccessKnowledge(BigInt(1));
+      expect(result1).toBe(false);
 
-      const result = await service.canUserViewKnowledge(knowledge, user);
+      // 作成者の場合
+      const result2 = await service.canAccessKnowledge(BigInt(1), { userId: 1 });
+      expect(result2).toBe(true);
 
+      // 管理者の場合
+      const result3 = await service.canAccessKnowledge(BigInt(1), { userId: 2, isAdmin: true });
+      expect(result3).toBe(true);
+
+      // その他のユーザー（グループメンバーでない）
+      const result4 = await service.canAccessKnowledge(BigInt(1), { userId: 2 });
+      expect(result4).toBe(false);
+    });
+
+    test('存在しないナレッジはアクセス不可', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue(null);
+
+      const result = await service.canAccessKnowledge(BigInt(999));
       expect(result).toBe(false);
     });
 
-    test('ログインしていない場合は公開ナレッジのみ閲覧可能', async () => {
-      const publicKnowledge = {
-        knowledgeId: BigInt(1),
-        publicFlag: 1,
-        insertUser: 2,
-      } as Knowledge;
+    test('不明な公開フラグはアクセス不可', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue({
+        ...mockKnowledge,
+        publicFlag: 99
+      });
 
-      const privateKnowledge = {
-        knowledgeId: BigInt(2),
-        publicFlag: 0,
-        insertUser: 2,
-      } as Knowledge;
-
-      const publicResult = await service.canUserViewKnowledge(publicKnowledge, null);
-      const privateResult = await service.canUserViewKnowledge(privateKnowledge, null);
-
-      expect(publicResult).toBe(true);
-      expect(privateResult).toBe(false);
-    });
-  });
-
-  describe('canUserEditKnowledge', () => {
-    test('作成者は編集可能', async () => {
-      const knowledge = {
-        knowledgeId: BigInt(1),
-        insertUser: 1,
-      } as Knowledge;
-
-      const user = { userId: 1 };
-
-      const result = await service.canUserEditKnowledge(knowledge, user);
-
-      expect(result).toBe(true);
-    });
-
-    test('管理者は編集可能', async () => {
-      const knowledge = {
-        knowledgeId: BigInt(1),
-        insertUser: 2,
-      } as Knowledge;
-
-      const user = { userId: 1, isAdmin: true };
-
-      const result = await service.canUserEditKnowledge(knowledge, user);
-
-      expect(result).toBe(true);
-    });
-
-    test('他ユーザーは編集不可', async () => {
-      const knowledge = {
-        knowledgeId: BigInt(1),
-        insertUser: 2,
-      } as Knowledge;
-
-      const user = { userId: 1 };
-
-      const result = await service.canUserEditKnowledge(knowledge, user);
-
-      expect(result).toBe(false);
-    });
-
-    test('ログインしていない場合は編集不可', async () => {
-      const knowledge = {
-        knowledgeId: BigInt(1),
-        insertUser: 1,
-      } as Knowledge;
-
-      const result = await service.canUserEditKnowledge(knowledge, null);
-
+      const result = await service.canAccessKnowledge(BigInt(1));
       expect(result).toBe(false);
     });
   });
 
   describe('incrementViewCount', () => {
-    test('閲覧数を増やせる', async () => {
-      mockKnowledgeRepo.incrementViewCount.mockResolvedValue(true);
+    test('閲覧数を正しく増加させる', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue({
+        ...mockKnowledge,
+        viewCount: BigInt(10)
+      });
+      mockKnowledgeRepo.updateViewCount.mockResolvedValue();
 
-      const result = await service.incrementViewCount(BigInt(1));
+      await service.incrementViewCount(BigInt(1));
 
-      expect(mockKnowledgeRepo.incrementViewCount).toHaveBeenCalledWith(BigInt(1));
-      expect(result).toBe(true);
+      expect(mockKnowledgeRepo.updateViewCount).toHaveBeenCalledWith(BigInt(1), BigInt(11));
+    });
+
+    test('viewCountがnullの場合も処理できる', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue({
+        ...mockKnowledge,
+        viewCount: null
+      });
+      mockKnowledgeRepo.updateViewCount.mockResolvedValue();
+
+      await service.incrementViewCount(BigInt(1));
+
+      expect(mockKnowledgeRepo.updateViewCount).toHaveBeenCalledWith(BigInt(1), BigInt(1));
+    });
+
+    test('エラーが発生してもクラッシュしない', async () => {
+      mockKnowledgeRepo.findById.mockRejectedValue(new Error('DB Error'));
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      await expect(service.incrementViewCount(BigInt(1))).resolves.not.toThrow();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+
+      consoleErrorSpy.mockRestore();
     });
   });
 
-  describe('getPopularKnowledges', () => {
-    test('人気ナレッジ一覧を取得できる', async () => {
-      const mockKnowledges = [
-        { knowledgeId: BigInt(1), viewCount: BigInt(100) },
-        { knowledgeId: BigInt(2), viewCount: BigInt(50) },
-      ];
+  describe('getKnowledgePoint', () => {
+    test('ポイントを正しく取得できる', async () => {
+      mockKnowledgeRepo.getPoint.mockResolvedValue(100);
 
-      mockKnowledgeRepo.findPopular.mockResolvedValue(mockKnowledges as any);
+      const result = await service.getKnowledgePoint(BigInt(1));
 
-      const result = await service.getPopularKnowledges(10);
-
-      expect(mockKnowledgeRepo.findPopular).toHaveBeenCalledWith(10);
-      expect(result).toEqual(mockKnowledges);
+      expect(mockKnowledgeRepo.getPoint).toHaveBeenCalledWith(BigInt(1));
+      expect(result).toBe(100);
     });
   });
 
-  describe('getRecentKnowledges', () => {
-    test('最新ナレッジ一覧を取得できる', async () => {
-      const mockKnowledges = [
-        { knowledgeId: BigInt(1), insertDatetime: new Date() },
-        { knowledgeId: BigInt(2), insertDatetime: new Date() },
-      ];
+  describe('updateKnowledgePoint', () => {
+    test('ポイントを正しく更新できる', async () => {
+      mockKnowledgeRepo.updatePoint.mockResolvedValue();
 
-      mockKnowledgeRepo.findRecent.mockResolvedValue(mockKnowledges as any);
+      await service.updateKnowledgePoint(BigInt(1), 200);
 
-      const result = await service.getRecentKnowledges(10);
-
-      expect(mockKnowledgeRepo.findRecent).toHaveBeenCalledWith(10);
-      expect(result).toEqual(mockKnowledges);
+      expect(mockKnowledgeRepo.updatePoint).toHaveBeenCalledWith(BigInt(1), 200);
     });
   });
 
-  describe('getUserKnowledges', () => {
-    test('ユーザーのナレッジ一覧を取得できる', async () => {
-      const mockKnowledges = [
-        { knowledgeId: BigInt(1), insertUser: 1 },
-        { knowledgeId: BigInt(2), insertUser: 1 },
-      ];
+  describe('createKnowledge', () => {
+    const createData = {
+      title: '新規ナレッジ',
+      content: '新規コンテンツ',
+      publicFlag: 1,
+      typeId: 1
+    };
 
-      mockKnowledgeRepo.findByUserId.mockResolvedValue(mockKnowledges as any);
+    test('ナレッジを正しく作成できる', async () => {
+      mockKnowledgeRepo.create.mockResolvedValue(mockKnowledge);
 
-      const result = await service.getUserKnowledges(1, 0, 10);
+      const result = await service.createKnowledge(createData, mockUser);
 
-      expect(mockKnowledgeRepo.findByUserId).toHaveBeenCalledWith(1, 0, 10);
-      expect(result).toEqual(mockKnowledges);
+      expect(mockKnowledgeRepo.create).toHaveBeenCalledWith({
+        title: createData.title,
+        content: createData.content,
+        publicFlag: createData.publicFlag,
+        typeId: createData.typeId,
+        insertUser: mockUser.userId,
+        insertDatetime: expect.any(Date),
+        updateUser: mockUser.userId,
+        updateDatetime: expect.any(Date),
+        deleteFlag: 0,
+        viewCount: BigInt(0),
+        point: 0
+      });
+      expect(result).toEqual(mockKnowledge);
+    });
+
+    test('contentが空の場合も作成できる', async () => {
+      mockKnowledgeRepo.create.mockResolvedValue(mockKnowledge);
+
+      const dataWithoutContent = { ...createData, content: undefined };
+      await service.createKnowledge(dataWithoutContent, mockUser);
+
+      expect(mockKnowledgeRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: ''
+        })
+      );
+    });
+
+    test('タイトルが空の場合エラーになる', async () => {
+      const invalidData = { ...createData, title: '' };
+
+      await expect(service.createKnowledge(invalidData, mockUser))
+        .rejects.toThrow('タイトルは必須です');
+    });
+
+    test('タイトルが長すぎる場合エラーになる', async () => {
+      const invalidData = { ...createData, title: 'a'.repeat(1025) };
+
+      await expect(service.createKnowledge(invalidData, mockUser))
+        .rejects.toThrow('タイトルは1024文字以内で入力してください');
+    });
+
+    test('不正な公開フラグでエラーになる', async () => {
+      const invalidData = { ...createData, publicFlag: 99 };
+
+      await expect(service.createKnowledge(invalidData, mockUser))
+        .rejects.toThrow('公開フラグが無効です');
     });
   });
 
-  describe('getDraftKnowledges', () => {
-    test('ユーザーの下書き一覧を取得できる', async () => {
-      const mockKnowledges = [
-        { knowledgeId: BigInt(1), publicFlag: 0, typeId: BigInt(99) },
-        { knowledgeId: BigInt(2), publicFlag: 0, typeId: BigInt(99) },
-      ];
+  describe('updateKnowledge', () => {
+    const updateData = {
+      knowledgeId: BigInt(1),
+      title: '更新ナレッジ',
+      content: '更新コンテンツ',
+      publicFlag: 1,
+      typeId: 1
+    };
 
-      mockKnowledgeRepo.findDraftsByUserId.mockResolvedValue(mockKnowledges as any);
+    test('ナレッジを正しく更新できる', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue(mockKnowledge);
+      mockKnowledgeRepo.update.mockResolvedValue(mockKnowledge);
 
-      const result = await service.getDraftKnowledges(1, 0, 10);
+      const result = await service.updateKnowledge(updateData, mockUser);
 
-      expect(mockKnowledgeRepo.findDraftsByUserId).toHaveBeenCalledWith(1, 0, 10);
-      expect(result).toEqual(mockKnowledges);
+      expect(mockKnowledgeRepo.update).toHaveBeenCalledWith(BigInt(1), {
+        title: updateData.title,
+        content: updateData.content,
+        publicFlag: updateData.publicFlag,
+        typeId: updateData.typeId,
+        updateUser: mockUser.userId,
+        updateDatetime: expect.any(Date)
+      });
+      expect(result).toEqual(mockKnowledge);
+    });
+
+    test('存在しないナレッジの更新はエラーになる', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue(null);
+
+      await expect(service.updateKnowledge(updateData, mockUser))
+        .rejects.toThrow('Knowledge not found');
+    });
+
+    test('作成者以外の更新は管理者のみ可能', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue({
+        ...mockKnowledge,
+        insertUser: 999
+      });
+
+      // 一般ユーザーの場合
+      await expect(service.updateKnowledge(updateData, mockUser))
+        .rejects.toThrow('ナレッジの編集権限がありません');
+
+      // 管理者の場合
+      mockKnowledgeRepo.update.mockResolvedValue(mockKnowledge);
+      const adminUser = { ...mockUser, isAdmin: true };
+      await expect(service.updateKnowledge(updateData, adminUser))
+        .resolves.toEqual(mockKnowledge);
+    });
+  });
+
+  describe('deleteKnowledge', () => {
+    test('ナレッジを正しく削除できる', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue(mockKnowledge);
+      mockKnowledgeRepo.softDelete.mockResolvedValue();
+
+      await service.deleteKnowledge(BigInt(1), mockUser);
+
+      expect(mockKnowledgeRepo.softDelete).toHaveBeenCalledWith(BigInt(1), mockUser.userId);
+    });
+
+    test('存在しないナレッジの削除はエラーになる', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue(null);
+
+      await expect(service.deleteKnowledge(BigInt(999), mockUser))
+        .rejects.toThrow('Knowledge not found');
+    });
+
+    test('作成者以外の削除は管理者のみ可能', async () => {
+      mockKnowledgeRepo.findById.mockResolvedValue({
+        ...mockKnowledge,
+        insertUser: 999
+      });
+
+      // 一般ユーザーの場合
+      await expect(service.deleteKnowledge(BigInt(1), mockUser))
+        .rejects.toThrow('ナレッジの編集権限がありません');
+
+      // 管理者の場合
+      mockKnowledgeRepo.softDelete.mockResolvedValue();
+      const adminUser = { ...mockUser, isAdmin: true };
+      await expect(service.deleteKnowledge(BigInt(1), adminUser))
+        .resolves.not.toThrow();
     });
   });
 });

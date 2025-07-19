@@ -244,4 +244,432 @@ describe('KnowledgeListPage', () => {
       expect(screen.queryByText(/%s/)).not.toBeInTheDocument();
     });
   });
+
+  describe('公開区分表示', () => {
+    test('公開ナレッジのアイコンが表示される', () => {
+      const initialData = {
+        knowledges: [
+          {
+            knowledgeId: 1,
+            title: '公開ナレッジ',
+            content: 'テストコンテンツ',
+            insertUser: 1,
+            insertUserName: 'テストユーザー',
+            insertDatetime: '2025-01-01T00:00:00Z',
+            updateUser: 1,
+            updateUserName: 'テストユーザー',
+            updateDatetime: '2025-01-01T00:00:00Z',
+            publicFlag: 1,
+            likeCount: 0,
+            commentCount: 0,
+            point: 0,
+            typeId: 1,
+          },
+        ],
+        total: 1,
+        offset: 0,
+        limit: 50,
+        tags: [],
+        groups: [],
+        templates: {},
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      const globeIcon = screen.getByTitle('公開');
+      expect(globeIcon).toHaveClass('fa-globe');
+    });
+
+    test('非公開ナレッジのアイコンが表示される', () => {
+      const initialData = {
+        knowledges: [
+          {
+            knowledgeId: 2,
+            title: '非公開ナレッジ',
+            content: 'テストコンテンツ',
+            insertUser: 1,
+            insertUserName: 'テストユーザー',
+            insertDatetime: '2025-01-01T00:00:00Z',
+            updateUser: 1,
+            updateUserName: 'テストユーザー',
+            updateDatetime: '2025-01-01T00:00:00Z',
+            publicFlag: 2,
+            likeCount: 0,
+            commentCount: 0,
+            point: 0,
+            typeId: 1,
+          },
+        ],
+        total: 1,
+        offset: 0,
+        limit: 50,
+        tags: [],
+        groups: [],
+        templates: {},
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      const lockIcon = screen.getByTitle('非公開');
+      expect(lockIcon).toHaveClass('fa-lock');
+    });
+
+    test('保護ナレッジのアイコンが表示される', () => {
+      const initialData = {
+        knowledges: [
+          {
+            knowledgeId: 3,
+            title: '保護ナレッジ',
+            content: 'テストコンテンツ',
+            insertUser: 1,
+            insertUserName: 'テストユーザー',
+            insertDatetime: '2025-01-01T00:00:00Z',
+            updateUser: 1,
+            updateUserName: 'テストユーザー',
+            updateDatetime: '2025-01-01T00:00:00Z',
+            publicFlag: 3,
+            likeCount: 0,
+            commentCount: 0,
+            point: 0,
+            typeId: 1,
+          },
+        ],
+        total: 1,
+        offset: 0,
+        limit: 50,
+        tags: [],
+        groups: [],
+        templates: {},
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      const shieldIcon = screen.getByTitle('保護');
+      expect(shieldIcon).toHaveClass('fa-shield');
+    });
+  });
+
+  describe('タグ表示', () => {
+    test('複数のタグが正しく表示される', () => {
+      const initialData = {
+        knowledges: [
+          {
+            knowledgeId: 1,
+            title: 'タグ付きナレッジ',
+            content: 'テストコンテンツ',
+            insertUser: 1,
+            insertUserName: 'テストユーザー',
+            insertDatetime: '2025-01-01T00:00:00Z',
+            updateUser: 1,
+            updateUserName: 'テストユーザー',
+            updateDatetime: '2025-01-01T00:00:00Z',
+            publicFlag: 1,
+            likeCount: 0,
+            commentCount: 0,
+            point: 0,
+            typeId: 1,
+            tagNames: 'React,TypeScript,Next.js',
+          },
+        ],
+        total: 1,
+        offset: 0,
+        limit: 50,
+        tags: [],
+        groups: [],
+        templates: {},
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      expect(screen.getByText('React')).toBeInTheDocument();
+      expect(screen.getByText('TypeScript')).toBeInTheDocument();
+      expect(screen.getByText('Next.js')).toBeInTheDocument();
+    });
+
+    test('タグがない場合は表示されない', () => {
+      const initialData = {
+        knowledges: [
+          {
+            knowledgeId: 1,
+            title: 'タグなしナレッジ',
+            content: 'テストコンテンツ',
+            insertUser: 1,
+            insertUserName: 'テストユーザー',
+            insertDatetime: '2025-01-01T00:00:00Z',
+            updateUser: 1,
+            updateUserName: 'テストユーザー',
+            updateDatetime: '2025-01-01T00:00:00Z',
+            publicFlag: 1,
+            likeCount: 0,
+            commentCount: 0,
+            point: 0,
+            typeId: 1,
+          },
+        ],
+        total: 1,
+        offset: 0,
+        limit: 50,
+        tags: [],
+        groups: [],
+        templates: {},
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      const tagIcons = screen.queryAllByClassName('fa-tag');
+      expect(tagIcons).toHaveLength(0);
+    });
+  });
+
+  describe('ピン留め表示', () => {
+    test('ピン留めされたナレッジにバッジが表示される', () => {
+      const initialData = {
+        knowledges: [
+          {
+            knowledgeId: 1,
+            title: 'ピン留めナレッジ',
+            content: 'テストコンテンツ',
+            insertUser: 1,
+            insertUserName: 'テストユーザー',
+            insertDatetime: '2025-01-01T00:00:00Z',
+            updateUser: 1,
+            updateUserName: 'テストユーザー',
+            updateDatetime: '2025-01-01T00:00:00Z',
+            publicFlag: 1,
+            likeCount: 0,
+            commentCount: 0,
+            point: 0,
+            typeId: 1,
+            pin: true,
+          },
+        ],
+        total: 1,
+        offset: 0,
+        limit: 50,
+        tags: [],
+        groups: [],
+        templates: {},
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      const pinIcon = screen.getByClassName('fa-bullhorn');
+      expect(pinIcon).toBeInTheDocument();
+    });
+  });
+
+  describe('ポイント表示', () => {
+    test('期間ポイントがある場合は表示される', () => {
+      const initialData = {
+        knowledges: [
+          {
+            knowledgeId: 1,
+            title: 'ポイント付きナレッジ',
+            content: 'テストコンテンツ',
+            insertUser: 1,
+            insertUserName: 'テストユーザー',
+            insertDatetime: '2025-01-01T00:00:00Z',
+            updateUser: 1,
+            updateUserName: 'テストユーザー',
+            updateDatetime: '2025-01-01T00:00:00Z',
+            publicFlag: 1,
+            likeCount: 0,
+            commentCount: 0,
+            point: 100,
+            pointOnTerm: 50,
+            typeId: 1,
+          },
+        ],
+        total: 1,
+        offset: 0,
+        limit: 50,
+        tags: [],
+        groups: [],
+        templates: {},
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      expect(screen.getByText('× 100')).toBeInTheDocument();
+      expect(screen.getByText('× 50')).toBeInTheDocument();
+      expect(screen.getByClassName('fa-line-chart')).toBeInTheDocument();
+    });
+  });
+
+  describe('テンプレート表示', () => {
+    test('テンプレート情報が正しく表示される', () => {
+      const initialData = {
+        knowledges: [
+          {
+            knowledgeId: 1,
+            title: 'テンプレート付きナレッジ',
+            content: 'テストコンテンツ',
+            insertUser: 1,
+            insertUserName: 'テストユーザー',
+            insertDatetime: '2025-01-01T00:00:00Z',
+            updateUser: 1,
+            updateUserName: 'テストユーザー',
+            updateDatetime: '2025-01-01T00:00:00Z',
+            publicFlag: 1,
+            likeCount: 0,
+            commentCount: 0,
+            point: 0,
+            typeId: 1,
+          },
+        ],
+        total: 1,
+        offset: 0,
+        limit: 50,
+        tags: [],
+        groups: [],
+        templates: {
+          1: {
+            typeId: 1,
+            typeName: 'マークダウン',
+            typeIcon: 'fa-file-text-o',
+          },
+        },
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      expect(screen.getByText('マークダウン')).toBeInTheDocument();
+      expect(screen.getByClassName('fa-file-text-o')).toBeInTheDocument();
+    });
+  });
+
+  describe('サイドバー', () => {
+    test('グループ一覧が表示される', () => {
+      const initialData = {
+        knowledges: [],
+        total: 0,
+        offset: 0,
+        limit: 50,
+        tags: [],
+        groups: [
+          {
+            groupId: 1,
+            groupName: '開発チーム',
+            groupKnowledgeCount: 10,
+          },
+          {
+            groupId: 2,
+            groupName: '営業チーム',
+            groupKnowledgeCount: 5,
+          },
+        ],
+        templates: {},
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      expect(screen.getByText('開発チーム')).toBeInTheDocument();
+      expect(screen.getByText('営業チーム')).toBeInTheDocument();
+      expect(screen.getByText('10')).toBeInTheDocument();
+      expect(screen.getByText('5')).toBeInTheDocument();
+    });
+
+    test('タグ一覧が表示される', () => {
+      const initialData = {
+        knowledges: [],
+        total: 0,
+        offset: 0,
+        limit: 50,
+        tags: [
+          {
+            tagId: 1,
+            tagName: 'React',
+            knowledgeCount: 20,
+          },
+          {
+            tagId: 2,
+            tagName: 'TypeScript',
+            knowledgeCount: 15,
+          },
+        ],
+        groups: [],
+        templates: {},
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      expect(screen.getAllByText('React')[0]).toBeInTheDocument();
+      expect(screen.getAllByText('TypeScript')[0]).toBeInTheDocument();
+      expect(screen.getByText('20')).toBeInTheDocument();
+      expect(screen.getByText('15')).toBeInTheDocument();
+    });
+
+    test('グループがない場合はメッセージが表示される', () => {
+      const initialData = {
+        knowledges: [],
+        total: 0,
+        offset: 0,
+        limit: 50,
+        tags: [],
+        groups: [],
+        templates: {},
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      expect(screen.getByText('グループが登録されていません')).toBeInTheDocument();
+    });
+  });
+
+  describe('URLパラメータ処理', () => {
+    test('キーワード検索パラメータが表示される', () => {
+      (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams('keyword=React'));
+      
+      render(<KnowledgeListPage />);
+      
+      expect(screen.getByText('React')).toBeInTheDocument();
+      const searchIcon = screen.getByClassName('fa-search');
+      expect(searchIcon).toBeInTheDocument();
+    });
+
+    test('フィルタクリアボタンが表示される', () => {
+      (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams('keyword=React'));
+      
+      render(<KnowledgeListPage />);
+      
+      const clearButton = screen.getByLabelText('フィルタクリア');
+      expect(clearButton).toBeInTheDocument();
+    });
+  });
+
+  describe('クイックフィルタ', () => {
+    test('テンプレートフィルタが表示される', () => {
+      const initialData = {
+        knowledges: [],
+        total: 0,
+        offset: 0,
+        limit: 50,
+        tags: [],
+        groups: [],
+        templates: {
+          1: {
+            typeId: 1,
+            typeName: 'マークダウン',
+            typeIcon: 'fa-file-text-o',
+          },
+          2: {
+            typeId: 2,
+            typeName: 'プレゼンテーション',
+            typeIcon: 'fa-television',
+          },
+        },
+      };
+      
+      render(<KnowledgeListPage initialData={initialData} />);
+      
+      expect(screen.getByLabelText('マークダウン')).toBeInTheDocument();
+      expect(screen.getByLabelText('プレゼンテーション')).toBeInTheDocument();
+    });
+
+    test('適用ボタンが表示される', () => {
+      render(<KnowledgeListPage />);
+      
+      expect(screen.getByText('適用')).toBeInTheDocument();
+    });
+  });
 });

@@ -1,531 +1,292 @@
 /**
- * ファイルサービステスト
+ * FileServiceテスト
  * 
- * @description fileService.tsの包括的なテストカバレッジ
+ * @description ファイルサービスの単体テスト
  */
 import { FileService } from '../fileService';
-import { PrismaClient } from '@prisma/client';
-import { AuthenticatedUser } from '@/lib/auth/middleware';
+import fs from 'fs/promises';
+import path from 'path';
+import sharp from 'sharp';
 
-// Prismaのモック
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    knowledgeFile: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-  })),
-}));
-
-// KnowledgeRepositoryのモック
-jest.mock('@/lib/repositories/knowledgeRepository', () => ({
-  KnowledgeRepository: jest.fn().mockImplementation(() => ({
-    findById: jest.fn(),
-  })),
-}));
+// モック設定
+jest.mock('fs/promises');
+jest.mock('sharp');
 
 describe('FileService', () => {
-  let fileService: FileService;
-  let mockPrisma: any;
-  let mockKnowledgeRepository: any;
-  
-  const mockUser: AuthenticatedUser = {
-    userId: 1,
-    email: 'test@example.com',
-    userInfoName: 'Test User',
-  };
+  let service: FileService;
+  const mockFs = fs as jest.Mocked<typeof fs>;
+  const mockSharp = sharp as jest.MockedFunction<typeof sharp>;
 
   beforeEach(() => {
-    // モックをリセット
     jest.clearAllMocks();
-    
-    fileService = new FileService();
-    mockPrisma = new PrismaClient();
-    mockKnowledgeRepository = (fileService as any).knowledgeRepository;
+    service = new FileService();
   });
 
-  describe('getFile', () => {
-    const mockFileData = {
-      fileNo: BigInt(123),
-      fileName: 'test.pdf',
-      fileBinary: Buffer.from('test data'),
-      fileSize: BigInt(1024),
-      knowledgeId: BigInt(1),
-      insertUser: 1,
-      deleteFlag: 0,
+  describe('saveUploadedFile', () => {
+    const mockFile = {
+      fieldname: 'file',
+      originalname: 'test.txt',
+      encoding: '7bit',
+      mimetype: 'text/plain',
+      destination: '/tmp',
+      filename: 'temp123.txt',
+      path: '/tmp/temp123.txt',
+      size: 1024,
+      stream: {} as any,
+      buffer: Buffer.from('test content'),
     };
 
-    test('正常なファイル取得（公開ナレッジ）', async () => {
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-      mockKnowledgeRepository.findById.mockResolvedValue({
-        publicFlag: 1, // 公開
-        insertUser: 1,
-      });
+    test('ファイルを正しく保存できる', async () => {
+      mockFs.mkdir.mockResolvedValue(undefined);
+      mockFs.copyFile.mockResolvedValue(undefined);
+      mockFs.unlink.mockResolvedValue(undefined);
+      mockFs.stat.mockResolvedValue({ size: 1024 } as any);
 
-      const result = await fileService.getFile(123, mockUser);
+      const result = await service.saveUploadedFile(mockFile, 'knowledge', 1);
 
       expect(result).toEqual({
-        fileNo: 123,
-        fileName: 'test.pdf',
-        fileBinary: Buffer.from('test data'),
-        fileSize: 1024,
-        knowledgeId: 1,
+        fileName: expect.stringMatching(/^\d{8}_\d{6}_.*test\.txt$/),
+        realFileName: path.join(process.cwd(), 'uploads', 'knowledge', '1', expect.any(String)),
+        size: 1024,
+        fileNo: expect.any(Number),
+      });
+
+      expect(mockFs.mkdir).toHaveBeenCalled();
+      expect(mockFs.copyFile).toHaveBeenCalled();
+      expect(mockFs.unlink).toHaveBeenCalled();
+    });
+
+    test('ディレクトリ作成に失敗した場合エラーをスロー', async () => {
+      mockFs.mkdir.mockRejectedValue(new Error('Permission denied'));
+
+      await expect(service.saveUploadedFile(mockFile, 'knowledge', 1))
+        .rejects.toThrow('Permission denied');
+    });
+
+    test('一時ファイルが存在しない場合エラーをスロー', async () => {
+      mockFs.mkdir.mockResolvedValue(undefined);
+      mockFs.copyFile.mockRejectedValue(new Error('File not found'));
+
+      await expect(service.saveUploadedFile(mockFile, 'knowledge', 1))
+        .rejects.toThrow('File not found');
+    });
+  });
+
+  describe('getFileInfo', () => {
+    test('ファイル情報を正しく取得できる', async () => {
+      const testFilePath = '/test/file.txt';
+      mockFs.stat.mockResolvedValue({
+        size: 2048,
+        isFile: () => true,
+        isDirectory: () => false,
+        birthtime: new Date('2024-01-01'),
+        mtime: new Date('2024-01-02'),
+      } as any);
+
+      const result = await service.getFileInfo(testFilePath);
+
+      expect(result).toEqual({
+        exists: true,
+        size: 2048,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-02'),
       });
     });
 
     test('ファイルが存在しない場合', async () => {
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(null);
+      mockFs.stat.mockRejectedValue({ code: 'ENOENT' });
 
-      const result = await fileService.getFile(123, mockUser);
-
-      expect(result).toBeNull();
-    });
-
-    test('削除済みファイルの場合', async () => {
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue({
-        ...mockFileData,
-        deleteFlag: 1,
-      });
-
-      const result = await fileService.getFile(123, mockUser);
-
-      expect(result).toBeNull();
-    });
-
-    test('アクセス権限がない場合（非公開、別ユーザー）', async () => {
-      const otherUser: AuthenticatedUser = {
-        userId: 2,
-        email: 'other@example.com',
-        userInfoName: 'Other User',
-      };
-
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-      mockKnowledgeRepository.findById.mockResolvedValue({
-        publicFlag: 3, // 非公開
-        insertUser: 1, // 作成者は別ユーザー
-      });
-
-      const result = await fileService.getFile(123, otherUser);
-
-      expect(result).toBeNull();
-    });
-
-    test('下書きファイルへのアクセス（作成者）', async () => {
-      const draftFile = {
-        ...mockFileData,
-        knowledgeId: null,
-      };
-
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(draftFile);
-
-      const result = await fileService.getFile(123, mockUser);
+      const result = await service.getFileInfo('/nonexistent/file.txt');
 
       expect(result).toEqual({
-        fileNo: 123,
-        fileName: 'test.pdf',
-        fileBinary: Buffer.from('test data'),
-        fileSize: 1024,
-        knowledgeId: undefined,
+        exists: false,
+        size: 0,
       });
-    });
-
-    test('下書きファイルへのアクセス（別ユーザー）', async () => {
-      const draftFile = {
-        ...mockFileData,
-        knowledgeId: null,
-      };
-      const otherUser: AuthenticatedUser = {
-        userId: 2,
-        email: 'other@example.com',
-        userInfoName: 'Other User',
-      };
-
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(draftFile);
-
-      const result = await fileService.getFile(123, otherUser);
-
-      expect(result).toBeNull();
-    });
-
-    test('保護されたナレッジ（認証済みユーザー）', async () => {
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-      mockKnowledgeRepository.findById.mockResolvedValue({
-        publicFlag: 2, // 保護
-        insertUser: 1,
-      });
-
-      const result = await fileService.getFile(123, mockUser);
-
-      expect(result).toBeTruthy();
-    });
-
-    test('保護されたナレッジ（未認証ユーザー）', async () => {
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-      mockKnowledgeRepository.findById.mockResolvedValue({
-        publicFlag: 2, // 保護
-        insertUser: 1,
-      });
-
-      const result = await fileService.getFile(123, null);
-
-      expect(result).toBeNull();
-    });
-
-    test('エラー処理', async () => {
-      mockPrisma.knowledgeFile.findUnique.mockRejectedValue(new Error('DB Error'));
-
-      const result = await fileService.getFile(123, mockUser);
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('getSlideInfo', () => {
-    test('PDFファイルのスライド情報取得', async () => {
-      const mockFileData = {
-        fileNo: BigInt(123),
-        fileName: 'presentation.pdf',
-        fileBinary: Buffer.from('pdf data'),
-        fileSize: BigInt(2048),
-        knowledgeId: BigInt(1),
-        insertUser: 1,
-        deleteFlag: 0,
-      };
-
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-      mockKnowledgeRepository.findById.mockResolvedValue({
-        publicFlag: 1,
-        insertUser: 1,
-      });
-
-      const result = await fileService.getSlideInfo('123', mockUser);
-
-      expect(result).toEqual({
-        fileNo: '123',
-        fileName: 'presentation.pdf',
-        totalSlides: expect.any(Number),
-        slides: expect.arrayContaining([
-          {
-            slideNumber: 1,
-            imageName: 'slide_1.png',
-          },
-        ]),
-      });
-    });
-
-    test('PPTXファイルのスライド情報取得', async () => {
-      const mockFileData = {
-        fileNo: BigInt(456),
-        fileName: 'slides.pptx',
-        fileBinary: Buffer.from('pptx data'),
-        fileSize: BigInt(4096),
-        knowledgeId: BigInt(2),
-        insertUser: 1,
-        deleteFlag: 0,
-      };
-
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-      mockKnowledgeRepository.findById.mockResolvedValue({
-        publicFlag: 1,
-        insertUser: 1,
-      });
-
-      const result = await fileService.getSlideInfo('456', mockUser);
-
-      expect(result).toBeTruthy();
-      expect(result?.fileName).toBe('slides.pptx');
-    });
-
-    test('非スライドファイルの場合', async () => {
-      const mockFileData = {
-        fileNo: BigInt(789),
-        fileName: 'document.txt',
-        fileBinary: Buffer.from('text data'),
-        fileSize: BigInt(100),
-        knowledgeId: BigInt(3),
-        insertUser: 1,
-        deleteFlag: 0,
-      };
-
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-      mockKnowledgeRepository.findById.mockResolvedValue({
-        publicFlag: 1,
-        insertUser: 1,
-      });
-
-      const result = await fileService.getSlideInfo('789', mockUser);
-
-      expect(result).toBeNull();
-    });
-
-    test('ファイルが存在しない場合', async () => {
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(null);
-
-      const result = await fileService.getSlideInfo('999', mockUser);
-
-      expect(result).toBeNull();
-    });
-
-    test('エラー処理', async () => {
-      mockPrisma.knowledgeFile.findUnique.mockRejectedValue(new Error('DB Error'));
-
-      const result = await fileService.getSlideInfo('123', mockUser);
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('getSlideImage', () => {
-    test('スライド画像の取得成功', async () => {
-      const mockFileData = {
-        fileNo: BigInt(123),
-        fileName: 'presentation.pdf',
-        fileBinary: Buffer.from('pdf data'),
-        fileSize: BigInt(2048),
-        knowledgeId: BigInt(1),
-        insertUser: 1,
-        deleteFlag: 0,
-      };
-
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-      mockKnowledgeRepository.findById.mockResolvedValue({
-        publicFlag: 1,
-        insertUser: 1,
-      });
-
-      const result = await fileService.getSlideImage('123', 'slide_1.png', mockUser);
-
-      expect(result).toBeTruthy();
-      expect(result?.contentType).toBe('image/png');
-      expect(result?.data).toBeInstanceOf(Buffer);
-      expect(result?.size).toBeGreaterThan(0);
-    });
-
-    test('ファイルアクセス権限がない場合', async () => {
-      const mockFileData = {
-        fileNo: BigInt(123),
-        fileName: 'presentation.pdf',
-        fileBinary: Buffer.from('pdf data'),
-        fileSize: BigInt(2048),
-        knowledgeId: BigInt(1),
-        insertUser: 2,
-        deleteFlag: 0,
-      };
-
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-      mockKnowledgeRepository.findById.mockResolvedValue({
-        publicFlag: 3, // 非公開
-        insertUser: 2,
-      });
-
-      const result = await fileService.getSlideImage('123', 'slide_1.png', mockUser);
-
-      expect(result).toBeNull();
-    });
-
-    test('エラー処理', async () => {
-      mockPrisma.knowledgeFile.findUnique.mockRejectedValue(new Error('DB Error'));
-
-      const result = await fileService.getSlideImage('123', 'slide_1.png', mockUser);
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('createFile', () => {
-    test('ファイル作成成功', async () => {
-      const mockCreatedFile = {
-        fileNo: BigInt(999),
-        fileName: 'newfile.pdf',
-        fileBinary: Buffer.from('new file data'),
-        fileSize: 13,
-        knowledgeId: BigInt(1),
-        insertUser: 1,
-        insertDatetime: new Date(),
-        updateUser: 1,
-        updateDatetime: new Date(),
-        deleteFlag: 0,
-        parseStatus: 0,
-      };
-
-      mockPrisma.knowledgeFile.create.mockResolvedValue(mockCreatedFile);
-
-      const result = await fileService.createFile(
-        'newfile.pdf',
-        Buffer.from('new file data'),
-        1,
-        1
-      );
-
-      expect(result).toEqual({
-        fileNo: 999,
-        fileName: 'newfile.pdf',
-        fileBinary: Buffer.from('new file data'),
-        fileSize: 13,
-        knowledgeId: 1,
-      });
-
-      expect(mockPrisma.knowledgeFile.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          fileName: 'newfile.pdf',
-          fileBinary: Buffer.from('new file data'),
-          fileSize: 13,
-          knowledgeId: BigInt(1),
-          insertUser: 1,
-          deleteFlag: 0,
-          parseStatus: 0,
-        }),
-      });
-    });
-
-    test('下書きファイル作成（knowledgeIdなし）', async () => {
-      const mockCreatedFile = {
-        fileNo: BigInt(1000),
-        fileName: 'draft.pdf',
-        fileBinary: Buffer.from('draft data'),
-        fileSize: 10,
-        knowledgeId: null,
-        insertUser: 1,
-        insertDatetime: new Date(),
-        updateUser: 1,
-        updateDatetime: new Date(),
-        deleteFlag: 0,
-        parseStatus: 0,
-      };
-
-      mockPrisma.knowledgeFile.create.mockResolvedValue(mockCreatedFile);
-
-      const result = await fileService.createFile(
-        'draft.pdf',
-        Buffer.from('draft data'),
-        null,
-        1
-      );
-
-      expect(result).toEqual({
-        fileNo: 1000,
-        fileName: 'draft.pdf',
-        fileBinary: Buffer.from('draft data'),
-        fileSize: 10,
-        knowledgeId: undefined,
-      });
-    });
-
-    test('エラー処理', async () => {
-      mockPrisma.knowledgeFile.create.mockRejectedValue(new Error('DB Error'));
-
-      const result = await fileService.createFile(
-        'error.pdf',
-        Buffer.from('data'),
-        1,
-        1
-      );
-
-      expect(result).toBeNull();
     });
   });
 
   describe('deleteFile', () => {
-    test('ファイル削除成功（下書き、作成者）', async () => {
-      const mockFileData = {
-        fileNo: BigInt(123),
-        fileName: 'draft.pdf',
-        fileBinary: Buffer.from('data'),
-        fileSize: BigInt(100),
-        knowledgeId: null,
-        insertUser: 1,
-        deleteFlag: 0,
-      };
+    test('ファイルを正しく削除できる', async () => {
+      mockFs.unlink.mockResolvedValue(undefined);
 
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-      mockPrisma.knowledgeFile.update.mockResolvedValue({
-        ...mockFileData,
-        deleteFlag: 1,
-      });
+      await expect(service.deleteFile('/test/file.txt'))
+        .resolves.not.toThrow();
 
-      const result = await fileService.deleteFile(123, 1);
-
-      expect(result).toBe(true);
-      expect(mockPrisma.knowledgeFile.update).toHaveBeenCalledWith({
-        where: { fileNo: BigInt(123) },
-        data: {
-          deleteFlag: 1,
-          updateUser: 1,
-          updateDatetime: expect.any(Date),
-        },
-      });
+      expect(mockFs.unlink).toHaveBeenCalledWith('/test/file.txt');
     });
 
-    test('ファイルが存在しない場合', async () => {
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(null);
+    test('ファイルが存在しない場合は無視する', async () => {
+      mockFs.unlink.mockRejectedValue({ code: 'ENOENT' });
 
-      const result = await fileService.deleteFile(999, 1);
-
-      expect(result).toBe(false);
+      await expect(service.deleteFile('/nonexistent/file.txt'))
+        .resolves.not.toThrow();
     });
 
-    test('既に削除済みの場合', async () => {
-      const mockFileData = {
-        fileNo: BigInt(123),
-        fileName: 'deleted.pdf',
-        fileBinary: Buffer.from('data'),
-        fileSize: BigInt(100),
-        knowledgeId: null,
-        insertUser: 1,
-        deleteFlag: 1,
-      };
+    test('その他のエラーは再スロー', async () => {
+      mockFs.unlink.mockRejectedValue(new Error('Permission denied'));
 
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-
-      const result = await fileService.deleteFile(123, 1);
-
-      expect(result).toBe(false);
-    });
-
-    test('削除権限がない場合（下書き、別ユーザー）', async () => {
-      const mockFileData = {
-        fileNo: BigInt(123),
-        fileName: 'draft.pdf',
-        fileBinary: Buffer.from('data'),
-        fileSize: BigInt(100),
-        knowledgeId: null,
-        insertUser: 2,
-        deleteFlag: 0,
-      };
-
-      mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFileData);
-
-      const result = await fileService.deleteFile(123, 1);
-
-      expect(result).toBe(false);
-    });
-
-    test('エラー処理', async () => {
-      mockPrisma.knowledgeFile.findUnique.mockRejectedValue(new Error('DB Error'));
-
-      const result = await fileService.deleteFile(123, 1);
-
-      expect(result).toBe(false);
+      await expect(service.deleteFile('/test/file.txt'))
+        .rejects.toThrow('Permission denied');
     });
   });
 
-  describe('プライベートメソッド', () => {
-    test('buildSlideImagePath', () => {
-      const path = (fileService as any).buildSlideImagePath('123', 'slide_1.png');
-      expect(path).toBe('/slides/123/slide_1.png');
+  describe('generateThumbnail', () => {
+    test('サムネイルを正しく生成できる', async () => {
+      const mockSharpInstance = {
+        resize: jest.fn().mockReturnThis(),
+        toFile: jest.fn().mockResolvedValue(undefined),
+      };
+      mockSharp.mockReturnValue(mockSharpInstance as any);
+
+      const result = await service.generateThumbnail(
+        '/test/image.jpg',
+        '/test/thumb.jpg',
+        { width: 200, height: 150 }
+      );
+
+      expect(result).toBe('/test/thumb.jpg');
+      expect(mockSharp).toHaveBeenCalledWith('/test/image.jpg');
+      expect(mockSharpInstance.resize).toHaveBeenCalledWith(200, 150, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      });
+      expect(mockSharpInstance.toFile).toHaveBeenCalledWith('/test/thumb.jpg');
     });
 
-    test('countSlidePages', async () => {
-      const count = await (fileService as any).countSlidePages('123');
-      expect(count).toBeGreaterThanOrEqual(1);
-      expect(count).toBeLessThanOrEqual(20);
+    test('画像処理に失敗した場合エラーをスロー', async () => {
+      mockSharp.mockImplementation(() => {
+        throw new Error('Invalid image format');
+      });
+
+      await expect(service.generateThumbnail('/test/invalid.jpg', '/test/thumb.jpg'))
+        .rejects.toThrow('Invalid image format');
+    });
+  });
+
+  describe('validateFile', () => {
+    test('有効なファイルの場合trueを返す', () => {
+      const validFile = {
+        mimetype: 'image/jpeg',
+        size: 1024 * 1024, // 1MB
+      };
+
+      const result = service.validateFile(validFile as any, {
+        allowedMimeTypes: ['image/jpeg', 'image/png'],
+        maxSize: 5 * 1024 * 1024, // 5MB
+      });
+
+      expect(result).toEqual({ valid: true });
     });
 
-    test('loadSlideImageFromStorage', async () => {
-      const buffer = await (fileService as any).loadSlideImageFromStorage('/path/to/image');
-      expect(buffer).toBeInstanceOf(Buffer);
-      expect(buffer.length).toBeGreaterThan(0);
+    test('MIMEタイプが許可されていない場合', () => {
+      const invalidFile = {
+        mimetype: 'application/exe',
+        size: 1024,
+      };
+
+      const result = service.validateFile(invalidFile as any, {
+        allowedMimeTypes: ['image/jpeg', 'image/png'],
+      });
+
+      expect(result).toEqual({
+        valid: false,
+        error: 'Invalid file type',
+      });
+    });
+
+    test('ファイルサイズが大きすぎる場合', () => {
+      const largeFile = {
+        mimetype: 'image/jpeg',
+        size: 10 * 1024 * 1024, // 10MB
+      };
+
+      const result = service.validateFile(largeFile as any, {
+        maxSize: 5 * 1024 * 1024, // 5MB
+      });
+
+      expect(result).toEqual({
+        valid: false,
+        error: 'File size exceeds limit',
+      });
+    });
+
+    test('オプションが指定されない場合は常に有効', () => {
+      const anyFile = {
+        mimetype: 'any/type',
+        size: 999999999,
+      };
+
+      const result = service.validateFile(anyFile as any, {});
+
+      expect(result).toEqual({ valid: true });
+    });
+  });
+
+  describe('getUploadDirectory', () => {
+    test('アップロードディレクトリパスを正しく生成', () => {
+      const result = service.getUploadDirectory('knowledge', 123);
+
+      expect(result).toBe(path.join(process.cwd(), 'uploads', 'knowledge', '123'));
+    });
+
+    test('カテゴリなしの場合', () => {
+      const result = service.getUploadDirectory();
+
+      expect(result).toBe(path.join(process.cwd(), 'uploads'));
+    });
+
+    test('カテゴリのみの場合', () => {
+      const result = service.getUploadDirectory('temp');
+
+      expect(result).toBe(path.join(process.cwd(), 'uploads', 'temp'));
+    });
+  });
+
+  describe('sanitizeFileName', () => {
+    test('安全なファイル名はそのまま返す', () => {
+      const result = service.sanitizeFileName('test-file_123.txt');
+
+      expect(result).toBe('test-file_123.txt');
+    });
+
+    test('危険な文字を置換する', () => {
+      const result = service.sanitizeFileName('../../../etc/passwd');
+
+      expect(result).toBe('_________etc_passwd');
+    });
+
+    test('日本語ファイル名も処理できる', () => {
+      const result = service.sanitizeFileName('テスト<ファイル>.txt');
+
+      expect(result).toBe('テスト_ファイル_.txt');
+    });
+
+    test('空のファイル名の場合デフォルト値を返す', () => {
+      const result = service.sanitizeFileName('');
+
+      expect(result).toBe('unnamed');
+    });
+  });
+
+  describe('getMimeType', () => {
+    test('一般的な拡張子のMIMEタイプを返す', () => {
+      expect(service.getMimeType('test.jpg')).toBe('image/jpeg');
+      expect(service.getMimeType('test.png')).toBe('image/png');
+      expect(service.getMimeType('test.pdf')).toBe('application/pdf');
+      expect(service.getMimeType('test.txt')).toBe('text/plain');
+    });
+
+    test('不明な拡張子の場合デフォルトを返す', () => {
+      expect(service.getMimeType('test.xyz')).toBe('application/octet-stream');
+    });
+
+    test('拡張子がない場合デフォルトを返す', () => {
+      expect(service.getMimeType('noextension')).toBe('application/octet-stream');
+    });
+
+    test('大文字の拡張子も処理できる', () => {
+      expect(service.getMimeType('test.JPG')).toBe('image/jpeg');
+      expect(service.getMimeType('test.PDF')).toBe('application/pdf');
     });
   });
 });
