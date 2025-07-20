@@ -1,10 +1,13 @@
 /**
- * ユーザーエイリアスリポジトリのテスト
+ * ユーザーエイリアスリポジトリテスト
  * 
- * @description userAliasRepositoryの単体テスト
+ * @description userAliasRepositoryのテストケース
  */
 
-import { prisma } from '@/lib/db';
+// Prismaクライアントのモックをjest.mockの前に定義
+jest.mock('@/lib/db');
+
+// テスト対象のインポート
 import {
   findUserAliasByKey,
   findEntraIdUserAlias,
@@ -13,34 +16,31 @@ import {
   createEntraIdUserAlias,
   deleteUserAlias,
   ENTRAID_AUTH_KEY,
-  UserAlias
+  UserAlias,
 } from '../userAliasRepository';
+import { prisma } from '@/lib/db';
 
-// Prismaクライアントをモック化
-jest.mock('@/lib/db', () => ({
-  prisma: {
-    userAlias: {
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
-      upsert: jest.fn(),
-      update: jest.fn(),
-    },
-  },
-}));
+// 型付きモック
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
 describe('userAliasRepository', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('findUserAliasByKey', () => {
     test('認証キーとエイリアスキーでユーザーエイリアスを検索できる', async () => {
-      const mockUserAlias = {
+      const mockAlias = {
         userId: 1,
-        authKey: 'test_auth',
-        aliasKey: 'test_alias',
+        authKey: 'google',
+        aliasKey: 'test@gmail.com',
         aliasName: 'Test User',
-        aliasMail: 'test@example.com',
+        aliasMail: 'test@gmail.com',
         userInfoUpdate: 1,
         insertUser: 1,
         insertDatetime: new Date(),
@@ -49,288 +49,251 @@ describe('userAliasRepository', () => {
         deleteFlag: 0,
       };
 
-      (prisma.userAlias.findFirst as jest.Mock).mockResolvedValue(mockUserAlias);
+      (mockPrisma.userAlias.findFirst as jest.Mock).mockResolvedValue(mockAlias);
 
-      const result = await findUserAliasByKey('test_auth', 'TEST_ALIAS');
+      const result = await findUserAliasByKey('google', 'TEST@GMAIL.COM');
 
-      expect(prisma.userAlias.findFirst).toHaveBeenCalledWith({
+      expect(result).toEqual(mockAlias);
+      expect(mockPrisma.userAlias.findFirst).toHaveBeenCalledWith({
         where: {
-          authKey: 'test_auth',
-          aliasKey: 'test_alias', // 小文字に変換される
-          deleteFlag: 0,
-        },
-      });
-
-      expect(result).toEqual(mockUserAlias);
-    });
-
-    test('エイリアスキーは小文字に変換される', async () => {
-      await findUserAliasByKey('test_auth', 'UPPERCASE_KEY');
-
-      expect(prisma.userAlias.findFirst).toHaveBeenCalledWith({
-        where: {
-          authKey: 'test_auth',
-          aliasKey: 'uppercase_key',
+          authKey: 'google',
+          aliasKey: 'test@gmail.com', // 小文字に変換される
           deleteFlag: 0,
         },
       });
     });
 
-    test('見つからない場合はnullを返す', async () => {
-      (prisma.userAlias.findFirst as jest.Mock).mockResolvedValue(null);
+    test('存在しない場合はnullを返す', async () => {
+      (mockPrisma.userAlias.findFirst as jest.Mock).mockResolvedValue(null);
 
-      const result = await findUserAliasByKey('test_auth', 'not_found');
+      const result = await findUserAliasByKey('google', 'nonexistent@gmail.com');
 
       expect(result).toBeNull();
     });
 
     test('エラーが発生した場合はnullを返す', async () => {
-      (prisma.userAlias.findFirst as jest.Mock).mockRejectedValue(new Error('Database error'));
-      
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const result = await findUserAliasByKey('test_auth', 'test_alias');
+      (mockPrisma.userAlias.findFirst as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+      const result = await findUserAliasByKey('google', 'error@gmail.com');
 
       expect(result).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error finding user alias by key:', expect.any(Error));
-      
-      consoleErrorSpy.mockRestore();
+      expect(console.error).toHaveBeenCalledWith('Error finding user alias by key:', expect.any(Error));
     });
   });
 
   describe('findEntraIdUserAlias', () => {
     test('EntraIDユーザーをメールアドレスで検索できる', async () => {
-      const mockUserAlias = {
+      const mockAlias = {
         userId: 1,
         authKey: ENTRAID_AUTH_KEY,
-        aliasKey: 'user@example.com',
-        aliasName: 'EntraID User',
+        aliasKey: 'user@contoso.com',
+        aliasName: 'Contoso User',
+        aliasMail: 'user@contoso.com',
+        userInfoUpdate: 1,
         deleteFlag: 0,
       };
 
-      (prisma.userAlias.findFirst as jest.Mock).mockResolvedValue(mockUserAlias);
+      (mockPrisma.userAlias.findFirst as jest.Mock).mockResolvedValue(mockAlias);
 
-      const result = await findEntraIdUserAlias('user@example.com');
+      const result = await findEntraIdUserAlias('user@contoso.com');
 
-      expect(prisma.userAlias.findFirst).toHaveBeenCalledWith({
+      expect(result).toEqual(mockAlias);
+      expect(mockPrisma.userAlias.findFirst).toHaveBeenCalledWith({
         where: {
           authKey: ENTRAID_AUTH_KEY,
-          aliasKey: 'user@example.com',
+          aliasKey: 'user@contoso.com',
           deleteFlag: 0,
         },
       });
-
-      expect(result).toEqual(mockUserAlias);
     });
   });
 
   describe('findUserAliasesByUserId', () => {
-    test('ユーザーIDで全てのエイリアスを検索できる', async () => {
-      const mockUserAliases = [
+    test('ユーザーIDで全ての認証エイリアスを取得できる', async () => {
+      const mockAliases = [
         {
           userId: 1,
-          authKey: 'auth1',
-          aliasKey: 'alias1',
-          aliasName: 'Alias 1',
+          authKey: 'google',
+          aliasKey: 'test@gmail.com',
+          aliasName: 'Google User',
           deleteFlag: 0,
         },
         {
           userId: 1,
-          authKey: 'auth2',
-          aliasKey: 'alias2',
-          aliasName: 'Alias 2',
+          authKey: ENTRAID_AUTH_KEY,
+          aliasKey: 'test@contoso.com',
+          aliasName: 'EntraID User',
           deleteFlag: 0,
         },
       ];
 
-      (prisma.userAlias.findMany as jest.Mock).mockResolvedValue(mockUserAliases);
+      (mockPrisma.userAlias.findMany as jest.Mock).mockResolvedValue(mockAliases);
 
       const result = await findUserAliasesByUserId(1);
 
-      expect(prisma.userAlias.findMany).toHaveBeenCalledWith({
+      expect(result).toEqual(mockAliases);
+      expect(mockPrisma.userAlias.findMany).toHaveBeenCalledWith({
         where: {
           userId: 1,
           deleteFlag: 0,
         },
         orderBy: { authKey: 'asc' },
       });
-
-      expect(result).toEqual(mockUserAliases);
     });
 
-    test('認証キーを指定してエイリアスを検索できる', async () => {
-      const mockUserAliases = [
+    test('特定の認証キーのエイリアスのみ取得できる', async () => {
+      const mockAliases = [
         {
           userId: 1,
-          authKey: 'specific_auth',
-          aliasKey: 'alias1',
-          aliasName: 'Alias 1',
+          authKey: 'google',
+          aliasKey: 'test@gmail.com',
+          aliasName: 'Google User',
           deleteFlag: 0,
         },
       ];
 
-      (prisma.userAlias.findMany as jest.Mock).mockResolvedValue(mockUserAliases);
+      (mockPrisma.userAlias.findMany as jest.Mock).mockResolvedValue(mockAliases);
 
-      const result = await findUserAliasesByUserId(1, 'specific_auth');
+      const result = await findUserAliasesByUserId(1, 'google');
 
-      expect(prisma.userAlias.findMany).toHaveBeenCalledWith({
+      expect(result).toEqual(mockAliases);
+      expect(mockPrisma.userAlias.findMany).toHaveBeenCalledWith({
         where: {
           userId: 1,
-          authKey: 'specific_auth',
+          authKey: 'google',
           deleteFlag: 0,
         },
         orderBy: { authKey: 'asc' },
       });
-
-      expect(result).toEqual(mockUserAliases);
     });
 
     test('エラーが発生した場合は空配列を返す', async () => {
-      (prisma.userAlias.findMany as jest.Mock).mockRejectedValue(new Error('Database error'));
-      
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      (mockPrisma.userAlias.findMany as jest.Mock).mockRejectedValue(new Error('Database error'));
+
       const result = await findUserAliasesByUserId(1);
 
       expect(result).toEqual([]);
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error finding user aliases by user ID:', expect.any(Error));
-      
-      consoleErrorSpy.mockRestore();
+      expect(console.error).toHaveBeenCalledWith('Error finding user aliases by user ID:', expect.any(Error));
     });
   });
 
   describe('saveUserAlias', () => {
     test('新規ユーザーエイリアスを作成できる', async () => {
-      const mockDate = new Date();
-      jest.useFakeTimers().setSystemTime(mockDate);
-
       const userAlias: UserAlias = {
         userId: 1,
-        authKey: 'test_auth',
-        aliasKey: 'TEST_ALIAS',
+        authKey: 'google',
+        aliasKey: 'TEST@GMAIL.COM',
         aliasName: 'Test User',
-        aliasMail: 'test@example.com',
+        aliasMail: 'test@gmail.com',
       };
 
-      const mockCreatedAlias = {
+      const mockResult = {
         ...userAlias,
-        aliasKey: 'test_alias',
+        aliasKey: 'test@gmail.com',
         userInfoUpdate: 1,
         insertUser: 1,
-        insertDatetime: mockDate,
+        insertDatetime: new Date(),
         updateUser: 1,
-        updateDatetime: mockDate,
+        updateDatetime: new Date(),
         deleteFlag: 0,
       };
 
-      (prisma.userAlias.upsert as jest.Mock).mockResolvedValue(mockCreatedAlias);
+      (mockPrisma.userAlias.upsert as jest.Mock).mockResolvedValue(mockResult);
 
       const result = await saveUserAlias(userAlias);
 
-      expect(prisma.userAlias.upsert).toHaveBeenCalledWith({
+      expect(result).toEqual(mockResult);
+      expect(mockPrisma.userAlias.upsert).toHaveBeenCalledWith({
         where: {
           userId_authKey: {
             userId: 1,
-            authKey: 'test_auth',
+            authKey: 'google',
           },
         },
         create: {
           userId: 1,
-          authKey: 'test_auth',
-          aliasKey: 'test_alias',
+          authKey: 'google',
+          aliasKey: 'test@gmail.com',
           aliasName: 'Test User',
-          aliasMail: 'test@example.com',
+          aliasMail: 'test@gmail.com',
           userInfoUpdate: 1,
           updateUser: 1,
-          updateDatetime: mockDate,
+          updateDatetime: expect.any(Date),
           insertUser: 1,
-          insertDatetime: mockDate,
+          insertDatetime: expect.any(Date),
           deleteFlag: 0,
         },
         update: {
-          aliasKey: 'test_alias',
+          aliasKey: 'test@gmail.com',
           aliasName: 'Test User',
-          aliasMail: 'test@example.com',
+          aliasMail: 'test@gmail.com',
           userInfoUpdate: 1,
           updateUser: 1,
-          updateDatetime: mockDate,
+          updateDatetime: expect.any(Date),
         },
       });
-
-      expect(result).toEqual(mockCreatedAlias);
-      
-      jest.useRealTimers();
     });
 
     test('既存のユーザーエイリアスを更新できる', async () => {
-      const mockDate = new Date();
-      jest.useFakeTimers().setSystemTime(mockDate);
-
       const userAlias: UserAlias = {
         userId: 1,
-        authKey: 'test_auth',
-        aliasKey: 'test_alias',
+        authKey: 'google',
+        aliasKey: 'test@gmail.com',
         aliasName: 'Updated User',
-        aliasMail: 'updated@example.com',
-        userInfoUpdate: 0,
+        aliasMail: 'test@gmail.com',
         updateUser: 2,
       };
 
-      const mockUpdatedAlias = {
+      const mockResult = {
         ...userAlias,
-        updateDatetime: mockDate,
+        userInfoUpdate: 1,
+        updateDatetime: new Date(),
       };
 
-      (prisma.userAlias.upsert as jest.Mock).mockResolvedValue(mockUpdatedAlias);
+      (mockPrisma.userAlias.upsert as jest.Mock).mockResolvedValue(mockResult);
 
       const result = await saveUserAlias(userAlias);
 
-      expect(result).toEqual(mockUpdatedAlias);
-      
-      jest.useRealTimers();
+      expect(result).toEqual(mockResult);
     });
 
     test('エラーが発生した場合は例外をスローする', async () => {
-      (prisma.userAlias.upsert as jest.Mock).mockRejectedValue(new Error('Database error'));
-      
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      
       const userAlias: UserAlias = {
         userId: 1,
-        authKey: 'test_auth',
-        aliasKey: 'test_alias',
+        authKey: 'google',
+        aliasKey: 'test@gmail.com',
         aliasName: 'Test User',
       };
 
+      (mockPrisma.userAlias.upsert as jest.Mock).mockRejectedValue(new Error('Database error'));
+
       await expect(saveUserAlias(userAlias)).rejects.toThrow('ユーザーエイリアスの保存に失敗しました');
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error saving user alias:', expect.any(Error));
-      
-      consoleErrorSpy.mockRestore();
+      expect(console.error).toHaveBeenCalledWith('Error saving user alias:', expect.any(Error));
     });
   });
 
   describe('createEntraIdUserAlias', () => {
     test('EntraIDユーザーエイリアスを作成できる', async () => {
-      const mockDate = new Date();
-      jest.useFakeTimers().setSystemTime(mockDate);
-
-      const mockCreatedAlias = {
+      const mockResult = {
         userId: 1,
         authKey: ENTRAID_AUTH_KEY,
-        aliasKey: 'user@example.com',
-        aliasName: 'EntraID User',
-        aliasMail: 'user@example.com',
+        aliasKey: 'user@contoso.com',
+        aliasName: 'Contoso User',
+        aliasMail: 'user@contoso.com',
         userInfoUpdate: 1,
         insertUser: 1,
-        insertDatetime: mockDate,
+        insertDatetime: new Date(),
         updateUser: 1,
-        updateDatetime: mockDate,
+        updateDatetime: new Date(),
         deleteFlag: 0,
       };
 
-      (prisma.userAlias.upsert as jest.Mock).mockResolvedValue(mockCreatedAlias);
+      (mockPrisma.userAlias.upsert as jest.Mock).mockResolvedValue(mockResult);
 
-      const result = await createEntraIdUserAlias(1, 'user@example.com', 'EntraID User');
+      const result = await createEntraIdUserAlias(1, 'user@contoso.com', 'Contoso User');
 
-      expect(prisma.userAlias.upsert).toHaveBeenCalledWith({
+      expect(result).toEqual(mockResult);
+      expect(mockPrisma.userAlias.upsert).toHaveBeenCalledWith({
         where: {
           userId_authKey: {
             userId: 1,
@@ -340,69 +303,58 @@ describe('userAliasRepository', () => {
         create: expect.objectContaining({
           userId: 1,
           authKey: ENTRAID_AUTH_KEY,
-          aliasKey: 'user@example.com',
-          aliasName: 'EntraID User',
-          aliasMail: 'user@example.com',
+          aliasKey: 'user@contoso.com',
+          aliasName: 'Contoso User',
+          aliasMail: 'user@contoso.com',
           userInfoUpdate: 1,
         }),
         update: expect.objectContaining({
-          aliasKey: 'user@example.com',
-          aliasName: 'EntraID User',
-          aliasMail: 'user@example.com',
+          aliasKey: 'user@contoso.com',
+          aliasName: 'Contoso User',
+          aliasMail: 'user@contoso.com',
           userInfoUpdate: 1,
         }),
       });
-
-      expect(result).toEqual(mockCreatedAlias);
-      
-      jest.useRealTimers();
     });
   });
 
   describe('deleteUserAlias', () => {
     test('ユーザーエイリアスを論理削除できる', async () => {
-      const mockDate = new Date();
-      jest.useFakeTimers().setSystemTime(mockDate);
+      (mockPrisma.userAlias.update as jest.Mock).mockResolvedValue({});
 
-      (prisma.userAlias.update as jest.Mock).mockResolvedValue({
-        userId: 1,
-        authKey: 'test_auth',
-        deleteFlag: 1,
-        updateDatetime: mockDate,
-        updateUser: 1,
-      });
+      const result = await deleteUserAlias(1, 'google');
 
-      const result = await deleteUserAlias(1, 'test_auth');
-
-      expect(prisma.userAlias.update).toHaveBeenCalledWith({
+      expect(result).toBe(true);
+      expect(mockPrisma.userAlias.update).toHaveBeenCalledWith({
         where: {
           userId_authKey: {
             userId: 1,
-            authKey: 'test_auth',
+            authKey: 'google',
           },
         },
         data: {
           deleteFlag: 1,
-          updateDatetime: mockDate,
+          updateDatetime: expect.any(Date),
           updateUser: 1,
         },
       });
-
-      expect(result).toBe(true);
-      
-      jest.useRealTimers();
     });
 
     test('エラーが発生した場合はfalseを返す', async () => {
-      (prisma.userAlias.update as jest.Mock).mockRejectedValue(new Error('Database error'));
-      
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const result = await deleteUserAlias(1, 'test_auth');
+      (mockPrisma.userAlias.update as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+      const result = await deleteUserAlias(1, 'google');
 
       expect(result).toBe(false);
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error deleting user alias:', expect.any(Error));
-      
-      consoleErrorSpy.mockRestore();
+      expect(console.error).toHaveBeenCalledWith('Error deleting user alias:', expect.any(Error));
+    });
+
+    test('存在しないエイリアスの削除を試みた場合もfalseを返す', async () => {
+      (mockPrisma.userAlias.update as jest.Mock).mockRejectedValue(new Error('Record not found'));
+
+      const result = await deleteUserAlias(999, 'nonexistent');
+
+      expect(result).toBe(false);
     });
   });
 });

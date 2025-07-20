@@ -3,23 +3,12 @@
  * 
  * @description userRepositoryのテストケース
  */
-import { describe, test, expect, beforeEach, jest } from '@jest/globals';
+import type { User } from '@prisma/client';
 
-// Prismaのモック作成
-const mockFindFirst = jest.fn();
-const mockFindUnique = jest.fn();
-const mockUpdate = jest.fn();
+// Prismaクライアントのモックをjest.mockの前に定義
+jest.mock('@/lib/db');
 
-jest.mock('@/lib/db', () => ({
-  prisma: {
-    user: {
-      findFirst: mockFindFirst,
-      findUnique: mockFindUnique,
-      update: mockUpdate,
-    },
-  },
-}));
-
+// テスト対象のインポート
 import {
   findUserByLoginId,
   findUserById,
@@ -27,6 +16,10 @@ import {
   findUserByEmail,
   updateLastLoginTime,
 } from '../userRepository';
+import { prisma } from '@/lib/db';
+
+// 型付きモック
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
 describe('userRepository', () => {
   beforeEach(() => {
@@ -35,20 +28,28 @@ describe('userRepository', () => {
 
   describe('findUserByLoginId', () => {
     test('ログインIDでユーザーを検索できる', async () => {
-      const mockUser = {
+      const mockUser: User = {
         userId: 1,
         userKey: 'testuser',
         userName: 'Test User',
         mailAddress: 'test@example.com',
+        password: 'hashed',
+        salt: 'salt',
+        roleId: 1,
+        locale: 'ja',
         deleteFlag: 0,
+        insertDatetime: new Date(),
+        insertUser: 1,
+        updateDatetime: new Date(),
+        updateUser: 1,
       };
 
-      mockFindFirst.mockResolvedValue(mockUser);
+      (mockPrisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await findUserByLoginId('testuser');
 
       expect(result).toEqual(mockUser);
-      expect(mockFindFirst).toHaveBeenCalledWith({
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
         where: {
           userKey: 'testuser',
           deleteFlag: 0,
@@ -57,29 +58,44 @@ describe('userRepository', () => {
     });
 
     test('存在しないユーザーの場合はnullを返す', async () => {
-      mockFindFirst.mockResolvedValue(null);
+      (mockPrisma.user.findFirst as jest.Mock).mockResolvedValue(null);
 
       const result = await findUserByLoginId('nonexistent');
 
       expect(result).toBeNull();
     });
+
+    test('エラーが発生した場合は例外がスローされる', async () => {
+      (mockPrisma.user.findFirst as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+      await expect(findUserByLoginId('error')).rejects.toThrow('Database error');
+    });
   });
 
   describe('findUserById', () => {
     test('ユーザーIDでユーザーを検索できる', async () => {
-      const mockUser = {
+      const mockUser: User = {
         userId: 1,
         userKey: 'testuser',
         userName: 'Test User',
         mailAddress: 'test@example.com',
+        password: 'hashed',
+        salt: 'salt',
+        roleId: 1,
+        locale: 'ja',
+        deleteFlag: 0,
+        insertDatetime: new Date(),
+        insertUser: 1,
+        updateDatetime: new Date(),
+        updateUser: 1,
       };
 
-      mockFindUnique.mockResolvedValue(mockUser);
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await findUserById(1);
 
       expect(result).toEqual(mockUser);
-      expect(mockFindUnique).toHaveBeenCalledWith({
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: {
           userId: 1,
         },
@@ -87,17 +103,23 @@ describe('userRepository', () => {
     });
 
     test('存在しないユーザーIDの場合はnullを返す', async () => {
-      mockFindUnique.mockResolvedValue(null);
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       const result = await findUserById(999);
 
       expect(result).toBeNull();
     });
+
+    test('エラーが発生した場合は例外がスローされる', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+      await expect(findUserById(1)).rejects.toThrow('Database error');
+    });
   });
 
   describe('getUserPassword', () => {
     test('ユーザーのパスワードとソルトを取得できる', async () => {
-      mockFindUnique.mockResolvedValue({
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         password: 'hashedpassword',
         salt: 'randomsalt',
       });
@@ -108,7 +130,7 @@ describe('userRepository', () => {
         password: 'hashedpassword',
         salt: 'randomsalt',
       });
-      expect(mockFindUnique).toHaveBeenCalledWith({
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: {
           userId: 1,
         },
@@ -120,7 +142,7 @@ describe('userRepository', () => {
     });
 
     test('ユーザーが存在しない場合はnullを返す', async () => {
-      mockFindUnique.mockResolvedValue(null);
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       const result = await getUserPassword(999);
 
@@ -128,7 +150,7 @@ describe('userRepository', () => {
     });
 
     test('パスワードがnullの場合はnullを返す', async () => {
-      mockFindUnique.mockResolvedValue({
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         password: null,
         salt: 'salt',
       });
@@ -139,7 +161,7 @@ describe('userRepository', () => {
     });
 
     test('ソルトがnullの場合はnullを返す', async () => {
-      mockFindUnique.mockResolvedValue({
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         password: 'password',
         salt: null,
       });
@@ -148,24 +170,38 @@ describe('userRepository', () => {
 
       expect(result).toBeNull();
     });
+
+    test('エラーが発生した場合は例外がスローされる', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+      await expect(getUserPassword(1)).rejects.toThrow('Database error');
+    });
   });
 
   describe('findUserByEmail', () => {
     test('メールアドレスでユーザーを検索できる', async () => {
-      const mockUser = {
+      const mockUser: User = {
         userId: 1,
         userKey: 'testuser',
         userName: 'Test User',
         mailAddress: 'test@example.com',
+        password: 'hashed',
+        salt: 'salt',
+        roleId: 1,
+        locale: 'ja',
         deleteFlag: 0,
+        insertDatetime: new Date(),
+        insertUser: 1,
+        updateDatetime: new Date(),
+        updateUser: 1,
       };
 
-      mockFindFirst.mockResolvedValue(mockUser);
+      (mockPrisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await findUserByEmail('test@example.com');
 
       expect(result).toEqual(mockUser);
-      expect(mockFindFirst).toHaveBeenCalledWith({
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
         where: {
           mailAddress: 'test@example.com',
           deleteFlag: 0,
@@ -174,11 +210,31 @@ describe('userRepository', () => {
     });
 
     test('存在しないメールアドレスの場合はnullを返す', async () => {
-      mockFindFirst.mockResolvedValue(null);
+      (mockPrisma.user.findFirst as jest.Mock).mockResolvedValue(null);
 
       const result = await findUserByEmail('nonexistent@example.com');
 
       expect(result).toBeNull();
+    });
+
+    test('空のメールアドレスの場合も検索できる', async () => {
+      (mockPrisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const result = await findUserByEmail('');
+
+      expect(result).toBeNull();
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          mailAddress: '',
+          deleteFlag: 0,
+        },
+      });
+    });
+
+    test('エラーが発生した場合は例外がスローされる', async () => {
+      (mockPrisma.user.findFirst as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+      await expect(findUserByEmail('test@example.com')).rejects.toThrow('Database error');
     });
   });
 
@@ -188,11 +244,11 @@ describe('userRepository', () => {
       jest.useFakeTimers();
       jest.setSystemTime(mockDate);
 
-      mockUpdate.mockResolvedValue({});
+      (mockPrisma.user.update as jest.Mock).mockResolvedValue({});
 
       await updateLastLoginTime(1);
 
-      expect(mockUpdate).toHaveBeenCalledWith({
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: {
           userId: 1,
         },
@@ -205,8 +261,24 @@ describe('userRepository', () => {
       jest.useRealTimers();
     });
 
+    test('異なるユーザーIDでも更新できる', async () => {
+      (mockPrisma.user.update as jest.Mock).mockResolvedValue({});
+
+      await updateLastLoginTime(999);
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: {
+          userId: 999,
+        },
+        data: {
+          updateDatetime: expect.any(Date),
+          updateUser: 999,
+        },
+      });
+    });
+
     test('更新エラーが発生した場合は例外がスローされる', async () => {
-      mockUpdate.mockRejectedValue(new Error('Database error'));
+      (mockPrisma.user.update as jest.Mock).mockRejectedValue(new Error('Database error'));
 
       await expect(updateLastLoginTime(1)).rejects.toThrow('Database error');
     });

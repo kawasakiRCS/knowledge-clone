@@ -261,3 +261,21 @@ jest.mock('next/server', () => ({
     },
   },
 }));
+
+// Mock Prisma client
+jest.mock('@/lib/db', () => ({
+  prisma: {
+    user: {
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+    },
+    userAlias: {
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      upsert: jest.fn(),
+      update: jest.fn(),
+    },
+  },
+}));
