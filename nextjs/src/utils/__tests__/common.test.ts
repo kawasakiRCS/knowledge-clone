@@ -1,361 +1,790 @@
 /**
  * 共通ユーティリティ関数のテスト
  * 
- * @description common.tsの各関数のテストケース
+ * @description common.tsの単体テスト
  */
-import { 
-  setCookie, 
-  getCookie, 
-  deleteCookie,
-  isDisplayTypeList,
-  isDisplayTypeBox,
-  unescapeHtml,
-  escapeURL,
+
+import {
+  setCookie,
+  getCookies,
+  logging,
   insertAtCaret,
-  notifyDesktop,
-  notifyMessage,
-  generateFileDownloadUrl
+  isString,
+  unescapeHTML,
+  escapeLink,
+  handleErrorResponse,
+  initPageTop,
+  initResponsiveNav,
+  initModalScrollbar,
+  startSessionKeepAlive,
+  preventDefaultDragDrop,
+  initCommonScripts
 } from '../common';
 
-// ブラウザAPIのモック
-Object.defineProperty(window, 'location', {
-  value: {
-    protocol: 'http:',
-    host: 'localhost:3000',
-    pathname: '/',
+// グローバルオブジェクトのモック
+const mockJQuery = jest.fn();
+const mockNotify = jest.fn();
+const mockFadeIn = jest.fn();
+const mockFadeOut = jest.fn();
+const mockAnimate = jest.fn();
+const mockScroll = jest.fn();
+const mockClick = jest.fn();
+const mockLoad = jest.fn();
+const mockOn = jest.fn();
+const mockShow = jest.fn();
+const mockHide = jest.fn();
+const mockCss = jest.fn();
+const mockAjax = jest.fn();
+const mockFocus = jest.fn();
+const mockVal = jest.fn();
+const mockGet = jest.fn();
+const mockReady = jest.fn();
+
+// jQueryオブジェクトのモック設定
+mockJQuery.mockImplementation((selector: any) => {
+  if (selector === window) {
+    return {
+      scroll: mockScroll,
+      scrollTop: jest.fn().mockReturnValue(0),
+      load: mockLoad,
+      on: mockOn,
+    };
+  }
+  if (selector === document) {
+    return {
+      ready: mockReady,
+      on: mockOn,
+    };
+  }
+  if (selector === '.pagetop') {
+    return {
+      fadeIn: mockFadeIn,
+      fadeOut: mockFadeOut,
+      click: mockClick,
+    };
+  }
+  if (selector === 'body, html') {
+    return {
+      animate: mockAnimate,
+    };
+  }
+  if (selector === '.navListButtonText') {
+    return {
+      show: mockShow,
+      hide: mockHide,
+    };
+  }
+  if (selector === '.navbar-fixed-top, .navbar-fixed-bottom') {
+    return {
+      css: mockCss,
+    };
+  }
+  return {
+    focus: mockFocus,
+    val: mockVal,
+    get: mockGet,
+  };
+});
+
+mockJQuery.notify = mockNotify;
+mockJQuery.ajax = mockAjax;
+mockJQuery.fn = {
+  modal: {
+    Constructor: {
+      prototype: {
+        setScrollbar: jest.fn(),
+        resetScrollbar: jest.fn(),
+      },
+    },
   },
-  writable: true,
-});
+};
 
-Object.defineProperty(window.document, 'cookie', {
-  writable: true,
-  value: '',
-});
+// windowオブジェクトのモック
+(global as any).window = {
+  _CONTEXT: '/context',
+  _LOGGING_NOTIFY_DESKTOP: true,
+  $: mockJQuery,
+  jQuery: mockJQuery,
+  matchMedia: jest.fn((query: string) => ({
+    matches: false,
+  })),
+};
 
-describe('Cookie関連関数', () => {
+(global as any).document = {
+  cookie: '',
+  selection: {
+    createRange: jest.fn(() => ({
+      text: '',
+      select: jest.fn(),
+    })),
+  },
+};
+
+(global as any).navigator = {
+  userAgent: 'Mozilla/5.0',
+};
+
+// consoleのモック
+const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+describe('common.ts', () => {
   beforeEach(() => {
-    // Cookieをクリア
+    jest.clearAllMocks();
     document.cookie = '';
   });
 
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+
   describe('setCookie', () => {
-    test('基本的なCookie設定', () => {
-      setCookie('testCookie', 'testValue');
-      expect(document.cookie).toContain('testCookie=testValue');
+    test('名前と値でCookieを設定できる', () => {
+      setCookie('testName', 'testValue');
+      expect(document.cookie).toContain('testName=testValue');
+      expect(document.cookie).toContain('path=/context/');
     });
 
-    test('有効期限付きCookie設定', () => {
-      setCookie('testCookie', 'testValue', 7);
-      expect(document.cookie).toContain('testCookie=testValue');
+    test('有効期限を指定してCookieを設定できる', () => {
+      setCookie('testName', 'testValue', 7);
+      expect(document.cookie).toContain('testName=testValue');
       expect(document.cookie).toContain('expires=');
     });
 
-    test('パス指定付きCookie設定', () => {
-      setCookie('testCookie', 'testValue', undefined, '/custom/path');
-      expect(document.cookie).toContain('testCookie=testValue');
+    test('パスを指定してCookieを設定できる', () => {
+      setCookie('testName', 'testValue', undefined, '/custom/path');
+      expect(document.cookie).toContain('path=/custom/path');
     });
 
-    test('グローバルコンテキスト付きCookie設定', () => {
-      window._CONTEXT = '/app';
-      setCookie('testCookie', 'testValue');
-      expect(document.cookie).toContain('testCookie=testValue');
-      delete window._CONTEXT;
+    test('_CONTEXTがない場合はルートパスを使用', () => {
+      (window as any)._CONTEXT = undefined;
+      setCookie('testName', 'testValue');
+      expect(document.cookie).toContain('path=/');
     });
 
-    test('日本語を含む値のエスケープ', () => {
-      setCookie('testCookie', 'テスト値');
-      expect(document.cookie).toContain('testCookie=%u30C6%u30B9%u30C8%u5024');
-    });
-  });
-
-  describe('getCookie', () => {
-    test('存在するCookieの取得', () => {
-      document.cookie = 'testCookie=testValue';
-      expect(getCookie('testCookie')).toBe('testValue');
-    });
-
-    test('存在しないCookieの取得', () => {
-      expect(getCookie('nonExistent')).toBe('');
-    });
-
-    test('複数のCookieから特定のCookieを取得', () => {
-      document.cookie = 'cookie1=value1; cookie2=value2; cookie3=value3';
-      expect(getCookie('cookie2')).toBe('value2');
-    });
-
-    test('エスケープされた値のデコード', () => {
-      document.cookie = 'testCookie=%u30C6%u30B9%u30C8%u5024';
-      expect(getCookie('testCookie')).toBe('テスト値');
-    });
-
-    test('空文字のCookie', () => {
-      document.cookie = 'emptyCookie=';
-      expect(getCookie('emptyCookie')).toBe('');
+    test('windowが存在しない場合もルートパスを使用', () => {
+      const originalWindow = (global as any).window;
+      (global as any).window = undefined;
+      setCookie('testName', 'testValue');
+      expect(document.cookie).toContain('path=/');
+      (global as any).window = originalWindow;
     });
   });
 
-  describe('deleteCookie', () => {
-    test('Cookieの削除', () => {
-      document.cookie = 'testCookie=testValue';
-      deleteCookie('testCookie');
-      expect(getCookie('testCookie')).toBe('');
-    });
-
-    test('パス指定付きCookieの削除', () => {
-      setCookie('testCookie', 'testValue', undefined, '/custom/path');
-      deleteCookie('testCookie', '/custom/path');
-      expect(getCookie('testCookie')).toBe('');
-    });
-
-    test('存在しないCookieの削除（エラーなし）', () => {
-      expect(() => {
-        deleteCookie('nonExistent');
-      }).not.toThrow();
-    });
-  });
-});
-
-describe('表示タイプ判定関数', () => {
-  test('isDisplayTypeList - リスト表示の判定', () => {
-    expect(isDisplayTypeList()).toBe(true); // デフォルト
-    
-    setCookie('displayType', 'list');
-    expect(isDisplayTypeList()).toBe(true);
-    
-    setCookie('displayType', 'box');
-    expect(isDisplayTypeList()).toBe(false);
-    
-    deleteCookie('displayType');
-  });
-
-  test('isDisplayTypeBox - ボックス表示の判定', () => {
-    expect(isDisplayTypeBox()).toBe(false); // デフォルト
-    
-    setCookie('displayType', 'box');
-    expect(isDisplayTypeBox()).toBe(true);
-    
-    setCookie('displayType', 'list');
-    expect(isDisplayTypeBox()).toBe(false);
-    
-    deleteCookie('displayType');
-  });
-});
-
-describe('HTML/URL処理関数', () => {
-  describe('unescapeHtml', () => {
-    test('基本的なHTMLエンティティのアンエスケープ', () => {
-      expect(unescapeHtml('&lt;div&gt;')).toBe('<div>');
-      expect(unescapeHtml('&amp;')).toBe('&');
-      expect(unescapeHtml('&quot;')).toBe('"');
-      expect(unescapeHtml('&#39;')).toBe("'");
-    });
-
-    test('複数のエンティティを含む文字列', () => {
-      expect(unescapeHtml('&lt;p&gt;Hello &amp; &quot;World&quot;&lt;/p&gt;')).toBe('<p>Hello & "World"</p>');
-    });
-
-    test('エンティティがない場合', () => {
-      expect(unescapeHtml('Hello World')).toBe('Hello World');
-    });
-
-    test('空文字列', () => {
-      expect(unescapeHtml('')).toBe('');
-    });
-  });
-
-  describe('escapeURL', () => {
-    test('基本的なURLのエスケープ', () => {
-      expect(escapeURL('http://example.com?param=value&other=test')).toBe('http://example.com?param=value&amp;other=test');
-    });
-
-    test('複数の&を含むURL', () => {
-      expect(escapeURL('a=1&b=2&c=3')).toBe('a=1&amp;b=2&amp;c=3');
-    });
-
-    test('既にエスケープされている場合', () => {
-      expect(escapeURL('a=1&amp;b=2')).toBe('a=1&amp;b=2');
-    });
-
-    test('&がない場合', () => {
-      expect(escapeURL('http://example.com')).toBe('http://example.com');
-    });
-  });
-});
-
-describe('DOM操作関数', () => {
-  describe('insertAtCaret', () => {
-    let textarea: HTMLTextAreaElement;
-
-    beforeEach(() => {
-      textarea = document.createElement('textarea');
-      textarea.id = 'testTextarea';
-      textarea.value = 'Hello World';
-      document.body.appendChild(textarea);
-    });
-
-    afterEach(() => {
-      document.body.removeChild(textarea);
-    });
-
-    test('カーソル位置に文字列を挿入', () => {
-      textarea.setSelectionRange(5, 5);
-      insertAtCaret('testTextarea', ' Beautiful');
-      expect(textarea.value).toBe('Hello Beautiful World');
-    });
-
-    test('選択範囲を置換', () => {
-      textarea.setSelectionRange(6, 11);
-      insertAtCaret('testTextarea', 'Universe');
-      expect(textarea.value).toBe('Hello Universe');
-    });
-
-    test('存在しない要素IDの場合', () => {
-      expect(() => {
-        insertAtCaret('nonExistent', 'test');
-      }).not.toThrow();
-    });
-
-    test('textarea以外の要素の場合', () => {
-      const div = document.createElement('div');
-      div.id = 'testDiv';
-      document.body.appendChild(div);
-      
-      expect(() => {
-        insertAtCaret('testDiv', 'test');
-      }).not.toThrow();
-      
-      document.body.removeChild(div);
-    });
-  });
-});
-
-describe('通知関数', () => {
-  describe('notifyDesktop', () => {
-    let originalNotification: any;
-
-    beforeEach(() => {
-      originalNotification = window.Notification;
-      window._LOGGING_NOTIFY_DESKTOP = true;
-    });
-
-    afterEach(() => {
-      window.Notification = originalNotification;
-      delete window._LOGGING_NOTIFY_DESKTOP;
-    });
-
-    test('通知権限が許可されている場合', () => {
-      const mockNotification = jest.fn();
-      window.Notification = mockNotification as any;
-      window.Notification.permission = 'granted';
-
-      notifyDesktop('Test Message');
-
-      expect(mockNotification).toHaveBeenCalledWith('Notification', {
-        body: 'Test Message',
-        tag: 'notification-knowledge',
-        icon: '/img/icon.png',
+  describe('getCookies', () => {
+    test('全てのCookieを取得できる', () => {
+      document.cookie = 'name1=value1; name2=value2';
+      const cookies = getCookies();
+      expect(cookies).toEqual({
+        name1: 'value1',
+        name2: 'value2',
       });
     });
 
-    test('通知権限がない場合', () => {
-      const mockNotification = jest.fn();
-      const mockRequestPermission = jest.fn().mockResolvedValue('granted');
-      window.Notification = mockNotification as any;
-      window.Notification.permission = 'default';
-      window.Notification.requestPermission = mockRequestPermission;
-
-      notifyDesktop('Test Message');
-
-      expect(mockRequestPermission).toHaveBeenCalled();
+    test('Cookieがない場合は空オブジェクトを返す', () => {
+      document.cookie = '';
+      const cookies = getCookies();
+      expect(cookies).toEqual({});
     });
 
-    test('通知が無効の場合', () => {
-      window._LOGGING_NOTIFY_DESKTOP = false;
-      const mockNotification = jest.fn();
-      window.Notification = mockNotification as any;
-
-      notifyDesktop('Test Message');
-
-      expect(mockNotification).not.toHaveBeenCalled();
-    });
-
-    test('Notification APIが存在しない場合', () => {
-      delete (window as any).Notification;
-      
-      expect(() => {
-        notifyDesktop('Test Message');
-      }).not.toThrow();
+    test('エンコードされた値をデコードする', () => {
+      document.cookie = 'encoded=%E3%83%86%E3%82%B9%E3%83%88';
+      const cookies = getCookies();
+      expect(cookies.encoded).toBe('テスト');
     });
   });
 
-  describe('notifyMessage', () => {
-    let mockNotify: jest.Mock;
+  describe('logging', () => {
+    test('コンソールにログを出力する', () => {
+      logging('test message');
+      expect(consoleLogSpy).toHaveBeenCalledWith('test message');
+    });
 
-    beforeEach(() => {
-      mockNotify = jest.fn();
-      window.$ = {
-        notify: mockNotify,
+    test('デスクトップ通知が有効な場合は通知も表示', () => {
+      logging('test message', 'error');
+      expect(mockNotify).toHaveBeenCalledWith('test message', {
+        className: 'error',
+        autoHideDelay: 10000,
+        globalPosition: 'bottom left',
+      });
+    });
+
+    test('レベルが指定されない場合はinfoを使用', () => {
+      logging('test message');
+      expect(mockNotify).toHaveBeenCalledWith('test message', {
+        className: 'info',
+        autoHideDelay: 10000,
+        globalPosition: 'bottom left',
+      });
+    });
+
+    test('デスクトップ通知が無効な場合は通知しない', () => {
+      (window as any)._LOGGING_NOTIFY_DESKTOP = false;
+      logging('test message');
+      expect(mockNotify).not.toHaveBeenCalled();
+      (window as any)._LOGGING_NOTIFY_DESKTOP = true;
+    });
+
+    test('windowが存在しない場合は通知しない', () => {
+      const originalWindow = (global as any).window;
+      (global as any).window = undefined;
+      logging('test message');
+      expect(mockNotify).not.toHaveBeenCalled();
+      (global as any).window = originalWindow;
+    });
+
+    test('jQueryが存在しない場合は通知しない', () => {
+      const original$ = (window as any).$;
+      (window as any).$ = undefined;
+      logging('test message');
+      expect(mockNotify).not.toHaveBeenCalled();
+      (window as any).$ = original$;
+    });
+
+    test('$.notifyが存在しない場合は通知しない', () => {
+      const originalNotify = (window as any).$.notify;
+      (window as any).$.notify = undefined;
+      logging('test message');
+      expect(mockNotify).not.toHaveBeenCalled();
+      (window as any).$.notify = originalNotify;
+    });
+  });
+
+  describe('insertAtCaret', () => {
+    test('カーソル位置に文字を挿入する', () => {
+      const mockElement = {
+        selectionStart: 5,
+        setSelectionRange: jest.fn(),
       };
+      mockGet.mockReturnValue(mockElement);
+      mockVal.mockReturnValue('Hello World');
+
+      insertAtCaret('#target', 'Test');
+
+      expect(mockFocus).toHaveBeenCalled();
+      expect(mockVal).toHaveBeenCalledWith('HelloTest World');
+      expect(mockElement.setSelectionRange).toHaveBeenCalledWith(9, 9);
+    });
+
+    test('IE環境では特別な処理を行う', () => {
+      (navigator as any).userAgent = 'MSIE 11.0';
+      const mockRange = {
+        text: '',
+        select: jest.fn(),
+      };
+      (document as any).selection.createRange.mockReturnValue(mockRange);
+
+      insertAtCaret('#target', 'Test');
+
+      expect(mockRange.text).toBe('Test');
+      expect(mockRange.select).toHaveBeenCalled();
+
+      // navigatorを元に戻す
+      (navigator as any).userAgent = 'Mozilla/5.0';
+    });
+
+    test('windowが存在しない場合は何もしない', () => {
+      const originalWindow = (global as any).window;
+      (global as any).window = undefined;
+      insertAtCaret('#target', 'Test');
+      expect(mockFocus).not.toHaveBeenCalled();
+      (global as any).window = originalWindow;
+    });
+
+    test('jQueryが存在しない場合は何もしない', () => {
+      const original$ = (window as any).$;
+      (window as any).$ = undefined;
+      insertAtCaret('#target', 'Test');
+      expect(mockFocus).not.toHaveBeenCalled();
+      (window as any).$ = original$;
+    });
+  });
+
+  describe('isString', () => {
+    test('文字列プリミティブに対してtrueを返す', () => {
+      expect(isString('test')).toBe(true);
+    });
+
+    test('Stringオブジェクトに対してtrueを返す', () => {
+      expect(isString(new String('test'))).toBe(true);
+    });
+
+    test('数値に対してfalseを返す', () => {
+      expect(isString(123)).toBe(false);
+    });
+
+    test('オブジェクトに対してfalseを返す', () => {
+      expect(isString({})).toBe(false);
+    });
+
+    test('nullに対してfalseを返す', () => {
+      expect(isString(null)).toBe(false);
+    });
+
+    test('undefinedに対してfalseを返す', () => {
+      expect(isString(undefined)).toBe(false);
+    });
+  });
+
+  describe('unescapeHTML', () => {
+    test('文字列をそのまま返す', () => {
+      expect(unescapeHTML('&lt;div&gt;test&lt;/div&gt;')).toBe('&lt;div&gt;test&lt;/div&gt;');
+    });
+  });
+
+  describe('escapeLink', () => {
+    test('javascript:プロトコルをエンコードする', () => {
+      const result = escapeLink('javascript:alert("XSS")');
+      expect(result).toBe(encodeURIComponent('javascript:alert("XSS")'));
+    });
+
+    test('大文字小文字を区別しない', () => {
+      const result = escapeLink('JavaScript:alert("XSS")');
+      expect(result).toBe(encodeURIComponent('JavaScript:alert("XSS")'));
+    });
+
+    test('javascript:の前に文字がある場合も処理する', () => {
+      const result = escapeLink('http://example.com#javascript:alert("XSS")');
+      expect(result).toBe('http://example.com#' + encodeURIComponent('javascript:alert("XSS")'));
+    });
+
+    test('javascript:を含まないURLはそのまま返す', () => {
+      const url = 'https://example.com/page';
+      expect(escapeLink(url)).toBe(url);
+    });
+  });
+
+  describe('handleErrorResponse', () => {
+    test('エラーレスポンスに子要素がある場合は個別に通知', () => {
+      const xhr = {
+        responseJSON: {
+          children: [
+            { message: 'Error 1' },
+            { message: 'Error 2' },
+          ],
+        },
+      };
+      
+      handleErrorResponse(xhr, 'error', new Error('test'));
+      
+      expect(mockNotify).toHaveBeenCalledWith('Error 1', 'warn');
+      expect(mockNotify).toHaveBeenCalledWith('Error 2', 'warn');
+    });
+
+    test('エラーレスポンスに子要素がない場合はデフォルトメッセージ', () => {
+      const xhr = {
+        responseJSON: {},
+      };
+      
+      handleErrorResponse(xhr, 'error', new Error('test'));
+      
+      expect(mockNotify).toHaveBeenCalledWith('data load error. please try again.', 'warn');
+    });
+
+    test('statusTextがある場合はそれを表示', () => {
+      const xhr = {
+        statusText: 'Internal Server Error',
+      };
+      
+      handleErrorResponse(xhr, 'error', new Error('test'));
+      
+      expect(mockNotify).toHaveBeenCalledWith('Internal Server Error', 'warn');
+    });
+
+    test('何もない場合はデフォルトメッセージ', () => {
+      handleErrorResponse({}, 'error', new Error('test'));
+      
+      expect(mockNotify).toHaveBeenCalledWith('data load error. please try again.', 'warn');
+    });
+
+    test('windowが存在しない場合は何もしない', () => {
+      const originalWindow = (global as any).window;
+      (global as any).window = undefined;
+      handleErrorResponse({}, 'error', new Error('test'));
+      expect(mockNotify).not.toHaveBeenCalled();
+      (global as any).window = originalWindow;
+    });
+
+    test('jQueryが存在しない場合は何もしない', () => {
+      const original$ = (window as any).$;
+      (window as any).$ = undefined;
+      handleErrorResponse({}, 'error', new Error('test'));
+      expect(mockNotify).not.toHaveBeenCalled();
+      (window as any).$ = original$;
+    });
+
+    test('$.notifyが存在しない場合は何もしない', () => {
+      const originalNotify = (window as any).$.notify;
+      (window as any).$.notify = undefined;
+      handleErrorResponse({}, 'error', new Error('test'));
+      expect(mockNotify).not.toHaveBeenCalled();
+      (window as any).$.notify = originalNotify;
+    });
+
+    test('xhrがnullの場合でもデフォルトメッセージ', () => {
+      handleErrorResponse(null as any, 'error', new Error('test'));
+      expect(mockNotify).toHaveBeenCalledWith('data load error. please try again.', 'warn');
+    });
+  });
+
+  describe('initPageTop', () => {
+    test('スクロールイベントを設定する', () => {
+      initPageTop();
+      expect(mockScroll).toHaveBeenCalled();
+    });
+
+    test('クリックイベントを設定する', () => {
+      initPageTop();
+      expect(mockClick).toHaveBeenCalled();
+    });
+
+    test('スクロール時の表示制御', () => {
+      const scrollCallback = mockScroll.mock.calls[0][0];
+      
+      // スクロール位置が100以下の場合
+      (window as any).$(window).scrollTop = jest.fn().mockReturnValue(50);
+      scrollCallback();
+      expect(mockFadeOut).toHaveBeenCalled();
+      
+      // スクロール位置が100より大きい場合
+      (window as any).$(window).scrollTop = jest.fn().mockReturnValue(150);
+      scrollCallback();
+      expect(mockFadeIn).toHaveBeenCalled();
+    });
+
+    test('クリック時のアニメーション', () => {
+      initPageTop();
+      const clickCallback = mockClick.mock.calls[0][0];
+      
+      const result = clickCallback();
+      
+      expect(mockAnimate).toHaveBeenCalledWith({ scrollTop: 0 }, 500);
+      expect(result).toBe(false);
+    });
+
+    test('windowが存在しない場合は何もしない', () => {
+      const originalWindow = (global as any).window;
+      (global as any).window = undefined;
+      initPageTop();
+      expect(mockScroll).not.toHaveBeenCalled();
+      (global as any).window = originalWindow;
+    });
+
+    test('jQueryが存在しない場合は何もしない', () => {
+      const original$ = (window as any).$;
+      (window as any).$ = undefined;
+      initPageTop();
+      expect(mockScroll).not.toHaveBeenCalled();
+      (window as any).$ = original$;
+    });
+  });
+
+  describe('initResponsiveNav', () => {
+    test('ウィンドウイベントを設定する', () => {
+      initResponsiveNav();
+      expect(mockOn).toHaveBeenCalledWith('load resize', expect.any(Function));
+    });
+
+    test('画面幅に応じて表示制御', () => {
+      initResponsiveNav();
+      const resizeCallback = mockOn.mock.calls[0][1];
+      
+      // モバイル表示（767px以下）
+      (window as any).matchMedia = jest.fn((query: string) => ({
+        matches: query === '(max-width:767px)',
+      }));
+      resizeCallback();
+      expect(mockShow).toHaveBeenCalled();
+      
+      // タブレット表示（768px-1200px）
+      (window as any).matchMedia = jest.fn((query: string) => ({
+        matches: query === '(max-width:1200px)' && query !== '(max-width:767px)',
+      }));
+      resizeCallback();
+      expect(mockHide).toHaveBeenCalled();
+      
+      // デスクトップ表示（1201px以上）
+      (window as any).matchMedia = jest.fn((query: string) => ({
+        matches: false,
+      }));
+      resizeCallback();
+      expect(mockShow).toHaveBeenCalledTimes(2);
+    });
+
+    test('windowが存在しない場合は何もしない', () => {
+      const originalWindow = (global as any).window;
+      (global as any).window = undefined;
+      initResponsiveNav();
+      expect(mockOn).not.toHaveBeenCalled();
+      (global as any).window = originalWindow;
+    });
+
+    test('jQueryが存在しない場合は何もしない', () => {
+      const original$ = (window as any).$;
+      (window as any).$ = undefined;
+      initResponsiveNav();
+      expect(mockOn).not.toHaveBeenCalled();
+      (window as any).$ = original$;
+    });
+
+    test('タブレット表示の条件が正しく判定される', () => {
+      initResponsiveNav();
+      const resizeCallback = mockOn.mock.calls[0][1];
+      
+      // タブレット表示（正確な条件: max-width:1200px AND NOT max-width:767px）
+      (window as any).matchMedia = jest.fn((query: string) => {
+        if (query === '(max-width:767px)') return { matches: false };
+        if (query === '(max-width:1200px)') return { matches: true };
+        return { matches: false };
+      });
+      resizeCallback();
+      expect(mockHide).toHaveBeenCalled();
+    });
+  });
+
+  describe('initModalScrollbar', () => {
+    test('モーダルのスクロールバー調整を初期化', () => {
+      const oldSetScrollbar = jest.fn();
+      const oldResetScrollbar = jest.fn();
+      
+      (window as any).$.fn.modal.Constructor.prototype.setScrollbar = oldSetScrollbar;
+      (window as any).$.fn.modal.Constructor.prototype.resetScrollbar = oldResetScrollbar;
+      
+      initModalScrollbar();
+      
+      // loadイベントのコールバックを実行
+      const loadCallback = mockLoad.mock.calls[0][0];
+      loadCallback();
+      
+      // 新しいsetScrollbarをテスト
+      const newSetScrollbar = (window as any).$.fn.modal.Constructor.prototype.setScrollbar;
+      const context = { bodyIsOverflowing: true, scrollbarWidth: 15 };
+      newSetScrollbar.call(context);
+      
+      expect(oldSetScrollbar).toHaveBeenCalled();
+      expect(mockCss).toHaveBeenCalledWith('padding-right', 15);
+      
+      // 新しいresetScrollbarをテスト
+      const newResetScrollbar = (window as any).$.fn.modal.Constructor.prototype.resetScrollbar;
+      newResetScrollbar.call({});
+      
+      expect(oldResetScrollbar).toHaveBeenCalled();
+      expect(mockCss).toHaveBeenCalledWith('padding-right', '');
+    });
+
+    test('bodyIsOverflowingがfalseの場合はパディングを設定しない', () => {
+      const oldSetScrollbar = jest.fn();
+      (window as any).$.fn.modal.Constructor.prototype.setScrollbar = oldSetScrollbar;
+      
+      initModalScrollbar();
+      const loadCallback = mockLoad.mock.calls[0][0];
+      loadCallback();
+      
+      const newSetScrollbar = (window as any).$.fn.modal.Constructor.prototype.setScrollbar;
+      const context = { bodyIsOverflowing: false, scrollbarWidth: 15 };
+      newSetScrollbar.call(context);
+      
+      expect(oldSetScrollbar).toHaveBeenCalled();
+      expect(mockCss).not.toHaveBeenCalled();
+    });
+
+    test('scrollbarWidthが0の場合はパディングを設定しない', () => {
+      const oldSetScrollbar = jest.fn();
+      (window as any).$.fn.modal.Constructor.prototype.setScrollbar = oldSetScrollbar;
+      
+      initModalScrollbar();
+      const loadCallback = mockLoad.mock.calls[0][0];
+      loadCallback();
+      
+      const newSetScrollbar = (window as any).$.fn.modal.Constructor.prototype.setScrollbar;
+      const context = { bodyIsOverflowing: true, scrollbarWidth: 0 };
+      newSetScrollbar.call(context);
+      
+      expect(oldSetScrollbar).toHaveBeenCalled();
+      expect(mockCss).not.toHaveBeenCalled();
+    });
+
+    test('windowが存在しない場合は何もしない', () => {
+      const originalWindow = (global as any).window;
+      (global as any).window = undefined;
+      initModalScrollbar();
+      expect(mockLoad).not.toHaveBeenCalled();
+      (global as any).window = originalWindow;
+    });
+
+    test('jQueryが存在しない場合は何もしない', () => {
+      const original$ = (window as any).$;
+      (window as any).$ = undefined;
+      initModalScrollbar();
+      expect(mockLoad).not.toHaveBeenCalled();
+      (window as any).$ = original$;
+    });
+
+    test('$.fn.modalが存在しない場合は何もしない', () => {
+      const originalModal = (window as any).$.fn.modal;
+      (window as any).$.fn.modal = undefined;
+      initModalScrollbar();
+      expect(mockLoad).not.toHaveBeenCalled();
+      (window as any).$.fn.modal = originalModal;
+    });
+  });
+
+  describe('startSessionKeepAlive', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
     });
 
     afterEach(() => {
-      delete window.$;
+      jest.useRealTimers();
     });
 
-    test('通常メッセージの表示', () => {
-      notifyMessage('Test Message');
-      expect(mockNotify).toHaveBeenCalledWith('Test Message', 'success');
-    });
-
-    test('エラーメッセージの表示', () => {
-      notifyMessage('Error Message', 'error');
-      expect(mockNotify).toHaveBeenCalledWith('Error Message', 'error');
-    });
-
-    test('jQueryが存在しない場合', () => {
-      delete window.$;
+    test('5分ごとにアクセスを送信', () => {
+      mockAjax.mockReturnValue({
+        done: jest.fn().mockReturnValue({
+          fail: jest.fn(),
+        }),
+      });
       
-      expect(() => {
-        notifyMessage('Test Message');
-      }).not.toThrow();
+      startSessionKeepAlive();
+      
+      // 初回は呼ばれない
+      expect(mockAjax).not.toHaveBeenCalled();
+      
+      // 5分後
+      jest.advanceTimersByTime(5 * 60 * 1000);
+      
+      expect(mockAjax).toHaveBeenCalledWith({
+        type: 'GET',
+        url: '/context/open.interval/access',
+      });
+    });
+
+    test('成功時のログ出力', () => {
+      const doneFn = jest.fn();
+      const failFn = jest.fn();
+      
+      mockAjax.mockReturnValue({
+        done: jest.fn((callback) => {
+          callback();
+          return { fail: failFn };
+        }),
+      });
+      
+      startSessionKeepAlive();
+      jest.advanceTimersByTime(5 * 60 * 1000);
+      
+      expect(consoleLogSpy).toHaveBeenCalledWith('OK');
+    });
+
+    test('失敗時のエラーログ出力', () => {
+      const error = new Error('Network error');
+      
+      mockAjax.mockReturnValue({
+        done: jest.fn().mockReturnValue({
+          fail: jest.fn((callback) => {
+            callback(error);
+          }),
+        }),
+      });
+      
+      startSessionKeepAlive();
+      jest.advanceTimersByTime(5 * 60 * 1000);
+      
+      expect(consoleErrorSpy).toHaveBeenCalledWith(error);
+    });
+
+    test('windowが存在しない場合は何もしない', () => {
+      const originalWindow = (global as any).window;
+      (global as any).window = undefined;
+      startSessionKeepAlive();
+      jest.advanceTimersByTime(5 * 60 * 1000);
+      expect(mockAjax).not.toHaveBeenCalled();
+      (global as any).window = originalWindow;
+    });
+
+    test('jQueryが存在しない場合は何もしない', () => {
+      const original$ = (window as any).$;
+      (window as any).$ = undefined;
+      startSessionKeepAlive();
+      jest.advanceTimersByTime(5 * 60 * 1000);
+      expect(mockAjax).not.toHaveBeenCalled();
+      (window as any).$ = original$;
     });
   });
-});
 
-describe('ファイルダウンロードURL生成', () => {
-  beforeEach(() => {
-    window.location = {
-      protocol: 'https:',
-      host: 'example.com',
-      pathname: '/',
-    } as any;
+  describe('preventDefaultDragDrop', () => {
+    test('ドラッグ&ドロップイベントのデフォルト動作を抑止', () => {
+      preventDefaultDragDrop();
+      
+      expect(mockOn).toHaveBeenCalledWith('drop dragover', expect.any(Function));
+      
+      const callback = mockOn.mock.calls[0][1];
+      const mockEvent = {
+        stopPropagation: jest.fn(),
+        preventDefault: jest.fn(),
+      };
+      
+      callback(mockEvent);
+      
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+    });
+
+    test('windowが存在しない場合は何もしない', () => {
+      const originalWindow = (global as any).window;
+      (global as any).window = undefined;
+      preventDefaultDragDrop();
+      expect(mockOn).not.toHaveBeenCalled();
+      (global as any).window = originalWindow;
+    });
+
+    test('jQueryが存在しない場合は何もしない', () => {
+      const original$ = (window as any).$;
+      (window as any).$ = undefined;
+      preventDefaultDragDrop();
+      expect(mockOn).not.toHaveBeenCalled();
+      (window as any).$ = original$;
+    });
   });
 
-  test('基本的なダウンロードURL生成', () => {
-    const url = generateFileDownloadUrl(123);
-    expect(url).toBe('https://example.com/files/download/123');
-  });
+  describe('initCommonScripts', () => {
+    test('全ての初期化関数を実行', () => {
+      initCommonScripts();
+      
+      // preventDefaultDragDropは即座に実行される
+      expect(mockOn).toHaveBeenCalledWith('drop dragover', expect.any(Function));
+      
+      // readyコールバックを実行
+      const readyCallback = mockReady.mock.calls[0][0];
+      readyCallback();
+      
+      // 各初期化関数が呼ばれることを確認
+      expect(mockScroll).toHaveBeenCalled(); // initPageTop
+      expect(mockOn).toHaveBeenCalledWith('load resize', expect.any(Function)); // initResponsiveNav
+      expect(mockLoad).toHaveBeenCalled(); // initModalScrollbar
+      
+      // startSessionKeepAliveのタイマーが設定されることを確認
+      jest.useFakeTimers();
+      jest.advanceTimersByTime(5 * 60 * 1000);
+      expect(mockAjax).toHaveBeenCalled();
+      jest.useRealTimers();
+    });
 
-  test('ファイル名付きURL生成', () => {
-    const url = generateFileDownloadUrl(123, 'test.pdf');
-    expect(url).toBe('https://example.com/files/download/123/test.pdf');
-  });
+    test('windowが存在しない場合は何もしない', () => {
+      const originalWindow = (global as any).window;
+      (global as any).window = undefined;
+      initCommonScripts();
+      expect(mockOn).not.toHaveBeenCalled();
+      (global as any).window = originalWindow;
+    });
 
-  test('特殊文字を含むファイル名', () => {
-    const url = generateFileDownloadUrl(123, 'test file (2024).pdf');
-    expect(url).toBe('https://example.com/files/download/123/test%20file%20(2024).pdf');
-  });
-
-  test('コンテキストパス付きの場合', () => {
-    window._CONTEXT = '/app';
-    const url = generateFileDownloadUrl(123);
-    expect(url).toBe('https://example.com/app/files/download/123');
-    delete window._CONTEXT;
-  });
-
-  test('HTTPプロトコルの場合', () => {
-    window.location.protocol = 'http:';
-    const url = generateFileDownloadUrl(123);
-    expect(url).toBe('http://example.com/files/download/123');
+    test('jQueryが存在しない場合は何もしない', () => {
+      const original$ = (window as any).$;
+      (window as any).$ = undefined;
+      initCommonScripts();
+      expect(mockOn).not.toHaveBeenCalled();
+      (window as any).$ = original$;
+    });
   });
 });
