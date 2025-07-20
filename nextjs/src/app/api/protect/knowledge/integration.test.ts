@@ -5,6 +5,44 @@
  */
 import { POST, DELETE, GET } from './route';
 
+// Prismaクライアントのモック
+jest.mock('@/lib/db', () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+    },
+    knowledge: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+  },
+}));
+
+// KnowledgeServiceのモック
+jest.mock('@/lib/services/knowledgeService', () => ({
+  KnowledgeService: jest.fn().mockImplementation(() => ({
+    getKnowledgeById: jest.fn(),
+    createKnowledge: jest.fn(),
+    updateKnowledge: jest.fn(),
+    deleteKnowledge: jest.fn(),
+  })),
+}));
+
+// next-authのモック
+jest.mock('next-auth', () => ({
+  getServerSession: jest.fn().mockResolvedValue(null),
+}));
+
+// authOptionsのモック
+jest.mock('@/lib/auth/authOptions', () => ({
+  authOptions: {},
+}));
+
+import { prisma } from '@/lib/db';
+import { KnowledgeService } from '@/lib/services/knowledgeService';
+
 // 統合テスト用のリクエストモック
 const createIntegrationRequest = (method: string, body?: any, headers?: any, url?: string) => {
   const mockUrl = url || 'http://localhost:3000/api/protect/knowledge';
@@ -27,6 +65,23 @@ const createIntegrationRequest = (method: string, body?: any, headers?: any, url
 };
 
 describe('Knowledge Protect API Integration Tests', () => {
+  // モックのリセットとセットアップ
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    // 認証ユーザーのモック
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+      userId: 1,
+      userName: 'testuser',
+      userKey: 'testuser@example.com',
+      deleteFlag: 0,
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('Error Handling Integration', () => {
     test('should handle authentication flow correctly', async () => {
       // 未認証リクエスト
@@ -48,7 +103,9 @@ describe('Knowledge Protect API Integration Tests', () => {
       // 認証ありでバリデーションエラー
       const invalidRequest = createIntegrationRequest('POST', {
         // titleが無い
-        content: 'Test content'
+        content: 'Test content',
+        publicFlag: 1,
+        typeId: 1
       }, {
         'authorization': 'Bearer user-1'
       });
@@ -59,6 +116,7 @@ describe('Knowledge Protect API Integration Tests', () => {
       expect(data.success).toBe(false);
       expect(data.errors).toBeDefined();
       expect(data.errors.length).toBeGreaterThan(0);
+      expect(data.errors[0]).toContain('タイトル');
     });
 
     test('should handle database connection scenarios', async () => {

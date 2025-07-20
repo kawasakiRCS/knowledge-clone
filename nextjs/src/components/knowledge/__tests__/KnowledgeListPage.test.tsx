@@ -490,10 +490,13 @@ describe('KnowledgeListPage', () => {
       
       const { container } = render(<KnowledgeListPage initialData={initialData} />);
       
-      // ポイント表示のみ確認（pointOnTermは表示されない）
-      expect(screen.getByText('100')).toBeInTheDocument();
+      // pointとpointOnTermの両方が表示される
+      expect(screen.getByText('100')).toBeInTheDocument(); // 通常ポイント
+      expect(screen.getByText('× 50', { exact: false })).toBeInTheDocument(); // 期間ポイント
       const starIcon = container.querySelector('.fa-star-o');
       expect(starIcon).toBeInTheDocument();
+      const chartIcon = container.querySelector('.fa-line-chart');
+      expect(chartIcon).toBeInTheDocument();
     });
   });
 
