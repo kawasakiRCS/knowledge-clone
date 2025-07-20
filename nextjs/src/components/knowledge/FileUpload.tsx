@@ -157,7 +157,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     Array.from(files).forEach(file => {
       uploadFile(file);
     });
-  }, [disabled, uploadFile]);
+  }, [disabled]);
 
   /**
    * ドラッグオーバーハンドラー
