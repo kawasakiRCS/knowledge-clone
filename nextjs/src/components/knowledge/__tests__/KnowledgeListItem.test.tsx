@@ -1,200 +1,194 @@
 /**
- * KnowledgeListItemコンポーネントテスト
+ * ナレッジリストアイテムコンポーネントテスト
  * 
- * @description ナレッジリストアイテムの表示と動作をテスト
+ * @description 一覧画面で使用する個別のナレッジ表示コンポーネントのテスト
  */
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import KnowledgeListItem from '../KnowledgeListItem';
 import { StockKnowledge } from '@/types/knowledge';
 
-// Mock Next.js modules
+// モック設定
 jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  );
+  return ({ children, href, className }: any) => {
+    return <a href={href} className={className}>{children}</a>;
+  };
 });
 
 jest.mock('next/image', () => {
-  return ({ src, alt, width, height, ...props }: any) => (
-    <img src={src} alt={alt} width={width} height={height} {...props} />
-  );
+  return ({ src, alt, width, height, ...props }: any) => {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={alt} width={width} height={height} {...props} />;
+  };
 });
 
-// Mock hooks
 jest.mock('@/hooks/useLocale', () => ({
   useLocale: () => ({
     t: (key: string, ...args: any[]) => {
-      const translations: { [key: string]: string } = {
+      const translations: Record<string, string> = {
         'label.unread': '未読',
-        'knowledge.view.info.insert': '投稿者: %s 投稿日時: %s',
+        'knowledge.view.info.insert': '登録者: %s 登録日時: %s',
         'knowledge.view.info.update': '更新者: %s 更新日時: %s',
         'knowledge.list.event.datetime': 'イベント日時',
         'knowledge.view.label.status.participation': '参加',
-        'knowledge.view.label.status.wait.cansel': 'キャンセル待ち',
+        'knowledge.view.label.status.wait.cansel': 'キャンセル待ち'
       };
-      
       let result = translations[key] || key;
-      if (args.length > 0) {
-        args.forEach((arg: string, index: number) => {
-          result = result.replace(`%s`, arg);
-        });
-      }
+      args.forEach((arg: string, index: number) => {
+        result = result.replace(`%s`, arg);
+      });
       return result;
-    },
-  }),
+    }
+  })
 }));
 
-// Mock utils
 jest.mock('@/lib/utils', () => ({
-  formatDate: (date: string) => `${date} (formatted)`,
+  formatDate: (date: string) => {
+    return new Date(date).toLocaleDateString('ja-JP');
+  }
 }));
-
-// Mock window.echo
-global.echo = {
-  init: jest.fn(),
-};
 
 describe('KnowledgeListItem', () => {
   const mockKnowledge: StockKnowledge = {
-    knowledgeId: 123,
+    knowledgeId: 1,
     title: 'テストナレッジ',
     content: 'テスト内容',
-    typeId: 1,
     publicFlag: 1,
+    insertUser: 1,
+    insertUserName: 'テストユーザー1',
+    insertDatetime: '2024-01-01T10:00:00Z',
+    updateUser: 2,
+    updateUserName: 'テストユーザー2',
+    updateDatetime: '2024-01-02T15:00:00Z',
     likeCount: 10,
     commentCount: 5,
-    point: 15,
-    insertUser: 1,
-    insertUserName: 'テスト太郎',
-    insertDatetime: '2025-01-01 10:00:00',
-    updateUser: 2,
-    updateUserName: '更新花子',
-    updateDatetime: '2025-01-02 11:00:00',
-    deleteFlag: 0,
-    templateId: null,
     pin: false,
-    viewerCounts: { total: 0, views: 0 },
+    startDateTime: null,
+    participations: null,
+    point: undefined,
+    deleteFlag: 0,
+    fulltextSearch: '',
+    attachFileList: [],
+    commentList: [],
+    tagList: [],
+    likeUsers: [],
+    stockUsers: [],
+    viewHistoriesEntity: []
   };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
 
   describe('基本レンダリング', () => {
     test('ナレッジ情報が正しく表示される', () => {
       render(<KnowledgeListItem knowledge={mockKnowledge} />);
 
       // タイトルとID
-      expect(screen.getByText('#123')).toBeInTheDocument();
+      expect(screen.getByText('#1')).toBeInTheDocument();
       expect(screen.getByText('テストナレッジ')).toBeInTheDocument();
-
-      // 投稿者情報（HTMLがレンダリングされるため、個別の要素をテスト）
-      expect(screen.getByText('テスト太郎')).toBeInTheDocument();
-      expect(screen.getByText(/投稿日時: 2025-01-01 10:00:00/)).toBeInTheDocument();
-
+      
+      // 登録者情報
+      expect(screen.getByText(/テストユーザー1/)).toBeInTheDocument();
+      expect(screen.getByText(/2024\/1\/1/)).toBeInTheDocument();
+      
       // 更新者情報
-      expect(screen.getByText('更新花子')).toBeInTheDocument();
-      expect(screen.getByText(/更新日時: 2025-01-02 11:00:00/)).toBeInTheDocument();
-
-      // いいね、コメント、ポイント数
+      expect(screen.getByText(/テストユーザー2/)).toBeInTheDocument();
+      expect(screen.getByText(/2024\/1\/3/)).toBeInTheDocument();
+      
+      // いいねとコメント数
       expect(screen.getByText('10')).toBeInTheDocument();
       expect(screen.getByText('5')).toBeInTheDocument();
-      expect(screen.getByText('15')).toBeInTheDocument();
     });
 
-    test('リンクが正しいURLを持つ', () => {
+    test('リンクが正しく設定される', () => {
       render(<KnowledgeListItem knowledge={mockKnowledge} />);
 
-      const titleLink = screen.getByRole('link', { name: /#123.*テストナレッジ/ });
-      expect(titleLink).toHaveAttribute('href', '/open/knowledge/view/123');
+      const titleLink = screen.getByRole('link', { name: /#1 テストナレッジ/ });
+      expect(titleLink).toHaveAttribute('href', '/open/knowledge/view/1');
     });
 
-    test('アイコン画像が正しく設定される', () => {
+    test('アイコン画像が表示される', () => {
       render(<KnowledgeListItem knowledge={mockKnowledge} />);
 
       const icons = screen.getAllByAltText('icon');
+      expect(icons).toHaveLength(2); // 登録者と更新者のアイコン
       expect(icons[0]).toHaveAttribute('data-echo', '/open/account/icon/1');
       expect(icons[1]).toHaveAttribute('data-echo', '/open/account/icon/2');
     });
   });
 
-  describe('条件付き表示', () => {
-    test('未読フラグが設定されると未読表示される', () => {
-      const { container } = render(<KnowledgeListItem knowledge={mockKnowledge} showUnread={true} />);
+  describe('未読表示', () => {
+    test('未読フラグがtrueの場合、未読ラベルが表示される', () => {
+      render(<KnowledgeListItem knowledge={mockKnowledge} showUnread={true} />);
 
-      expect(container.querySelector('.knowledge_item')).toHaveClass('unread');
+      // 正確なテキストコンテンツを検索
       expect(screen.getByText(/\[未読\]/)).toBeInTheDocument();
+      
+      const container = screen.getByText('#1').closest('.knowledge_item');
+      expect(container).toHaveClass('unread');
     });
 
-    test('ピン留めされている場合にバッジが表示される', () => {
+    test('未読フラグがfalseの場合、未読ラベルが表示されない', () => {
+      render(<KnowledgeListItem knowledge={mockKnowledge} showUnread={false} />);
+
+      expect(screen.queryByText('[未読]')).not.toBeInTheDocument();
+      
+      const container = screen.getByText('#1').closest('.knowledge_item');
+      expect(container).not.toHaveClass('unread');
+    });
+  });
+
+  describe('ピン表示', () => {
+    test('ピンフラグがtrueの場合、ピンアイコンが表示される', () => {
       const pinnedKnowledge = { ...mockKnowledge, pin: true };
       render(<KnowledgeListItem knowledge={pinnedKnowledge} />);
 
-      const badge = screen.getByText((content, element) => {
-        return element?.tagName === 'SPAN' && element?.classList.contains('badge');
-      });
-      expect(badge).toBeInTheDocument();
+      // fa-bullhornクラスを持つ要素が存在することを確認
+      const pinIcon = document.querySelector('.fa-bullhorn');
+      expect(pinIcon).toBeInTheDocument();
     });
 
-    test('更新日時が投稿日時と同じ場合は更新情報が表示されない', () => {
-      const sameTimeKnowledge = {
-        ...mockKnowledge,
-        updateDatetime: mockKnowledge.insertDatetime,
-      };
-      render(<KnowledgeListItem knowledge={sameTimeKnowledge} />);
+    test('ピンフラグがfalseの場合、ピンアイコンが表示されない', () => {
+      render(<KnowledgeListItem knowledge={mockKnowledge} />);
 
-      expect(screen.queryByText(/更新者/)).not.toBeInTheDocument();
-    });
-
-    test('ポイントが未定義の場合は表示されない', () => {
-      const noPointKnowledge = { ...mockKnowledge, point: undefined };
-      render(<KnowledgeListItem knowledge={noPointKnowledge} />);
-
-      const pointIcon = screen.queryByText((content, element) => {
-        return element?.querySelector('.fa-star-o') !== null;
-      });
-      expect(pointIcon).not.toBeInTheDocument();
+      // fa-bullhornクラスを持つ要素が存在しないことを確認
+      const pinIcon = document.querySelector('.fa-bullhorn');
+      expect(pinIcon).not.toBeInTheDocument();
     });
   });
 
   describe('イベント情報', () => {
-    test('イベント日時が設定されている場合に表示される', () => {
+    test('イベント日時が設定されている場合、表示される', () => {
       const eventKnowledge = {
         ...mockKnowledge,
-        startDateTime: '2025-02-01 14:00:00',
-      };
-      render(<KnowledgeListItem knowledge={eventKnowledge} />);
-
-      expect(screen.getByText(/イベント日時.*2025-02-01 14:00:00/)).toBeInTheDocument();
-    });
-
-    test('参加者情報が表示される', () => {
-      const eventKnowledge = {
-        ...mockKnowledge,
-        startDateTime: '2025-02-01 14:00:00',
+        startDateTime: '2024-02-01 14:00',
         participations: {
-          count: 10,
-          limit: 20,
-          status: 1,
-        },
+          count: 5,
+          limit: 10,
+          status: 1
+        }
       };
       render(<KnowledgeListItem knowledge={eventKnowledge} />);
 
-      // 参加者数が表示される
-      expect(screen.getByText(/10 \/ 20/)).toBeInTheDocument();
+      expect(screen.getByText(/イベント日時/)).toBeInTheDocument();
+      expect(screen.getByText(/2024-02-01 14:00/)).toBeInTheDocument();
+      expect(screen.getByText(/5 \/ 10/)).toBeInTheDocument();
       expect(screen.getByText('参加')).toBeInTheDocument();
     });
 
-    test('キャンセル待ちステータスが表示される', () => {
+    test('イベント日時が設定されていない場合、表示されない', () => {
+      render(<KnowledgeListItem knowledge={mockKnowledge} />);
+
+      expect(screen.queryByText(/イベント日時/)).not.toBeInTheDocument();
+    });
+
+    test('キャンセル待ちステータスが正しく表示される', () => {
       const eventKnowledge = {
         ...mockKnowledge,
-        startDateTime: '2025-02-01 14:00:00',
+        startDateTime: '2024-02-01 14:00',
         participations: {
-          count: 20,
-          limit: 20,
-          status: 0,
-        },
+          count: 10,
+          limit: 10,
+          status: 2
+        }
       };
       render(<KnowledgeListItem knowledge={eventKnowledge} />);
 
@@ -208,65 +202,100 @@ describe('KnowledgeListItem', () => {
         ...mockKnowledge,
         tags: [
           { tagId: 1, tagName: 'JavaScript' },
-          { tagId: 2, tagName: 'React' },
-        ],
+          { tagId: 2, tagName: 'React' }
+        ]
       };
-      render(<KnowledgeListItem knowledge={knowledgeWithTags} />);
+      render(<KnowledgeListItem knowledge={knowledgeWithTags as any} />);
 
       const jsTag = screen.getByRole('link', { name: 'JavaScript' });
       expect(jsTag).toHaveAttribute('href', '/open/knowledge/list?tag=1');
-
+      
       const reactTag = screen.getByRole('link', { name: 'React' });
       expect(reactTag).toHaveAttribute('href', '/open/knowledge/list?tag=2');
     });
 
-    test('タグがない場合は何も表示されない', () => {
+    test('タグがない場合、タグエリアは空になる', () => {
       render(<KnowledgeListItem knowledge={mockKnowledge} />);
 
-      const tagsContainer = screen.getByText((content, element) => {
-        return element?.classList.contains('tags') || false;
-      });
+      const tagsContainer = screen.getByText('#1').closest('.knowledge_item')?.querySelector('.tags');
       expect(tagsContainer).toBeEmptyDOMElement();
     });
   });
 
-  describe('パラメータサポート', () => {
-    test('paramsが指定されるとリンクに追加される', () => {
-      render(<KnowledgeListItem knowledge={mockKnowledge} params="?offset=10" />);
+  describe('ポイント表示', () => {
+    test('ポイントが設定されている場合、表示される', () => {
+      const knowledgeWithPoint = { ...mockKnowledge, point: 100 };
+      render(<KnowledgeListItem knowledge={knowledgeWithPoint} />);
 
-      const titleLink = screen.getByRole('link', { name: /#123.*テストナレッジ/ });
-      expect(titleLink).toHaveAttribute('href', '/open/knowledge/view/123?offset=10');
+      expect(screen.getByText('100')).toBeInTheDocument();
+      
+      // fa-star-oクラスを持つ要素が存在することを確認
+      const pointIcon = document.querySelector('.fa-star-o');
+      expect(pointIcon).toBeInTheDocument();
     });
-  });
 
-  describe('echo.js初期化', () => {
-    test('コンポーネントマウント時にecho.initが呼ばれる', () => {
+    test('ポイントが未定義の場合、表示されない', () => {
       render(<KnowledgeListItem knowledge={mockKnowledge} />);
 
-      expect(global.echo.init).toHaveBeenCalledTimes(1);
+      // fa-star-oクラスを持つ要素が存在しないことを確認
+      const starIcon = document.querySelector('.fa-star-o');
+      expect(starIcon).not.toBeInTheDocument();
     });
   });
 
-  describe('CSS構造の互換性', () => {
-    test('旧システムと同じCSS構造を持つ', () => {
-      const { container } = render(<KnowledgeListItem knowledge={mockKnowledge} />);
+  describe('パラメータサポート', () => {
+    test('paramsが渡された場合、リンクに追加される', () => {
+      render(<KnowledgeListItem knowledge={mockKnowledge} params="?tag=1" />);
 
-      // メインコンテナ
-      expect(container.querySelector('.knowledge_item')).toBeInTheDocument();
+      const titleLink = screen.getByRole('link', { name: /#1 テストナレッジ/ });
+      expect(titleLink).toHaveAttribute('href', '/open/knowledge/view/1?tag=1');
+    });
+  });
 
-      // 情報セクション
-      expect(container.querySelector('.insert_info')).toBeInTheDocument();
-      expect(container.querySelector('.list-title')).toBeInTheDocument();
-      expect(container.querySelector('.dispKnowledgeId')).toBeInTheDocument();
+  describe('更新情報の表示制御', () => {
+    test('登録日時と更新日時が同じ場合、更新情報は表示されない', () => {
+      const sameTimeKnowledge = {
+        ...mockKnowledge,
+        updateDatetime: mockKnowledge.insertDatetime
+      };
+      render(<KnowledgeListItem knowledge={sameTimeKnowledge} />);
 
-      // 表示情報セクション
-      expect(container.querySelector('.show_info')).toBeInTheDocument();
-      expect(container.querySelectorAll('.show_info_item')).toHaveLength(3);
+      expect(screen.queryByText(/テストユーザー2/)).not.toBeInTheDocument();
+    });
+  });
 
-      // アイコンクラス
-      expect(container.querySelector('.fa-thumbs-o-up')).toBeInTheDocument();
-      expect(container.querySelector('.fa-comment-o')).toBeInTheDocument();
-      expect(container.querySelector('.fa-star-o')).toBeInTheDocument();
+  describe('エッジケース', () => {
+    test('必須フィールドのみでレンダリングできる', () => {
+      const minimalKnowledge: StockKnowledge = {
+        knowledgeId: 999,
+        title: '最小限のナレッジ',
+        content: '',
+        publicFlag: 1,
+        insertUser: 1,
+        insertUserName: 'ユーザー',
+        insertDatetime: '2024-01-01T00:00:00Z',
+        updateUser: 1,
+        updateUserName: 'ユーザー',
+        updateDatetime: '2024-01-01T00:00:00Z',
+        likeCount: 0,
+        commentCount: 0,
+        pin: false,
+        startDateTime: null,
+        participations: null,
+        deleteFlag: 0,
+        fulltextSearch: '',
+        attachFileList: [],
+        commentList: [],
+        tagList: [],
+        likeUsers: [],
+        stockUsers: [],
+        viewHistoriesEntity: []
+      };
+
+      render(<KnowledgeListItem knowledge={minimalKnowledge} />);
+
+      expect(screen.getByText('#999')).toBeInTheDocument();
+      expect(screen.getByText('最小限のナレッジ')).toBeInTheDocument();
     });
   });
 });

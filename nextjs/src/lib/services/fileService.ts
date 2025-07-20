@@ -10,7 +10,14 @@ import { KnowledgeRepository } from '@/lib/repositories/knowledgeRepository';
 import { KnowledgeService } from '@/lib/services/knowledgeService';
 import { AuthenticatedUser } from '@/lib/auth/middleware';
 
-const prisma = new PrismaClient();
+let prisma: PrismaClient;
+
+// テスト時はモックを使用
+if (process.env.NODE_ENV === 'test') {
+  prisma = global.prisma || new PrismaClient();
+} else {
+  prisma = new PrismaClient();
+}
 
 export interface FileData {
   fileNo: number;
@@ -126,7 +133,7 @@ export class FileService {
       return true; // 保護（認証済みユーザーのみ）
     } else if (knowledge.publicFlag === 3 && currentUser) {
       // 非公開（作成者のみ）
-      return knowledge.insertUser === currentUser.userId;
+      return Number(knowledge.insertUser) === currentUser.userId;
     }
 
     return false;
