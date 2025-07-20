@@ -4,12 +4,14 @@
  * @description 旧システムとの互換性テストを含む
  */
 import { render, screen, waitFor } from '@testing-library/react';
-import KnowledgeStocksPage from '../page';
+import { KnowledgeStocksPage } from '../page';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
 // モック
-jest.mock('@/hooks/useAuth');
+jest.mock('@/hooks/useAuth', () => ({
+  useAuth: jest.fn(),
+}));
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
@@ -21,23 +23,19 @@ jest.mock('@/components/layout/MainLayout', () => {
 });
 
 jest.mock('@/components/knowledge/KnowledgeListItem', () => {
-  return {
-    KnowledgeListItem: function MockKnowledgeListItem({ knowledge }: any) {
-      return (
-        <div>
-          <h3>{knowledge.title}</h3>
-          <p>{knowledge.insertUserName}</p>
-        </div>
-      );
-    }
+  return function MockKnowledgeListItem({ knowledge }: any) {
+    return (
+      <div>
+        <h3>{knowledge.title}</h3>
+        <p>{knowledge.insertUserName}</p>
+      </div>
+    );
   };
 });
 
 jest.mock('@/components/knowledge/KnowledgeSubList', () => {
-  return {
-    KnowledgeSubList: function MockKnowledgeSubList() {
-      return <div>SubList</div>;
-    }
+  return function MockKnowledgeSubList() {
+    return <div>SubList</div>;
   };
 });
 
@@ -45,8 +43,8 @@ jest.mock('@/components/knowledge/KnowledgeSubList', () => {
 global.fetch = jest.fn();
 
 describe('KnowledgeStocksPage', () => {
-  const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-  const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
+  const mockUseAuth = useAuth as jest.Mock;
+  const mockUseRouter = useRouter as jest.Mock;
   const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
   const mockRouter = { push: jest.fn() };
 

@@ -3,29 +3,19 @@
  * 
  * @description /api/auth/loginのテストケース
  */
-import { describe, test, expect, beforeEach, jest } from '@jest/globals';
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
+import { findUserByLoginId, getUserPassword, updateLastLoginTime } from '@/repositories/userRepository';
+import { verifyPassword } from '@/lib/auth/password';
 
 // モック
 jest.mock('@/repositories/userRepository');
 jest.mock('@/lib/auth/password');
 
-const mockFindUserByLoginId = jest.fn();
-const mockGetUserPassword = jest.fn();
-const mockUpdateLastLoginTime = jest.fn();
-const mockVerifyPassword = jest.fn();
-
-// モックのインポート
-jest.doMock('@/repositories/userRepository', () => ({
-  findUserByLoginId: mockFindUserByLoginId,
-  getUserPassword: mockGetUserPassword,
-  updateLastLoginTime: mockUpdateLastLoginTime,
-}));
-
-jest.doMock('@/lib/auth/password', () => ({
-  verifyPassword: mockVerifyPassword,
-}));
+const mockFindUserByLoginId = findUserByLoginId as jest.Mock;
+const mockGetUserPassword = getUserPassword as jest.Mock;
+const mockUpdateLastLoginTime = updateLastLoginTime as jest.Mock;
+const mockVerifyPassword = verifyPassword as jest.Mock;
 
 describe('/api/auth/login POST', () => {
   beforeEach(() => {
@@ -214,6 +204,82 @@ describe('/api/auth/login POST', () => {
         loginId: 'testuser',
         password: 'password123',
       }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('ログイン処理中にエラーが発生しました');
+  });
+
+  test('パスワード情報が取得できない場合', async () => {
+    const mockUser = {
+      userId: 1,
+      userName: 'テストユーザー',
+      userKey: 'testuser',
+      localeKey: 'ja',
+      roleFlag: 0,
+    };
+
+    mockFindUserByLoginId.mockResolvedValue(mockUser);
+    mockGetUserPassword.mockResolvedValue(null);
+
+    const request = new NextRequest('http://localhost:3000/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        loginId: 'testuser',
+        password: 'password123',
+      }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('パスワード情報が見つかりません');
+  });
+
+  test('localeKeyがnullの場合はデフォルト値ja', async () => {
+    const mockUser = {
+      userId: 1,
+      userName: 'テストユーザー',
+      userKey: 'testuser',
+      localeKey: null,
+      roleFlag: 0,
+    };
+
+    const mockPasswordInfo = {
+      password: 'hashed_password',
+      salt: 'test_salt',
+    };
+
+    mockFindUserByLoginId.mockResolvedValue(mockUser);
+    mockGetUserPassword.mockResolvedValue(mockPasswordInfo);
+    mockVerifyPassword.mockResolvedValue(true);
+    mockUpdateLastLoginTime.mockResolvedValue(undefined);
+
+    const request = new NextRequest('http://localhost:3000/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        loginId: 'testuser',
+        password: 'password123',
+      }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.user.locale).toBe('ja');
+  });
+
+  test('不正なJSONボディの場合', async () => {
+    const request = new NextRequest('http://localhost:3000/api/auth/login', {
+      method: 'POST',
+      body: 'invalid json',
     });
 
     const response = await POST(request);

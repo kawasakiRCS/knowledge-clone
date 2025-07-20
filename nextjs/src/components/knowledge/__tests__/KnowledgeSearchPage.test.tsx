@@ -78,11 +78,13 @@ describe('KnowledgeSearchPage', () => {
       });
 
       // 検索フォーム要素の確認
-      expect(screen.getByLabelText('knowledge.search.keyword')).toBeInTheDocument();
-      expect(screen.getByText('knowledge.add.label.type')).toBeInTheDocument();
-      expect(screen.getByText('knowledge.search.tags')).toBeInTheDocument();
-      const creatorTexts = screen.getAllByText('knowledge.search.creator');
-      expect(creatorTexts.length).toBeGreaterThan(0);
+      await waitFor(() => {
+        expect(screen.getByLabelText('knowledge.search.keyword')).toBeInTheDocument();
+        expect(screen.getByText('knowledge.add.label.type')).toBeInTheDocument();
+        expect(screen.getByText('knowledge.search.tags')).toBeInTheDocument();
+        const creatorTexts = screen.getAllByText('knowledge.search.creator');
+        expect(creatorTexts.length).toBeGreaterThan(0);
+      });
     });
 
     test('ログイン時はグループ検索フィールドが表示される', async () => {
