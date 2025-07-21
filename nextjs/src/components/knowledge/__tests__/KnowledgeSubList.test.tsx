@@ -13,7 +13,7 @@ jest.mock('@/hooks/useAuth');
 jest.mock('@/hooks/useLocale');
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-const mockUseLocale = useLocale as jest.MockedFunction<typeof useLocale>;
+const mockUseLocale = useLocale as jest.Mock;
 
 // モックデータ
 const mockEvents = [

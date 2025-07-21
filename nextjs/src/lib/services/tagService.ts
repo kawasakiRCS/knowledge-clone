@@ -8,7 +8,7 @@
 import { PrismaClient } from '@prisma/client';
 import { AuthenticatedUser } from '@/lib/auth/middleware';
 
-const prisma = new PrismaClient();
+let prisma: PrismaClient;
 
 export interface TagData {
   tagId: number;
@@ -18,6 +18,9 @@ export interface TagData {
 }
 
 export class TagService {
+  constructor(prismaClient?: PrismaClient) {
+    prisma = prismaClient || new PrismaClient();
+  }
 
   /**
    * タグ一覧をナレッジ件数付きで取得

@@ -36,8 +36,8 @@ describe('TagService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    tagService = new TagService();
     mockPrisma = new PrismaClient();
+    tagService = new TagService(mockPrisma);
   });
 
   describe('getTagsWithCount', () => {
