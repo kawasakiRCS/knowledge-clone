@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Search, Plus, Star, Menu, Bell, User, Settings, LogOut } from 'lucide-react';
 import { 
@@ -25,6 +26,7 @@ import { Input } from '@/components/ui/input';
 
 export function Navbar() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -37,7 +39,7 @@ export function Navbar() {
     e.preventDefault();
     if (searchKeyword.trim()) {
       // 検索ページに遷移
-      window.location.href = `/knowledge/list?keyword=${encodeURIComponent(searchKeyword)}`;
+      router.push(`/knowledge/list?keyword=${encodeURIComponent(searchKeyword)}`);
     }
   };
 

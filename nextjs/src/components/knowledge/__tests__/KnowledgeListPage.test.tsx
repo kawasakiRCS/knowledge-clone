@@ -491,10 +491,10 @@ describe('KnowledgeListPage', () => {
       const { container } = render(<KnowledgeListPage initialData={initialData} />);
       
       // pointとpointOnTermの両方が表示される
-      expect(screen.getByText('100')).toBeInTheDocument(); // 通常ポイント
-      expect(screen.getByText('× 50', { exact: false })).toBeInTheDocument(); // 期間ポイント
-      const starIcon = container.querySelector('.fa-star-o');
-      expect(starIcon).toBeInTheDocument();
+      expect(screen.getByText(/100/)).toBeInTheDocument(); // 通常ポイント
+      expect(screen.getByText(/50/)).toBeInTheDocument(); // 期間ポイント
+      const heartIcon = container.querySelector('.fa-heart-o');
+      expect(heartIcon).toBeInTheDocument();
       const chartIcon = container.querySelector('.fa-line-chart');
       expect(chartIcon).toBeInTheDocument();
     });

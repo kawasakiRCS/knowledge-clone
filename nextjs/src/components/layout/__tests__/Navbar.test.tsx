@@ -6,11 +6,15 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '../Navbar';
 
 jest.mock('next-auth/react', () => ({
   useSession: jest.fn(),
   signOut: jest.fn()
+}));
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn()
 }));
 jest.mock('next/image', () => ({
   __esModule: true,
@@ -19,40 +23,17 @@ jest.mock('next/image', () => ({
 
 const mockUseSession = useSession as jest.Mock;
 const mockSignOut = signOut as jest.Mock;
-
-// window.location.hrefをモック
-let mockHref = 'http://localhost/';
-const mockLocationAssign = jest.fn();
-
-beforeAll(() => {
-  delete (window as any).location;
-  window.location = {
-    get href() {
-      return mockHref;
-    },
-    set href(url: string) {
-      mockHref = url;
-      mockLocationAssign(url);
-    },
-    assign: mockLocationAssign,
-    replace: jest.fn(),
-    reload: jest.fn(),
-    origin: 'http://localhost',
-    protocol: 'http:',
-    host: 'localhost',
-    hostname: 'localhost',
-    port: '',
-    pathname: '/',
-    search: '',
-    hash: ''
-  } as any;
-});
+const mockUseRouter = useRouter as jest.Mock;
+const mockPush = jest.fn();
 
 describe('Navbar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockLocationAssign.mockClear();
-    mockHref = 'http://localhost/';
+    mockUseRouter.mockReturnValue({
+      push: mockPush,
+      replace: jest.fn(),
+      pathname: '/',
+    });
   });
 
   describe('未認証ユーザー', () => {
@@ -195,7 +176,7 @@ describe('Navbar', () => {
       const searchButton = screen.getAllByRole('button')[1]; // 検索ボタン
       await user.click(searchButton);
       
-      expect(mockLocationAssign).toHaveBeenCalledWith('/knowledge/list?keyword=%E3%83%86%E3%82%B9%E3%83%88%E3%82%AD%E3%83%BC%E3%83%AF%E3%83%BC%E3%83%89');
+      expect(mockPush).toHaveBeenCalledWith('/knowledge/list?keyword=%E3%83%86%E3%82%B9%E3%83%88%E3%82%AD%E3%83%BC%E3%83%AF%E3%83%BC%E3%83%89');
     });
 
     test('空の検索キーワードでは検索されない', async () => {
@@ -205,7 +186,7 @@ describe('Navbar', () => {
       const searchButton = screen.getAllByRole('button')[1]; // 検索ボタン
       await user.click(searchButton);
       
-      expect(mockLocationAssign).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalled();
     });
 
     test('Enterキーで検索できる', async () => {
@@ -215,7 +196,7 @@ describe('Navbar', () => {
       const searchInput = screen.getByPlaceholderText('ナレッジを検索...');
       await user.type(searchInput, 'テストキーワード{Enter}');
       
-      expect(mockLocationAssign).toHaveBeenCalledWith('/knowledge/list?keyword=%E3%83%86%E3%82%B9%E3%83%88%E3%82%AD%E3%83%BC%E3%83%AF%E3%83%BC%E3%83%89');
+      expect(mockPush).toHaveBeenCalledWith('/knowledge/list?keyword=%E3%83%86%E3%82%B9%E3%83%88%E3%82%AD%E3%83%BC%E3%83%AF%E3%83%BC%E3%83%89');
     });
   });
 
@@ -258,7 +239,7 @@ describe('Navbar', () => {
       const mobileSearchButton = searchButtons[searchButtons.length - 1]; // 最後のボタンがモバイル検索ボタン
       await user.click(mobileSearchButton);
       
-      expect(mockLocationAssign).toHaveBeenCalledWith('/knowledge/list?keyword=%E3%83%A2%E3%83%90%E3%82%A4%E3%83%AB%E6%A4%9C%E7%B4%A2');
+      expect(mockPush).toHaveBeenCalledWith('/knowledge/list?keyword=%E3%83%A2%E3%83%90%E3%82%A4%E3%83%AB%E6%A4%9C%E7%B4%A2');
     });
   });
 
