@@ -103,5 +103,6 @@ export function useLocale() {
     updateLocale,
     availableLocales,
     label,
+    t: label, // エイリアス
   };
 }

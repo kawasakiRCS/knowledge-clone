@@ -47,9 +47,12 @@ export class FileService {
   private knowledgeService: KnowledgeService;
   private knowledgeRepository: KnowledgeRepository;
 
-  constructor() {
-    this.knowledgeService = new KnowledgeService();
-    this.knowledgeRepository = new KnowledgeRepository();
+  constructor(
+    knowledgeRepository?: KnowledgeRepository,
+    knowledgeService?: KnowledgeService
+  ) {
+    this.knowledgeRepository = knowledgeRepository || new KnowledgeRepository();
+    this.knowledgeService = knowledgeService || new KnowledgeService();
   }
 
   /**

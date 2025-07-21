@@ -44,6 +44,41 @@ describe('KnowledgeSearchPage', () => {
     jest.restoreAllMocks();
   });
 
+  describe('ローディング状態', () => {
+    test('データ取得中はローディング表示される', async () => {
+      let resolveTemplates: any;
+      const templatesPromise = new Promise((resolve) => {
+        resolveTemplates = resolve;
+      });
+
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/templates')) {
+          return templatesPromise;
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      });
+
+      const { container } = render(<KnowledgeSearchPage />);
+
+      // ローディング表示を確認
+      expect(container.textContent).toContain('Loading...');
+
+      // データ取得を完了させる
+      resolveTemplates({
+        ok: true,
+        json: async () => [],
+      });
+
+      // ローディングが消えることを確認
+      await waitFor(() => {
+        expect(container.textContent).not.toContain('Loading...');
+      });
+    });
+  });
+
   describe('基本レンダリング', () => {
     test('検索ページが正しく表示される', async () => {
       const mockTags = ['Java', 'React', 'Next.js'];
@@ -409,6 +444,205 @@ describe('KnowledgeSearchPage', () => {
       await waitFor(() => {
         expect(screen.getByText('Failed to load initial data')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('モーダル機能の詳細テスト', () => {
+    test('タグ選択モーダルでタグを選択できる', async () => {
+      const mockTags = ['Java', 'JavaScript', 'React', 'TypeScript'];
+
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/tags')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockTags,
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      // タグモーダルを開く
+      const tagSearchLink = await screen.findByText('label.search.tags');
+      fireEvent.click(tagSearchLink);
+
+      // モーダル内のタグをクリック
+      await waitFor(() => {
+        const javaTag = screen.getByText('Java');
+        fireEvent.click(javaTag);
+      });
+
+      // タグ入力フィールドに反映されることを確認
+      const tagInput = screen.getByPlaceholderText('knowledge.add.label.tags');
+      expect(tagInput).toHaveValue('Java');
+
+      // 複数タグを選択
+      const reactTag = screen.getByText('React');
+      fireEvent.click(reactTag);
+      
+      expect(tagInput).toHaveValue('Java,React');
+    });
+
+    test('タグモーダルを閉じることができる', async () => {
+      const mockTags = ['Java', 'JavaScript'];
+
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/tags')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockTags,
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      // タグモーダルを開く
+      const tagSearchLink = await screen.findByText('label.search.tags');
+      fireEvent.click(tagSearchLink);
+
+      // Closeボタンをクリック
+      await waitFor(() => {
+        const closeButton = screen.getByText('Close');
+        fireEvent.click(closeButton);
+      });
+
+      // モーダルが閉じることを確認
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
+    });
+
+    test('ユーザー選択モーダルでページネーションが動作する', async () => {
+      const mockUsers = [
+        { userId: 1, userName: 'user1' },
+        { userId: 2, userName: 'user2' },
+      ];
+
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/users')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockUsers,
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      // ユーザーモーダルを開く
+      const creatorSearchLinks = await screen.findAllByText('knowledge.search.creator');
+      fireEvent.click(creatorSearchLinks[1]);
+
+      // ユーザー検索を実行
+      await waitFor(() => {
+        const searchButton = screen.getByRole('button', { name: /label.filter/i });
+        fireEvent.click(searchButton);
+      });
+
+      // ページ番号が表示されることを確認
+      await waitFor(() => {
+        expect(screen.getByText(/page-1/)).toBeInTheDocument();
+      });
+
+      // 次ページボタンをクリック
+      const nextButton = screen.getByRole('button', { name: />/i });
+      fireEvent.click(nextButton);
+
+      // API呼び出しを確認
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('offset=1')
+      );
+    });
+
+    test('ユーザー選択が正しく動作する', async () => {
+      const mockUsers = [
+        { userId: 1, userName: 'testuser1' },
+        { userId: 2, userName: 'testuser2' },
+      ];
+
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/users')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockUsers,
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      // ユーザーモーダルを開く
+      const creatorSearchLinks = await screen.findAllByText('knowledge.search.creator');
+      fireEvent.click(creatorSearchLinks[1]);
+
+      // ユーザー検索
+      const searchButton = screen.getByRole('button', { name: /label.filter/i });
+      fireEvent.click(searchButton);
+
+      // ユーザーを選択
+      await waitFor(() => {
+        const user1 = screen.getByText('testuser1');
+        fireEvent.click(user1);
+      });
+
+      // 作成者入力フィールドに反映されることを確認
+      const creatorInput = screen.getByPlaceholderText('knowledge.search.creator');
+      expect(creatorInput).toHaveValue('testuser1');
+    });
+
+    test('グループモーダルでグループを選択できる', async () => {
+      mockUseAuth.mockReturnValue({ 
+        isAuthenticated: true, 
+        user: { userId: 1, userName: 'testuser' } 
+      });
+
+      const mockGroups = ['Development', 'QA', 'Design'];
+
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/groups')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockGroups,
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      });
+
+      render(<KnowledgeSearchPage />);
+
+      // グループモーダルを開く
+      const groupSearchLink = await screen.findByText('label.search.groups');
+      fireEvent.click(groupSearchLink);
+
+      // グループを選択
+      await waitFor(() => {
+        const devGroup = screen.getByText('Development');
+        fireEvent.click(devGroup);
+      });
+
+      // グループ入力フィールドに反映されることを確認
+      const groupInput = screen.getByPlaceholderText('knowledge.add.label.groups');
+      expect(groupInput).toHaveValue('Development');
     });
   });
 

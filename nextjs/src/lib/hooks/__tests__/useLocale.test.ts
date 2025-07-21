@@ -86,6 +86,11 @@ Object.defineProperty(window, 'navigator', {
 describe('useLocale', () => {
   beforeEach(() => {
     localStorageMock.clear();
+    // navigatorのlanguageをリセット
+    Object.defineProperty(window.navigator, 'language', {
+      value: 'ja-JP',
+      writable: true
+    });
   });
 
   describe('基本動作', () => {
@@ -105,6 +110,68 @@ describe('useLocale', () => {
       
       expect(result.current.locale).toBe('en');
       expect(result.current.displayName).toBe('English');
+    });
+
+    test('LocalStorageに保存されたロケールが読み込まれる', () => {
+      localStorageMock.setItem('knowledge_locale', 'en');
+      
+      const { result } = renderHook(() => useLocale());
+      
+      expect(result.current.locale).toBe('en');
+      expect(result.current.displayName).toBe('English');
+    });
+
+    test('ブラウザの言語設定が使用される', () => {
+      Object.defineProperty(window.navigator, 'language', {
+        value: 'en-US',
+        writable: true
+      });
+      
+      const { result } = renderHook(() => useLocale());
+      
+      expect(result.current.locale).toBe('en');
+    });
+
+    test('サポートされていない言語の場合は日本語にフォールバック', () => {
+      Object.defineProperty(window.navigator, 'language', {
+        value: 'fr-FR',
+        writable: true
+      });
+      
+      const { result } = renderHook(() => useLocale());
+      
+      expect(result.current.locale).toBe('ja');
+    });
+
+    test('updateLocaleがlocalStorageに保存する', () => {
+      const { result } = renderHook(() => useLocale());
+      
+      act(() => {
+        result.current.updateLocale('en');
+      });
+      
+      expect(localStorageMock.getItem('knowledge_locale')).toBe('en');
+    });
+
+    test('flagIconが正しく設定される', () => {
+      const { result } = renderHook(() => useLocale());
+      
+      expect(result.current.flagIcon).toBe('jp');
+      
+      act(() => {
+        result.current.updateLocale('en');
+      });
+      
+      expect(result.current.flagIcon).toBe('us');
+    });
+
+    test('availableLocalesが正しく返される', () => {
+      const { result } = renderHook(() => useLocale());
+      
+      expect(result.current.availableLocales).toEqual([
+        { code: 'ja', displayName: '日本語', flagIcon: 'jp' },
+        { code: 'en', displayName: 'English', flagIcon: 'us' },
+      ]);
     });
   });
 
@@ -170,6 +237,108 @@ describe('useLocale', () => {
       const { result } = renderHook(() => useLocale());
       
       expect(result.current.label('')).toBe('');
+    });
+
+    test('翻訳ファイルの読み込みエラー時のフォールバック', async () => {
+      // 翻訳ファイルの読み込みをエラーにする
+      jest.doMock('../../locales/fr.json', () => {
+        throw new Error('File not found');
+      }, { virtual: true });
+
+      const { result } = renderHook(() => useLocale());
+      
+      act(() => {
+        result.current.updateLocale('fr');
+      });
+      
+      // ロケールは日本語にフォールバック
+      expect(result.current.locale).toBe('ja');
+    });
+
+    test('label関数で非文字列値が返された場合はキーを返す', async () => {
+      // 数値を含む翻訳データのモック
+      jest.doMock('../../locales/test.json', () => ({
+        default: {
+          number: 123,
+          object: { nested: 'value' }
+        }
+      }), { virtual: true });
+
+      const { result } = renderHook(() => useLocale());
+      
+      // 翻訳データを数値を含むものに変更
+      await act(async () => {
+        result.current.updateLocale('test');
+      });
+      
+      // 翻訳データの読み込みを待機
+      await waitFor(() => {
+        // 数値の場合はキーを返す
+        expect(result.current.label('number')).toBe('number');
+      });
+    });
+
+    test('ネストされたオブジェクトの中間パスへのアクセス', async () => {
+      const { result } = renderHook(() => useLocale());
+      
+      await waitFor(() => {
+        // 中間のオブジェクトパスはキーを返す
+        expect(result.current.label('knowledge.list')).toBe('knowledge.list');
+      });
+    });
+  });
+
+  describe('翻訳ファイルの動的インポート', () => {
+    test('console.warnが呼ばれる（存在しないロケール）', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      // 存在しないロケールファイルをモック
+      jest.doMock('../../locales/xx.json', () => {
+        throw new Error('File not found');
+      }, { virtual: true });
+
+      const { result } = renderHook(() => useLocale());
+      
+      await act(async () => {
+        result.current.updateLocale('xx');
+      });
+      
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith('Failed to load translations for locale: ja');
+      });
+      
+      consoleSpy.mockRestore();
+    });
+
+    test('日本語フォールバックも失敗した場合', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      
+      // 両方のファイルをエラーにする
+      jest.doMock('../../locales/zz.json', () => {
+        throw new Error('File not found');
+      }, { virtual: true });
+      
+      // 日本語ファイルも一時的にエラーにする
+      jest.resetModules();
+      jest.doMock('../../locales/ja.json', () => {
+        throw new Error('File not found');
+      }, { virtual: true });
+
+      const { useLocale: useLocaleNew } = require('../useLocale');
+      const { result } = renderHook(() => useLocaleNew());
+      
+      await act(async () => {
+        result.current.updateLocale('zz');
+      });
+      
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith('Failed to load fallback translations');
+      });
+      
+      // label関数は空オブジェクトからキーを返す
+      expect(result.current.label('any.key')).toBe('any.key');
+      
+      consoleSpy.mockRestore();
     });
   });
 });

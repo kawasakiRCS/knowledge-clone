@@ -46,10 +46,17 @@ const mockPrismaClient = new (PrismaClient as any)();
 describe('FileService', () => {
   let fileService: FileService;
   let mockPrisma: any;
+  let mockKnowledgeRepository: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    fileService = new FileService();
+    
+    // KnowledgeRepositoryのモックインスタンスを作成
+    const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
+    mockKnowledgeRepository = new KnowledgeRepository();
+    
+    // FileServiceにモックを注入
+    fileService = new FileService(mockKnowledgeRepository);
     mockPrisma = mockPrismaClient;
   });
 
@@ -85,8 +92,7 @@ describe('FileService', () => {
         mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFile);
         
         // KnowledgeRepositoryのモック
-        const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
-        KnowledgeRepository.prototype.findById = jest.fn().mockResolvedValue(mockKnowledge);
+        mockKnowledgeRepository.findById = jest.fn().mockResolvedValue(mockKnowledge);
 
         const result = await fileService.getFile(1, null);
 
@@ -117,8 +123,7 @@ describe('FileService', () => {
 
         mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFile);
         
-        const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
-        KnowledgeRepository.prototype.findById = jest.fn().mockResolvedValue(mockKnowledge);
+        mockKnowledgeRepository.findById = jest.fn().mockResolvedValue(mockKnowledge);
 
         const result = await fileService.getFile(2, mockUser);
 
@@ -146,8 +151,7 @@ describe('FileService', () => {
 
         mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFile);
         
-        const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
-        KnowledgeRepository.prototype.findById = jest.fn().mockResolvedValue(mockKnowledge);
+        mockKnowledgeRepository.findById = jest.fn().mockResolvedValue(mockKnowledge);
 
         const result = await fileService.getFile(3, mockUser);
 
@@ -223,8 +227,7 @@ describe('FileService', () => {
 
         mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFile);
         
-        const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
-        KnowledgeRepository.prototype.findById = jest.fn().mockResolvedValue(mockKnowledge);
+        mockKnowledgeRepository.findById = jest.fn().mockResolvedValue(mockKnowledge);
 
         const result = await fileService.getFile(6, null);
 
@@ -250,8 +253,7 @@ describe('FileService', () => {
 
         mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFile);
         
-        const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
-        KnowledgeRepository.prototype.findById = jest.fn().mockResolvedValue(mockKnowledge);
+        mockKnowledgeRepository.findById = jest.fn().mockResolvedValue(mockKnowledge);
 
         const result = await fileService.getFile(7, mockUser);
 
@@ -317,8 +319,7 @@ describe('FileService', () => {
 
         mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFile);
         
-        const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
-        KnowledgeRepository.prototype.findById = jest.fn().mockResolvedValue(mockKnowledge);
+        mockKnowledgeRepository.findById = jest.fn().mockResolvedValue(mockKnowledge);
 
         const result = await fileService.getSlideInfo('10', mockUser);
 
@@ -350,8 +351,7 @@ describe('FileService', () => {
 
         mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFile);
         
-        const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
-        KnowledgeRepository.prototype.findById = jest.fn().mockResolvedValue(mockKnowledge);
+        mockKnowledgeRepository.findById = jest.fn().mockResolvedValue(mockKnowledge);
 
         const result = await fileService.getSlideInfo('11', mockUser);
 
@@ -380,8 +380,7 @@ describe('FileService', () => {
 
         mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFile);
         
-        const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
-        KnowledgeRepository.prototype.findById = jest.fn().mockResolvedValue(mockKnowledge);
+        mockKnowledgeRepository.findById = jest.fn().mockResolvedValue(mockKnowledge);
 
         const result = await fileService.getSlideInfo('12', mockUser);
 
@@ -407,8 +406,7 @@ describe('FileService', () => {
 
         mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFile);
         
-        const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
-        KnowledgeRepository.prototype.findById = jest.fn().mockResolvedValue(mockKnowledge);
+        mockKnowledgeRepository.findById = jest.fn().mockResolvedValue(mockKnowledge);
 
         const result = await fileService.getSlideInfo('13', mockUser);
 
@@ -456,8 +454,7 @@ describe('FileService', () => {
 
         mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFile);
         
-        const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
-        KnowledgeRepository.prototype.findById = jest.fn().mockResolvedValue(mockKnowledge);
+        mockKnowledgeRepository.findById = jest.fn().mockResolvedValue(mockKnowledge);
 
         const result = await fileService.getSlideImage('20', 'slide_1.png', mockUser);
 
@@ -488,8 +485,7 @@ describe('FileService', () => {
 
         mockPrisma.knowledgeFile.findUnique.mockResolvedValue(mockFile);
         
-        const { KnowledgeRepository } = require('@/lib/repositories/knowledgeRepository');
-        KnowledgeRepository.prototype.findById = jest.fn().mockResolvedValue(mockKnowledge);
+        mockKnowledgeRepository.findById = jest.fn().mockResolvedValue(mockKnowledge);
 
         const result = await fileService.getSlideImage('21', 'slide_1.png', mockUser);
 
