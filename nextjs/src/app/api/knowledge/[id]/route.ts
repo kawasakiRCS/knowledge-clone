@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { KnowledgeService } from '@/lib/services/knowledgeService';
+import { getAuthenticatedUser } from '@/lib/auth/middleware';
 
 export async function GET(
   request: NextRequest,
@@ -21,8 +22,11 @@ export async function GET(
 
     const knowledgeService = new KnowledgeService();
     
+    // ユーザー認証情報取得（ログインしていない場合はundefined）
+    const user = await getAuthenticatedUser(request);
+    
     // ナレッジの存在確認とアクセス権限チェック
-    const canAccess = await knowledgeService.canAccessKnowledge(knowledgeId);
+    const canAccess = await knowledgeService.canAccessKnowledge(knowledgeId, user);
     if (!canAccess) {
       // 存在しないか、アクセス権限がない場合
       const knowledge = await knowledgeService.getKnowledgeById(knowledgeId);

@@ -59,7 +59,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      knowledgeId: knowledge.knowledgeId,
+      knowledgeId: Number(knowledge.knowledgeId), // BigIntをNumber型に変換
       title: knowledge.title,
       content: knowledge.content,
       publicFlag: knowledge.publicFlag,
@@ -159,7 +159,7 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      knowledgeId: updated.knowledgeId,
+      knowledgeId: Number(updated.knowledgeId), // BigIntをNumber型に変換
       message: draft ? '下書きを保存しました' : 'ナレッジを更新しました'
     });
   } catch (error) {
@@ -258,18 +258,28 @@ function validateKnowledgeData(data: any): string[] {
     errors.push('内容は必須です');
   }
 
-  if (data.publicFlag && !['private', 'public', 'protect'].includes(data.publicFlag)) {
+  if (data.publicFlag && ![1, 2, 3].includes(data.publicFlag)) {
     errors.push('公開フラグが無効です');
+  }
+
+  if (!data.typeId) {
+    errors.push('テンプレートタイプは必須です');
   }
   
   return errors;
 }
 
-function convertPublicFlag(flag: string): number {
+function convertPublicFlag(flag: any): number {
+  // 既に数値の場合はそのまま返す
+  if (typeof flag === 'number') {
+    return flag;
+  }
+  
+  // 文字列の場合の変換（旧実装の互換性）
   switch (flag) {
-    case 'private': return 1;
-    case 'public': return 2;
-    case 'protect': return 3;
-    default: return 1;
+    case 'private': return 2; // 2=非公開
+    case 'public': return 1;  // 1=公開
+    case 'protect': return 3; // 3=保護
+    default: return 2; // デフォルトは非公開
   }
 }

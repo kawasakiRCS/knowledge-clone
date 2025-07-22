@@ -273,6 +273,120 @@ export class TagService {
   }
 
   /**
+   * ナレッジに紐づくタグを取得
+   * 
+   * @description 指定されたナレッジIDに関連付けられたタグを取得
+   * @param knowledgeId ナレッジID
+   * @returns タグ配列
+   */
+  async getTagsByKnowledgeId(knowledgeId: bigint): Promise<TagData[]> {
+    try {
+      const tags = await prisma.knowledgeTag.findMany({
+        where: {
+          knowledgeId: knowledgeId,
+          deleteFlag: 0
+        },
+        include: {
+          tag: {
+            where: {
+              deleteFlag: 0
+            }
+          }
+        }
+      });
+
+      return tags
+        .filter(kt => kt.tag) // tagがnullでないもののみ
+        .map(kt => ({
+          tagId: Number(kt.tag!.tagId),
+          tagName: kt.tag!.tagName,
+          knowledgeCount: 0 // 個別取得時はカウント不要
+        }));
+    } catch (error) {
+      console.error('TagService.getTagsByKnowledgeId error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * ナレッジのタグを更新
+   * 
+   * @description 指定されたナレッジのタグを全て更新（既存削除→新規追加）
+   * @param knowledgeId ナレッジID
+   * @param tagNames タグ名配列
+   * @param user 実行ユーザー
+   * @returns 更新成功フラグ
+   */
+  async updateKnowledgeTags(
+    knowledgeId: bigint,
+    tagNames: string[],
+    user: AuthenticatedUser
+  ): Promise<boolean> {
+    try {
+      const now = new Date();
+      const userId = user.userId;
+
+      // 既存の紐づけを削除
+      await prisma.knowledgeTag.updateMany({
+        where: {
+          knowledgeId: knowledgeId,
+          deleteFlag: 0
+        },
+        data: {
+          deleteFlag: 1,
+          updateUser: userId,
+          updateDatetime: now
+        }
+      });
+
+      // 新しいタグの処理
+      for (const tagName of tagNames) {
+        if (!tagName.trim()) continue;
+
+        // タグ取得または作成
+        let tag = await prisma.tag.findFirst({
+          where: {
+            tagName: tagName.trim(),
+            deleteFlag: 0
+          }
+        });
+
+        if (!tag) {
+          // タグが存在しない場合は作成
+          tag = await prisma.tag.create({
+            data: {
+              tagName: tagName.trim(),
+              insertUser: userId,
+              insertDatetime: now,
+              updateUser: userId,
+              updateDatetime: now,
+              deleteFlag: 0
+            }
+          });
+        }
+
+        // ナレッジとタグの紐づけ作成
+        await prisma.knowledgeTag.create({
+          data: {
+            knowledgeId: knowledgeId,
+            tagId: Number(tag.tagId),
+            insertUser: userId,
+            insertDatetime: now,
+            updateUser: userId,
+            updateDatetime: now,
+            deleteFlag: 0
+          }
+        });
+      }
+
+      return true;
+    } catch (error) {
+      console.error('TagService.updateKnowledgeTags error:', error);
+      return false;
+    }
+  }
+
+  /**
    * キーワードサニタイズ
    * 
    * @description SQL Injection等の防止

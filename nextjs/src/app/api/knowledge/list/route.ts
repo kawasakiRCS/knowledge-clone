@@ -6,6 +6,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getAuthenticatedUser } from '@/lib/auth/middleware';
 
 /**
  * ナレッジ一覧取得API
@@ -13,6 +14,9 @@ import { prisma } from '@/lib/db';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    
+    // ユーザー認証情報取得
+    const authenticatedUser = await getAuthenticatedUser(request);
     
     // パラメータ取得
     const keyword = searchParams.get('keyword') || '';
@@ -27,15 +31,36 @@ export async function GET(request: NextRequest) {
     // ナレッジデータをDBから取得
     let whereConditions: any = {
       deleteFlag: 0,
-      publicFlag: 1, // 公開記事のみ
     };
+
+    // アクセス権限に基づくフィルタリング
+    let accessFilter: any;
+    if (authenticatedUser) {
+      // ログイン済み：公開記事 OR 自分が作成した記事
+      accessFilter = {
+        OR: [
+          { publicFlag: 1 }, // 公開記事
+          { insertUser: authenticatedUser.userId }, // 自分が作成した記事
+        ]
+      };
+    } else {
+      // 未ログイン：公開記事のみ
+      accessFilter = { publicFlag: 1 };
+    }
 
     // キーワード検索
     if (keyword) {
-      whereConditions.OR = [
-        { title: { contains: keyword, mode: 'insensitive' } },
-        { content: { contains: keyword, mode: 'insensitive' } },
+      whereConditions.AND = [
+        accessFilter,
+        {
+          OR: [
+            { title: { contains: keyword, mode: 'insensitive' } },
+            { content: { contains: keyword, mode: 'insensitive' } },
+          ]
+        }
       ];
+    } else {
+      Object.assign(whereConditions, accessFilter);
     }
 
     // タグ名検索

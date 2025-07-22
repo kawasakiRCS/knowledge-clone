@@ -2,6 +2,7 @@
  * ナレッジ編集ページテスト
  * 
  * @description Issue #34 - ナレッジ作成・編集ページの実装テスト
+ * @description Issue #64 - 公開ボタンエラー修正のテスト追加
  * @description 旧システム protect/knowledge/edit.jsp の完全互換テスト
  */
 import { render, screen, waitFor } from '@testing-library/react';
@@ -73,8 +74,9 @@ describe('KnowledgeEditPage', () => {
         knowledgeId: 123,
         title: 'テスト記事タイトル',
         content: 'テスト記事内容',
-        publicFlag: 'private',
+        publicFlag: 2, // 数値として設定
         tags: ['tag1', 'tag2'],
+        typeId: 1, // デフォルト: ナレッジ
       }),
     });
   });
@@ -220,6 +222,204 @@ describe('KnowledgeEditPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('knowledge-edit-container')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Issue #64: 公開ボタンエラー修正テスト', () => {
+    test('publicFlag初期値が数値である', async () => {
+      render(<KnowledgeEditPage params={Promise.resolve({ params: undefined })} />);
+      
+      await waitFor(() => {
+        // プライベート（自分のみ）がデフォルトで選択されている（value="2"）
+        const privateRadio = screen.getByDisplayValue('2');
+        expect(privateRadio).toBeInTheDocument();
+        // React Hook Formでのchecked属性の確認
+        expect(privateRadio).toHaveAttribute('checked', '');
+      });
+    });
+
+    test('公開フラグ選択が正しく動作する', async () => {
+      const user = userEvent.setup();
+      render(<KnowledgeEditPage params={Promise.resolve({ params: undefined })} />);
+      
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('2')).toBeInTheDocument(); // プライベート
+      });
+
+      // 各オプションを選択してテスト
+      const publicRadio = screen.getByDisplayValue('1'); // パブリック
+      const privateRadio = screen.getByDisplayValue('2'); // プライベート
+      const protectRadio = screen.getByDisplayValue('3'); // 保護
+
+      // パブリック選択
+      await user.click(publicRadio);
+      expect(publicRadio).toBeChecked();
+      expect(privateRadio).not.toBeChecked();
+      expect(protectRadio).not.toBeChecked();
+
+      // 保護選択
+      await user.click(protectRadio);
+      expect(protectRadio).toBeChecked();
+      expect(publicRadio).not.toBeChecked();
+      expect(privateRadio).not.toBeChecked();
+
+      // プライベート選択
+      await user.click(privateRadio);
+      expect(privateRadio).toBeChecked();
+      expect(publicRadio).not.toBeChecked();
+      expect(protectRadio).not.toBeChecked();
+    });
+
+    test('新規作成時の公開ボタンで正しいpublicFlag値が送信される', async () => {
+      const user = userEvent.setup();
+      
+      // fetchモックをクリア
+      (global.fetch as jest.Mock).mockClear();
+      
+      // 公開API成功のモック
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ knowledgeId: 123 })
+      });
+
+      render(<KnowledgeEditPage params={Promise.resolve({ params: undefined })} />);
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('タイトルを入力してください')).toBeInTheDocument();
+      });
+
+      // フォーム入力
+      await user.type(screen.getByPlaceholderText('タイトルを入力してください'), 'テストタイトル');
+      await user.type(screen.getByPlaceholderText('内容をMarkdownで入力してください'), 'テスト内容');
+      
+      // パブリック（全員）を選択
+      const publicRadio = screen.getByDisplayValue('1');
+      await user.click(publicRadio);
+      
+      // 公開ボタンをクリック
+      const publishButton = screen.getByText('公開');
+      await user.click(publishButton);
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith('/api/protect/knowledge', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: 'テストタイトル',
+            content: 'テスト内容',
+            publicFlag: 1, // 数値で送信されることを確認
+            tags: [],
+            typeId: 1, // デフォルト: ナレッジ
+            editors: [],
+            viewers: [],
+            commentFlag: true,
+            tagNames: '',
+            draft: false,
+          }),
+        });
+      }, { timeout: 3000 });
+    });
+
+    test('編集時の公開ボタンで正しいpublicFlag値が送信される', async () => {
+      const user = userEvent.setup();
+      
+      // すべてのfetchモックをクリア
+      (global.fetch as jest.Mock).mockClear();
+      
+      // 既存記事取得のモック（成功レスポンス）
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            title: '既存タイトル',
+            content: '既存内容',
+            publicFlag: 2, // 非公開
+            tags: [],
+            typeId: 1, // デフォルト: ナレッジ
+            editors: [],
+            viewers: [],
+            commentFlag: true
+          })
+        })
+        // 更新API成功のモック
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ knowledgeId: 123 })
+        });
+
+      render(<KnowledgeEditPage params={Promise.resolve({ params: ['123'] })} />);
+
+      // データ読み込み完了まで待機
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('既存タイトル')).toBeInTheDocument();
+      }, { timeout: 3000 });
+      
+      // 保護（指定グループのみ）を選択
+      const protectRadio = screen.getByDisplayValue('3');
+      await user.click(protectRadio);
+      
+      // 公開ボタンをクリック
+      const publishButton = screen.getByText('公開');
+      await user.click(publishButton);
+
+      // API呼び出しを確認
+      await waitFor(() => {
+        // fetch が2回呼ばれる（データ取得 + 更新）
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+        
+        // 2回目の呼び出し（更新API）の確認
+        expect(global.fetch).toHaveBeenNthCalledWith(2, '/api/protect/knowledge/123', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: '既存タイトル',
+            content: '既存内容',
+            publicFlag: 3, // 数値で送信されることを確認
+            tags: [],
+            typeId: 1, // デフォルト: ナレッジ
+            editors: [],
+            viewers: [],
+            commentFlag: true,
+            tagNames: '',
+            draft: false,
+          }),
+        });
+      }, { timeout: 3000 });
+    });
+
+    test('API エラー時に適切にハンドリングされる', async () => {
+      const user = userEvent.setup();
+      
+      // API エラーのモック
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400
+      });
+
+      render(<KnowledgeEditPage params={Promise.resolve({ params: undefined })} />);
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('タイトルを入力してください')).toBeInTheDocument();
+      });
+
+      // フォーム入力
+      await user.type(screen.getByPlaceholderText('タイトルを入力してください'), 'テストタイトル');
+      await user.type(screen.getByPlaceholderText('内容をMarkdownで入力してください'), 'テスト内容');
+      
+      // 公開ボタンをクリック
+      await user.click(screen.getByText('公開'));
+
+      // APIが呼ばれることを確認
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalled();
+      });
+      
+      // エラー時はリダイレクトしない
+      expect(mockPush).not.toHaveBeenCalled();
     });
   });
 });

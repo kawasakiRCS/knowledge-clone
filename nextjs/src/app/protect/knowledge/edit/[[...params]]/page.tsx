@@ -20,9 +20,9 @@ import FileUpload from '@/components/knowledge/FileUpload';
 const knowledgeSchema = z.object({
   title: z.string().min(1, 'タイトルは必須です').max(1024, 'タイトルは1024文字以内で入力してください'),
   content: z.string().min(1, '内容は必須です'),
-  publicFlag: z.enum(['private', 'public', 'protect']).default('private'),
+  publicFlag: z.number().int().min(1).max(3).default(2), // 1=公開, 2=非公開, 3=保護
   tags: z.array(z.string()).default([]),
-  typeId: z.number().optional(),
+  typeId: z.number().int().min(1).default(1), // デフォルト: ナレッジ
   editors: z.array(z.number()).default([]),
   viewers: z.array(z.number()).default([]),
   commentFlag: z.boolean().default(true),
@@ -60,8 +60,9 @@ export default function KnowledgeEditPage({ params: paramsPromise }: KnowledgeEd
     defaultValues: {
       title: '',
       content: '',
-      publicFlag: 'private',
+      publicFlag: 2, // 2=非公開
       tags: [],
+      typeId: 1, // デフォルト: ナレッジ
       editors: [],
       viewers: [],
       commentFlag: true,
@@ -149,8 +150,9 @@ export default function KnowledgeEditPage({ params: paramsPromise }: KnowledgeEd
       reset({
         title: knowledge.title || '',
         content: knowledge.content || '',
-        publicFlag: knowledge.publicFlag || 'private',
+        publicFlag: knowledge.publicFlag || 2, // 2=非公開
         tags: knowledge.tags || [],
+        typeId: knowledge.typeId || 1, // デフォルト: ナレッジ
         editors: knowledge.editors || [],
         viewers: knowledge.viewers || [],
         commentFlag: knowledge.commentFlag ?? true,
@@ -190,8 +192,10 @@ export default function KnowledgeEditPage({ params: paramsPromise }: KnowledgeEd
       
       const result = await response.json();
       
-      // 成功時は詳細ページにリダイレクト
-      router.push(`/open/knowledge/view/${result.knowledgeId}`);
+      // 成功時のみ詳細ページにリダイレクト
+      if (result && result.knowledgeId) {
+        router.push(`/open/knowledge/view/${result.knowledgeId}`);
+      }
     } catch (error) {
       console.error('公開処理でエラーが発生しました:', error);
       // TODO: エラー通知の実装
@@ -521,8 +525,11 @@ export default function KnowledgeEditPage({ params: paramsPromise }: KnowledgeEd
                         <label>
                           <input
                             type="radio"
-                            value="private"
-                            {...methods.register('publicFlag')}
+                            value="2"
+                            defaultChecked={true}
+                            {...methods.register('publicFlag', {
+                              setValueAs: (value) => parseInt(value, 10)
+                            })}
                           />
                           プライベート（自分のみ）
                         </label>
@@ -531,8 +538,10 @@ export default function KnowledgeEditPage({ params: paramsPromise }: KnowledgeEd
                         <label>
                           <input
                             type="radio"
-                            value="public"
-                            {...methods.register('publicFlag')}
+                            value="1"
+                            {...methods.register('publicFlag', {
+                              setValueAs: (value) => parseInt(value, 10)
+                            })}
                           />
                           パブリック（全員）
                         </label>
@@ -541,12 +550,33 @@ export default function KnowledgeEditPage({ params: paramsPromise }: KnowledgeEd
                         <label>
                           <input
                             type="radio"
-                            value="protect"
-                            {...methods.register('publicFlag')}
+                            value="3"
+                            {...methods.register('publicFlag', {
+                              setValueAs: (value) => parseInt(value, 10)
+                            })}
                           />
                           保護（指定グループのみ）
                         </label>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* テンプレートタイプ */}
+                  <div className="form-group">
+                    <label className="control-label">テンプレートタイプ</label>
+                    <div>
+                      <select
+                        className="form-control"
+                        {...methods.register('typeId', {
+                          setValueAs: (value) => parseInt(value, 10)
+                        })}
+                      >
+                        <option value={1}>ナレッジ</option>
+                        <option value={2}>イベント</option>
+                        <option value={3}>プレゼンテーション</option>
+                        <option value={4}>ブックマーク</option>
+                        <option value={5}>障害情報</option>
+                      </select>
                     </div>
                   </div>
 

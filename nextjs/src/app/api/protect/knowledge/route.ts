@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json({
         success: true,
-        knowledgeId: updated.knowledgeId,
+        knowledgeId: Number(updated.knowledgeId), // BigIntをNumber型に変換
         message: 'ナレッジを更新しました'
       });
     } else {
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json({
         success: true,
-        knowledgeId: created.knowledgeId,
+        knowledgeId: Number(created.knowledgeId), // BigIntをNumber型に変換
         message: 'ナレッジを作成しました'
       }, { status: 201 });
     }
