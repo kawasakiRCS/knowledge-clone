@@ -20,6 +20,11 @@ export interface KnowledgeWithAuthor extends Knowledge {
   } | null;
 }
 
+export interface KnowledgeEditor {
+  user_id: number;
+  user_name: string | null;
+}
+
 export class KnowledgeRepository {
   /**
    * IDでナレッジを取得
@@ -220,5 +225,26 @@ export class KnowledgeRepository {
     await prisma.knowledge.delete({
       where: { knowledgeId }
     });
+  }
+
+  /**
+   * ナレッジの編集者リストを取得
+   * 
+   * @description knowledge_usersテーブルから編集者情報を取得
+   * @param knowledgeId ナレッジID
+   * @returns 編集者リスト
+   */
+  async getEditors(knowledgeId: bigint): Promise<KnowledgeEditor[]> {
+    const result = await prisma.$queryRaw<KnowledgeEditor[]>`
+      SELECT 
+        ku.user_id,
+        u.user_name
+      FROM knowledge_users ku
+      LEFT JOIN users u ON ku.user_id = u.user_id
+      WHERE ku.knowledge_id = ${knowledgeId}
+      AND ku.delete_flag = 0
+      ORDER BY ku.user_id
+    `;
+    return result;
   }
 }

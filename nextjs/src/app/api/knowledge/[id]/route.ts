@@ -56,6 +56,16 @@ export async function GET(
     // 閲覧数を増加（非同期、エラーは無視）
     knowledgeService.incrementViewCount(knowledgeId).catch(console.error);
 
+    // 編集者リストを取得
+    const editors = await knowledgeService.getEditors(knowledgeId);
+
+    // 編集権限チェック
+    const editable = await knowledgeService.isEditor(
+      user?.userId || null,
+      knowledge,
+      editors
+    );
+
     // レスポンス用のデータ変換
     const responseData = {
       knowledgeId: knowledge.knowledgeId.toString(), // BigIntは文字列に変換
@@ -78,8 +88,11 @@ export async function GET(
       stocks: [],
       targets: [],
       groups: [],
-      editors: [],
-      editable: false,
+      editors: editors.map(e => ({
+        userId: e.userId,
+        userName: e.userName
+      })),
+      editable: editable,
       files: [],
       comments: []
     };

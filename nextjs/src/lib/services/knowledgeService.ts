@@ -13,6 +13,11 @@ export interface User {
   groups?: Array<{ groupId: number }>;
 }
 
+export interface Editor {
+  userId: number;
+  userName: string;
+}
+
 export interface CreateKnowledgeInput {
   title: string;
   content?: string;
@@ -376,5 +381,49 @@ export class KnowledgeService {
    */
   private async saveEditors(knowledgeId: bigint, editors: number[], user: AuthenticatedUser): Promise<void> {
     // KnowledgeEditorsテーブルの実装予定
+  }
+
+  /**
+   * 編集権限チェック（公開メソッド）
+   * 
+   * @description 旧システムのisEditor相当の権限チェック
+   * @param loginUserId ログインユーザーID（未ログインの場合はnull）
+   * @param knowledge ナレッジ情報
+   * @param editors 編集者リスト
+   * @returns 編集可能かどうか
+   */
+  async isEditor(loginUserId: number | null, knowledge: Pick<Knowledge, 'knowledgeId' | 'insertUser' | 'publicFlag'>, editors: Editor[]): Promise<boolean> {
+    // 未ログインユーザーは編集不可
+    if (!loginUserId) {
+      return false;
+    }
+
+    // 作成者は編集可能
+    if (knowledge.insertUser === loginUserId) {
+      return true;
+    }
+
+    // 共同編集者は編集可能
+    if (editors.some(editor => editor.userId === loginUserId)) {
+      return true;
+    }
+
+    // その他のユーザーは編集不可
+    return false;
+  }
+
+  /**
+   * ナレッジの編集者リストを取得
+   * 
+   * @description knowledge_usersテーブルから編集者情報を取得
+   * @param knowledgeId ナレッジID
+   * @returns 編集者リスト
+   */
+  async getEditors(knowledgeId: bigint | number): Promise<Editor[]> {
+    const editors = await this.knowledgeRepo.getEditors(BigInt(knowledgeId));
+    return editors.map(editor => ({
+      userId: editor.user_id,
+      userName: editor.user_name || ''
+    }));
   }
 }

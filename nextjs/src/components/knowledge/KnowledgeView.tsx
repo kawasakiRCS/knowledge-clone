@@ -256,14 +256,32 @@ const KnowledgeView: React.FC<Props> = ({ knowledge }) => {
         {/* 右上のボタン部分 */}
         <div className="col-sm-4">
           <div className="btn-group-vertical btn-block" role="group">
-            {knowledge.editable && (
-              <button 
-                type="button" 
-                className="btn btn-primary btn-block"
-                onClick={handleEdit}
+            {/* 編集ボタン - 旧システムと同じ3状態実装 */}
+            {user ? (
+              knowledge.editable ? (
+                <button 
+                  type="button" 
+                  className="btn btn-primary btn-block btn_edit"
+                  onClick={handleEdit}
+                >
+                  <i className="fa fa-edit"></i> 投稿を編集
+                </button>
+              ) : (
+                <button 
+                  type="button" 
+                  className="btn btn-primary btn-block btn_edit disabled"
+                  disabled
+                >
+                  <i className="fa fa-info-circle"></i> 編集権限がありません
+                </button>
+              )
+            ) : (
+              <a 
+                href={`/protect/knowledge/view_edit/${knowledge.knowledgeId}`}
+                className="btn btn-primary btn-block btn_edit"
               >
-                <i className="fa fa-edit"></i> 編集
-              </button>
+                <i className="fa fa-edit"></i> ログインして編集
+              </a>
             )}
             
             <button 
