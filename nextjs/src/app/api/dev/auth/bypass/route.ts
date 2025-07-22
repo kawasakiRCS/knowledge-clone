@@ -6,11 +6,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { SignJWT } from 'jose';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/authOptions';
+import { encode } from 'next-auth/jwt';
 import { 
   isDevelopmentAuthBypassEnabled, 
-  isValidDevelopmentUserType, 
-  generateDevelopmentTokenPayload,
+  isValidDevelopmentUserType,
   DEVELOPMENT_USERS 
 } from '@/lib/auth/devBypass';
 
@@ -28,59 +29,100 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  console.log('[DEV AUTH BYPASS] Request received:', {
+    url: request.url,
+    nodeEnv: process.env.NODE_ENV,
+    authBypass: process.env.DEVELOPMENT_AUTH_BYPASS
+  });
+
   // 開発環境認証バイパスが有効でない場合
   if (!isDevelopmentAuthBypassEnabled()) {
-    return NextResponse.json(
-      { success: false, error: 'Development auth bypass is not enabled' },
-      { status: 403 }
-    );
+    const response = {
+      success: false, 
+      error: 'Development auth bypass is not enabled',
+      env: {
+        NODE_ENV: process.env.NODE_ENV,
+        DEVELOPMENT_AUTH_BYPASS: process.env.DEVELOPMENT_AUTH_BYPASS
+      }
+    };
+    console.log('[DEV AUTH BYPASS] Not enabled:', response);
+    return NextResponse.json(response, { status: 403 });
   }
 
   try {
     const { searchParams } = new URL(request.url);
     const userType = searchParams.get('user') || 'user';
 
+    console.log('[DEV AUTH BYPASS] Processing user type:', userType);
+
     // ユーザータイプの検証
     if (!isValidDevelopmentUserType(userType)) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: `Invalid user type. Valid types: ${Object.keys(DEVELOPMENT_USERS).join(', ')}` 
-        },
-        { status: 400 }
-      );
+      const response = { 
+        success: false, 
+        error: `Invalid user type. Valid types: ${Object.keys(DEVELOPMENT_USERS).join(', ')}` 
+      };
+      console.log('[DEV AUTH BYPASS] Invalid user type:', response);
+      return NextResponse.json(response, { status: 400 });
     }
 
-    // JWTトークンペイロードを生成
-    const tokenPayload = generateDevelopmentTokenPayload(userType);
+    // 開発用ユーザー情報を取得
+    const user = DEVELOPMENT_USERS[userType];
+    console.log('[DEV AUTH BYPASS] User data:', user);
+    
+    // NextAuth互換のJWTトークンを生成
+    const now = Math.floor(Date.now() / 1000);
+    const tokenPayload = {
+      // NextAuth標準フィールド
+      iat: now,
+      exp: now + (24 * 60 * 60), // 24時間後
+      
+      // カスタムユーザー情報
+      userId: user.userId,
+      userName: user.userName,
+      userKey: user.userKey,
+      role: user.role,
+      unreadCount: user.unreadCount,
+      
+      // 開発モード識別子
+      isDevelopmentBypass: true,
+    };
 
-    // JWTトークンを生成
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!);
-    const token = await new SignJWT(tokenPayload)
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('24h')
-      .sign(secret);
+    console.log('[DEV AUTH BYPASS] Token payload prepared:', tokenPayload);
 
-    // NextAuthのJWTトークンとして設定
+    // NextAuthのencodeを使用してトークン生成
+    const jwtToken = await encode({
+      token: tokenPayload,
+      secret: process.env.NEXTAUTH_SECRET!,
+    });
+
+    console.log('[DEV AUTH BYPASS] JWT token generated');
+
+    // レスポンス準備
     const response = NextResponse.json({
       success: true,
       message: `Development auth bypass activated for ${userType}`,
       user: {
-        userId: tokenPayload.userId,
-        userName: tokenPayload.userName,
-        userKey: tokenPayload.userKey,
-        role: tokenPayload.role,
+        userId: user.userId,
+        userName: user.userName,
+        userKey: user.userKey,
+        role: user.role,
       },
+      redirect: '/protect/knowledge/edit', // 認証後のリダイレクト先
+      debug: {
+        timestamp: new Date().toISOString(),
+        environment: {
+          NODE_ENV: process.env.NODE_ENV,
+          DEVELOPMENT_AUTH_BYPASS: process.env.DEVELOPMENT_AUTH_BYPASS
+        }
+      }
     });
 
-    // HTTPOnly Cookieとしてトークンを設定
-    // Next.jsの開発環境ではクッキー名が異なる場合がある
+    // NextAuth互換のセッションCookieを設定
     const cookieName = process.env.NODE_ENV === 'production' 
       ? '__Secure-next-auth.session-token' 
       : 'next-auth.session-token';
       
-    response.cookies.set(cookieName, token, {
+    response.cookies.set(cookieName, jwtToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -88,14 +130,27 @@ export async function GET(request: NextRequest) {
       path: '/',
     });
 
+    console.log('[DEV AUTH BYPASS] Cookie set:', cookieName);
     return response;
 
   } catch (error) {
     console.error('Development auth bypass error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    
+    // デバッグ用のエラー詳細情報
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    
+    const errorResponse = { 
+      success: false, 
+      error: 'Internal server error', 
+      debug: { 
+        message: errorMessage,
+        stack: stack
+      }
+    };
+    
+    console.log('[DEV AUTH BYPASS] Error response:', errorResponse);
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
 

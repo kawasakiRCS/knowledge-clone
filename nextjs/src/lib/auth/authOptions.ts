@@ -117,6 +117,12 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user, account }) {
+      // 開発環境認証バイパスの場合
+      if (token.isDevelopmentBypass) {
+        // 既にバイパス情報が設定されている場合はそのまま返す
+        return token;
+      }
+      
       // Azure AD認証の場合
       if (account?.provider === 'azure-ad') {
         const entraIdEmail = token.email!;

@@ -45,37 +45,58 @@
 - 403 Access denied → 権限チェック修正
 - 一覧で自分の記事が見えない → アクセス権限フィルタ修正
 
-### ✅ 開発環境認証バイパス機能実装（2025-07-22）
-- **Issue**: #64 - Playwright MCP統合用認証バイパス機能実装
-- **解決した問題**: Playwright MCP統合時の手動認証作業の自動化
-- **技術的詳細**:
-  - **認証バイパスAPI**: `/api/dev/auth/bypass?user=admin|user`
-    - 管理者ユーザー: Knowledge test（userId: 12）
-    - 一般ユーザー: 山田 テスト（userId: 7）
-  - **Middleware認証スキップ**: `?dev_user=admin`パラメータでの認証バイパス
-  - **環境変数制御**: `DEVELOPMENT_AUTH_BYPASS=true`で機能有効化
-- **セキュリティ対策**:
-  - **本番環境無効化**: `NODE_ENV=production`では物理的に動作不可
-  - **明示的有効化**: 開発環境でも環境変数による明示的な有効化が必要
-  - **デバッグログ**: middleware動作状況の可視化
-- **実装成果**:
-  - **開発効率向上**: 手動ログイン作業の完全自動化
-  - **権限別テスト**: 管理者・一般ユーザーでの動作確認が簡単
-  - **MCP統合最適化**: Claude Code MCPツールでの即座アクセス
-- **使用方法**:
-  ```typescript
-  // 管理者として保護ページにアクセス
-  await mcp__playwright__browser_navigate({ 
-    url: 'http://localhost:3000/protect/knowledge/edit?dev_user=admin' 
-  });
-  
-  // 一般ユーザーとしてアクセス
-  await mcp__playwright__browser_navigate({ 
-    url: 'http://localhost:3000/api/dev/auth/bypass?user=user' 
-  });
-  ```
-- **ドキュメント更新**: README.mdに詳細な使用例とセキュリティ注意事項を追加
-- **継続的改善**: 開発環境での生産性向上とデバッグ効率化を実現
+### ✅ Issue #64完了: 認証バイパス機能の修正とPlaywright MCP統合最適化（2025-07-22）
+- **Issue**: #64 - Playwright MCP統合用認証バイパス機能の問題修正
+- **解決した問題**: 
+  - 認証バイパス機能が期待通りに動作しない問題
+  - NextAuthセッション管理との不整合
+  - Middlewareとバイパス機能の統合問題
+
+#### 🔧 技術的修正内容
+1. **NextAuth互換JWTトークン生成**:
+   - `next-auth/jwt`の`encode`関数を使用してNextAuth互換トークンを生成
+   - JWTペイロードをNextAuth標準構造に変更
+   - セッションCookie（`next-auth.session-token`）の正しい設定
+
+2. **authOptions.ts修正**:
+   - JWTコールバック処理で`isDevelopmentBypass`フラグを認識
+   - バイパス認証トークンの適切な処理を実装
+   - 開発環境認証バイパスの例外処理追加
+
+3. **Middleware統合改善**:
+   - `shouldBypassAuthInDevelopment`関数でバイパス条件を正しく判定
+   - `dev_user`パラメータでの認証バイパスが正常動作
+   - デバッグログ出力の強化
+
+4. **エラーハンドリング強化**:
+   - 詳細なデバッグ情報の出力
+   - 環境変数設定状況の可視化
+   - APIレスポンスの改善
+
+#### 🧪 動作確認結果
+- ✅ **認証バイパスAPI**: `/api/dev/auth/bypass?user=admin` が正常レスポンス
+- ✅ **JWTトークン設定**: Cookieに正しく設定される
+- ✅ **ページアクセス**: `?dev_user=admin`パラメータでのアクセス成功
+- ✅ **Middleware連携**: 認証バイパスを正しく認識・許可
+
+#### 🚀 Playwright MCP統合での使用方法
+```typescript
+// 管理者として保護ページに直接アクセス
+await mcp__playwright__browser_navigate({ 
+  url: 'http://localhost:3000/protect/knowledge/edit?dev_user=admin' 
+});
+
+// 事前認証でのアクセス
+await mcp__playwright__browser_navigate({ 
+  url: 'http://localhost:3000/api/dev/auth/bypass?user=admin' 
+});
+```
+
+#### 📈 実装成果
+- **開発効率向上**: 手動ログイン作業の完全自動化
+- **権限別テスト**: 管理者・一般ユーザーでの動作確認が簡単
+- **MCP統合最適化**: Claude Code MCPツールでの即座アクセス実現
+- **セキュリティ保持**: 本番環境では物理的に無効化
 
 ### ✅ Playwright MCP統合デバッグ環境完成（2025-07-22）
 - **Issue**: #57 - Playwright E2Eテスト環境のCLI専用環境での構築とMCP統合
