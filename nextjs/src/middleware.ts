@@ -28,6 +28,9 @@ const ALWAYS_PUBLIC_PATHS = [
   '/api/password', // パスワードリセット
   '/api/signup',   // サインアップ
   
+  // 開発環境専用（本番では無効）
+  '/api/dev/*',    // 開発用API
+  
   // 静的ファイル
   '/favicon.ico',
   '/_next',
@@ -109,18 +112,72 @@ function isAdminPath(pathname: string): boolean {
 }
 
 /**
+ * 開発モードかつ認証バイパスが有効かチェック
+ */
+function isDevelopmentAuthBypassEnabled(): boolean {
+  const nodeEnv = process.env.NODE_ENV;
+  const authBypass = process.env.DEVELOPMENT_AUTH_BYPASS;
+  
+  console.log('[DEV] Environment check:', {
+    NODE_ENV: nodeEnv,
+    DEVELOPMENT_AUTH_BYPASS: authBypass,
+    enabled: nodeEnv === 'development' && authBypass === 'true'
+  });
+  
+  return nodeEnv === 'development' && authBypass === 'true';
+}
+
+/**
+ * 開発モード用認証バイパス判定
+ */
+function shouldBypassAuthInDevelopment(request: NextRequest): boolean {
+  if (!isDevelopmentAuthBypassEnabled()) {
+    console.log('[DEV] Auth bypass not enabled');
+    return false;
+  }
+  
+  const { searchParams } = request.nextUrl;
+  const hasDevUser = searchParams.has('dev_user');
+  const isDevApi = request.nextUrl.pathname.startsWith('/api/dev/');
+  
+  console.log('[DEV] Bypass check:', {
+    pathname: request.nextUrl.pathname,
+    hasDevUser,
+    isDevApi,
+    shouldBypass: hasDevUser || isDevApi
+  });
+  
+  // dev_userパラメータが指定されている場合のみバイパス
+  return hasDevUser || isDevApi;
+}
+
+/**
  * Middleware関数
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  console.log('[MIDDLEWARE] Processing:', {
+    pathname,
+    method: request.method,
+    searchParams: Object.fromEntries(request.nextUrl.searchParams.entries())
+  });
+
   // 公開パスの場合はそのまま通す
   if (isPublicPath(pathname)) {
+    console.log('[MIDDLEWARE] Public path, allowing access');
     return NextResponse.next();
   }
 
   // 読み取り専用APIの場合はそのまま通す（各APIで個別に権限チェック）
   if (isReadOnlyAPI(pathname)) {
+    console.log('[MIDDLEWARE] Read-only API, allowing access');
+    return NextResponse.next();
+  }
+
+  // 開発モードでの認証バイパスチェック
+  if (shouldBypassAuthInDevelopment(request)) {
+    console.log('[MIDDLEWARE] Development auth bypass activated, allowing access');
     return NextResponse.next();
   }
 
