@@ -9,7 +9,7 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { StockKnowledge } from '@/types/knowledge';
-import { useLocale } from '@/hooks/useLocale';
+import { useLocale } from '@/lib/hooks/useLocale';
 import { formatDate } from '@/lib/utils';
 
 interface KnowledgeListItemProps {

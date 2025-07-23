@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import MainLayout from '@/components/layout/MainLayout';
 import KnowledgeListItem from '@/components/knowledge/KnowledgeListItem';
 import KnowledgeSubList from '@/components/knowledge/KnowledgeSubList';

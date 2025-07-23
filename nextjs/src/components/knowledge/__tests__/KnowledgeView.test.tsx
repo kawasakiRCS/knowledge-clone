@@ -6,7 +6,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import KnowledgeView from '../KnowledgeView';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
 // useAuthとuseRouterはjest.setup.jsでグローバルにモック済み

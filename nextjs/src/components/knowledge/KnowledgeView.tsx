@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { formatDate } from '@/lib/utils';
 import { useSafeHTMLProps } from '@/hooks/useSafeHTML';
 import { convertEmoji } from '@/lib/emoji';
@@ -87,8 +87,11 @@ interface Props {
 
 const KnowledgeView: React.FC<Props> = ({ knowledge }) => {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoggedIn, loading } = useAuth();
   const [showToc, setShowToc] = useState(false);
+  
+  // デバッグ用
+  console.log('Auth state:', { user, isLoggedIn, loading });
 
   // formatDate関数は@/lib/utilsから使用
 
@@ -257,7 +260,15 @@ const KnowledgeView: React.FC<Props> = ({ knowledge }) => {
         <div className="col-sm-4">
           <div className="btn-group-vertical btn-block" role="group">
             {/* 編集ボタン - 旧システムと同じ3状態実装 */}
-            {user ? (
+            {loading ? (
+              <button 
+                type="button" 
+                className="btn btn-primary btn-block btn_edit disabled"
+                disabled
+              >
+                <i className="fa fa-spinner fa-spin"></i> 読み込み中...
+              </button>
+            ) : isLoggedIn ? (
               knowledge.editable ? (
                 <button 
                   type="button" 
@@ -445,7 +456,7 @@ const KnowledgeView: React.FC<Props> = ({ knowledge }) => {
       <hr />
       <div className="row">
         <div className="col-sm-12">
-          {user ? (
+          {isLoggedIn ? (
             <form onSubmit={handleCommentSubmit}>
               <div className="form-group">
                 <textarea 

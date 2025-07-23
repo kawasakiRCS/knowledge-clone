@@ -5,12 +5,12 @@
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import KnowledgeSubList from '../KnowledgeSubList';
-import { useAuth } from '@/hooks/useAuth';
-import { useLocale } from '@/hooks/useLocale';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { useLocale } from '@/lib/hooks/useLocale';
 
 // モック
-jest.mock('@/hooks/useAuth');
-jest.mock('@/hooks/useLocale');
+jest.mock('@/lib/hooks/useAuth');
+jest.mock('@/lib/hooks/useLocale');
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockUseLocale = useLocale as jest.Mock;

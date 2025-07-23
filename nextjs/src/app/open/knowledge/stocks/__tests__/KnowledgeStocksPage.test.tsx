@@ -5,11 +5,11 @@
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import { KnowledgeStocksPage } from '../page';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
 // モック
-jest.mock('@/hooks/useAuth', () => ({
+jest.mock('@/lib/hooks/useAuth', () => ({
   useAuth: jest.fn(),
 }));
 jest.mock('next/navigation', () => ({

@@ -9,7 +9,7 @@ import Link from 'next/link';
 import CommonHeader from './CommonHeader';
 import CommonFooter from './CommonFooter';
 import CommonScripts from './CommonScripts';
-import { useLocale } from '@/hooks/useLocale';
+import { useLocale } from '@/lib/hooks/useLocale';
 
 interface LayoutNoMenuProps {
   children: ReactNode;

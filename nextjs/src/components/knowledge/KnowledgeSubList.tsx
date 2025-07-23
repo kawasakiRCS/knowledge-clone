@@ -7,8 +7,8 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
-import { useLocale } from '@/hooks/useLocale';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { useLocale } from '@/lib/hooks/useLocale';
 
 interface Event {
   knowledgeId: number;

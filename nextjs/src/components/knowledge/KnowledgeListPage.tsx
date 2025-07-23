@@ -8,8 +8,8 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { useLocale } from '@/hooks/useLocale';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { useLocale } from '@/lib/hooks/useLocale';
 import { Knowledge, KnowledgeListResponse, KnowledgeListParams, TemplateType, Tag, Group } from '../../types/knowledge';
 import '@/styles/knowledge-list.css';
 

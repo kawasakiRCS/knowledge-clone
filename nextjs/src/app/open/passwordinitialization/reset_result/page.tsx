@@ -9,7 +9,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useLocale } from '@/hooks/useLocale';
+import { useLocale } from '@/lib/hooks/useLocale';
 
 export default function PasswordResetResultPage() {
   const { t } = useLocale();

@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useLocale } from '@/hooks/useLocale';
+import { useLocale } from '@/lib/hooks/useLocale';
 import MainLayout from '@/components/layout/MainLayout';
 
 interface FormData {

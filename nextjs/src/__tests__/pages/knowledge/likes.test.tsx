@@ -5,7 +5,7 @@
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 import KnowledgeLikesPage from '../../../../app/knowledge/likes/[id]/page';
 
 // モック設定

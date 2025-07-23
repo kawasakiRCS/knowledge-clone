@@ -7,14 +7,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
 import SignupPage from '../page';
-import { useLocale } from '@/hooks/useLocale';
+import { useLocale } from '@/lib/hooks/useLocale';
 
 // モック設定
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn()
 }));
 
-jest.mock('@/hooks/useLocale', () => ({
+jest.mock('@/lib/hooks/useLocale', () => ({
   useLocale: jest.fn()
 }));
 

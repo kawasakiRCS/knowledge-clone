@@ -6,8 +6,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { useLocale } from '@/hooks/useLocale';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { useLocale } from '@/lib/hooks/useLocale';
 import KnowledgeShowHistoryPage from '../page';
 
 // モック
@@ -15,11 +15,11 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('@/hooks/useAuth', () => ({
+jest.mock('@/lib/hooks/useAuth', () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock('@/hooks/useLocale', () => ({
+jest.mock('@/lib/hooks/useLocale', () => ({
   useLocale: jest.fn(),
 }));
 

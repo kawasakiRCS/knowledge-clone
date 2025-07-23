@@ -7,7 +7,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-// import { useLocale } from '@/hooks/useLocale';
+// import { useLocale } from '@/lib/hooks/useLocale';
 import MainLayout from '@/components/layout/MainLayout';
 
 interface ActivatePageProps {

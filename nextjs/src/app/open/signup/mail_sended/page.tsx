@@ -6,7 +6,7 @@
 'use client';
 
 import React from 'react';
-import { useLocale } from '@/hooks/useLocale';
+import { useLocale } from '@/lib/hooks/useLocale';
 import MainLayout from '@/components/layout/MainLayout';
 
 const MailSendedPage: React.FC = () => {

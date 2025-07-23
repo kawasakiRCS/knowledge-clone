@@ -8,14 +8,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
 import KnowledgeView from '../KnowledgeView';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 // モックの設定
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn()
 }));
 
-jest.mock('@/hooks/useAuth', () => ({
+jest.mock('@/lib/hooks/useAuth', () => ({
   useAuth: jest.fn()
 }));
 
