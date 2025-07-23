@@ -165,3 +165,52 @@ model KnowledgeFile {
   
   @@map("knowledge_files")
 }
+
+// Provisional Registrations table
+model ProvisionalRegistration {
+  id             String    @id @map("id") @db.VarChar(256)
+  userKey        String    @map("user_key") @db.VarChar(256)
+  userName       String    @map("user_name") @db.VarChar(256)
+  password       String    @db.VarChar(1024)
+  salt           String    @db.VarChar(1024)
+  localeKey      String?   @map("locale_key") @db.VarChar(12)
+  mailAddress    String?   @map("mail_address") @db.VarChar(256)
+  rowId          String?   @map("row_id") @db.VarChar(64)
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @map("delete_flag")
+  
+  @@map("provisional_registrations")
+}
+
+// System Configs table
+model SystemConfig {
+  systemName     String    @map("system_name") @db.VarChar(64)
+  configName     String    @map("config_name") @db.VarChar(256)
+  configValue    String?   @map("config_value") @db.VarChar(1024)
+  rowId          String?   @map("row_id") @db.VarChar(64)
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @map("delete_flag")
+  
+  @@id([systemName, configName])
+  @@map("system_configs")
+}
+
+// Password Resets table
+model PasswordReset {
+  id             String    @id @map("id") @db.VarChar(256)
+  userKey        String?   @map("user_key") @db.VarChar(256)
+  rowId          String?   @map("row_id") @db.VarChar(64)
+  insertUser     Int?      @map("insert_user")
+  insertDatetime DateTime? @map("insert_datetime") @db.Timestamp(6)
+  updateUser     Int?      @map("update_user")
+  updateDatetime DateTime? @map("update_datetime") @db.Timestamp(6)
+  deleteFlag     Int?      @map("delete_flag")
+  
+  @@map("password_resets")
+}
