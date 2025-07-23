@@ -14,6 +14,11 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
+// useAuthのモック
+jest.mock('@/lib/hooks/useAuth', () => ({
+  useAuth: jest.fn(),
+}));
+
 // Chart.js のモックは動的インポートのため不要
 
 describe('KnowledgeView', () => {
@@ -21,6 +26,7 @@ describe('KnowledgeView', () => {
   const mockRouter = {
     push: mockPush,
   };
+  const mockUseAuth = require('@/lib/hooks/useAuth').useAuth;
 
   const defaultKnowledge = {
     knowledgeId: 1,
@@ -68,6 +74,14 @@ describe('KnowledgeView', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    // デフォルトでは未ログイン状態
+    mockUseAuth.mockReturnValue({
+      isLoggedIn: false,
+      user: null,
+      loading: false,
+      login: jest.fn(),
+      logout: jest.fn()
+    });
   });
 
   describe('基本表示', () => {
@@ -125,17 +139,35 @@ describe('KnowledgeView', () => {
     });
 
     test('編集権限がある場合、編集ボタンが表示される', () => {
+      // ログイン状態をモック
+      mockUseAuth.mockReturnValue({
+        isLoggedIn: true,
+        user: { userId: 'test-user', email: 'test@example.com' },
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      });
+
       const editableKnowledge = { ...defaultKnowledge, editable: true };
       render(<KnowledgeView knowledge={editableKnowledge} />);
 
-      expect(screen.getByText('編集')).toBeInTheDocument();
+      expect(screen.getByText('投稿を編集')).toBeInTheDocument();
     });
 
     test('編集ボタンクリックで編集ページへ遷移', () => {
+      // ログイン状態をモック
+      mockUseAuth.mockReturnValue({
+        isLoggedIn: true,
+        user: { userId: 'test-user', email: 'test@example.com' },
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      });
+
       const editableKnowledge = { ...defaultKnowledge, editable: true };
       render(<KnowledgeView knowledge={editableKnowledge} />);
 
-      fireEvent.click(screen.getByText('編集'));
+      fireEvent.click(screen.getByText('投稿を編集'));
       expect(mockPush).toHaveBeenCalledWith('/protect/knowledge/edit/1');
     });
 
@@ -236,15 +268,21 @@ describe('KnowledgeView', () => {
       expect(screen.getByText('コメントするにはログインしてください')).toBeInTheDocument();
     });
 
-    test.skip('ログイン時はコメントフォームが有効', () => {
-      // TODO: 認証機能実装後に有効化
-      // 現在のグローバルuseAuthモックでは個別の状態変更ができないため
+    test('ログイン時はコメントフォームが有効', () => {
+      // ログイン状態をモック
+      mockUseAuth.mockReturnValue({
+        isLoggedIn: true,
+        user: { userId: 'test-user', email: 'test@example.com' },
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      });
       
       render(<KnowledgeView knowledge={defaultKnowledge} />);
 
       // コメントフォームの基本表示のみ確認
       expect(screen.getByPlaceholderText('コメントを入力...')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'コメント投稿' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /コメント投稿/ })).toBeInTheDocument();
     });
   });
 

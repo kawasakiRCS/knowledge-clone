@@ -413,4 +413,223 @@ describe('TagService', () => {
       expect(tagService.validateOffset(NaN)).toBe(0);
     });
   });
+
+  describe('getTagsByKnowledgeId', () => {
+    test('ナレッジIDでタグ取得成功', async () => {
+      const mockResult = [
+        { 
+          knowledgeId: BigInt(1), 
+          tagId: 10,
+          tag: {
+            tagId: 10,
+            tagName: 'JavaScript',
+            insertUser: 1,
+            insertDatetime: new Date(),
+            updateUser: 1,
+            updateDatetime: new Date(),
+            deleteFlag: 0
+          }
+        },
+        { 
+          knowledgeId: BigInt(1), 
+          tagId: 20,
+          tag: {
+            tagId: 20,
+            tagName: 'React',
+            insertUser: 1,
+            insertDatetime: new Date(),
+            updateUser: 1,
+            updateDatetime: new Date(),
+            deleteFlag: 0
+          }
+        }
+      ];
+
+      mockPrisma.knowledgeTag = {
+        findMany: jest.fn().mockResolvedValue(mockResult)
+      };
+
+      const result = await tagService.getTagsByKnowledgeId(BigInt(1));
+
+      expect(result).toEqual([
+        { tagId: 10, tagName: 'JavaScript', knowledgeCount: 0 },
+        { tagId: 20, tagName: 'React', knowledgeCount: 0 }
+      ]);
+
+      expect(mockPrisma.knowledgeTag.findMany).toHaveBeenCalledWith({
+        where: {
+          knowledgeId: BigInt(1),
+          deleteFlag: 0
+        },
+        include: {
+          tag: {
+            where: {
+              deleteFlag: 0
+            }
+          }
+        }
+      });
+    });
+
+    test('tagがnullの場合除外される', async () => {
+      const mockResult = [
+        { 
+          knowledgeId: BigInt(1), 
+          tagId: 10,
+          tag: null
+        },
+        { 
+          knowledgeId: BigInt(1), 
+          tagId: 20,
+          tag: {
+            tagId: 20,
+            tagName: 'React',
+            insertUser: 1,
+            insertDatetime: new Date(),
+            updateUser: 1,
+            updateDatetime: new Date(),
+            deleteFlag: 0
+          }
+        }
+      ];
+
+      mockPrisma.knowledgeTag = {
+        findMany: jest.fn().mockResolvedValue(mockResult)
+      };
+
+      const result = await tagService.getTagsByKnowledgeId(BigInt(1));
+
+      expect(result).toEqual([
+        { tagId: 20, tagName: 'React', knowledgeCount: 0 }
+      ]);
+    });
+
+    test('エラー時は空配列を返す', async () => {
+      mockPrisma.knowledgeTag = {
+        findMany: jest.fn().mockRejectedValue(new Error('DB Error'))
+      };
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const result = await tagService.getTagsByKnowledgeId(BigInt(1));
+
+      expect(result).toEqual([]);
+      expect(consoleSpy).toHaveBeenCalledWith('TagService.getTagsByKnowledgeId error:', expect.any(Error));
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('updateKnowledgeTags', () => {
+    test('ナレッジのタグ更新成功', async () => {
+      mockPrisma.knowledgeTag = {
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+        create: jest.fn().mockResolvedValue({})
+      };
+
+      mockPrisma.tag = {
+        findFirst: jest.fn()
+          .mockResolvedValueOnce({ // 既存タグ
+            tagId: 10,
+            tagName: 'JavaScript',
+            deleteFlag: 0
+          })
+          .mockResolvedValueOnce(null) // 新規タグ
+          .mockResolvedValueOnce({ // もう一つの既存タグ
+            tagId: 30,
+            tagName: 'Node.js',
+            deleteFlag: 0
+          }),
+        create: jest.fn().mockResolvedValue({
+          tagId: 20,
+          tagName: 'TypeScript',
+          insertUser: 'test@example.com',
+          insertDatetime: new Date(),
+          updateUser: 'test@example.com',
+          updateDatetime: new Date(),
+          deleteFlag: 0
+        })
+      };
+
+      const result = await tagService.updateKnowledgeTags(
+        BigInt(1),
+        ['JavaScript', 'TypeScript', 'Node.js'],
+        mockUser
+      );
+
+      expect(result).toBe(true);
+
+      // 既存タグの削除
+      expect(mockPrisma.knowledgeTag.updateMany).toHaveBeenCalledWith({
+        where: {
+          knowledgeId: BigInt(1),
+          deleteFlag: 0
+        },
+        data: {
+          deleteFlag: 1,
+          updateUser: 'test@example.com',
+          updateDatetime: expect.any(Date)
+        }
+      });
+
+      // 新規タグの作成
+      expect(mockPrisma.tag.create).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.tag.create).toHaveBeenCalledWith({
+        data: {
+          tagName: 'TypeScript',
+          insertUser: 'test@example.com',
+          insertDatetime: expect.any(Date),
+          updateUser: 'test@example.com',
+          updateDatetime: expect.any(Date),
+          deleteFlag: 0
+        }
+      });
+
+      // タグの紐付け
+      expect(mockPrisma.knowledgeTag.create).toHaveBeenCalledTimes(3);
+    });
+
+    test('空のタグ名は無視される', async () => {
+      mockPrisma.knowledgeTag = {
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+        create: jest.fn().mockResolvedValue({})
+      };
+
+      mockPrisma.tag = {
+        findFirst: jest.fn().mockResolvedValue({
+          tagId: 10,
+          tagName: 'ValidTag',
+          deleteFlag: 0
+        }),
+        create: jest.fn()
+      };
+
+      const result = await tagService.updateKnowledgeTags(
+        BigInt(1),
+        ['', '  ', 'ValidTag'],
+        mockUser
+      );
+
+      expect(result).toBe(true);
+      expect(mockPrisma.tag.findFirst).toHaveBeenCalledTimes(1); // ValidTagのみ
+      expect(mockPrisma.knowledgeTag.create).toHaveBeenCalledTimes(1);
+    });
+
+    test('エラー時はfalseを返す', async () => {
+      mockPrisma.knowledgeTag = {
+        updateMany: jest.fn().mockRejectedValue(new Error('DB Error'))
+      };
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const result = await tagService.updateKnowledgeTags(
+        BigInt(1),
+        ['tag1'],
+        mockUser
+      );
+
+      expect(result).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith('TagService.updateKnowledgeTags error:', expect.any(Error));
+
+      consoleSpy.mockRestore();
+    });
+  });
 });

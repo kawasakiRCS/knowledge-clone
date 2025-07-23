@@ -5,9 +5,7 @@
  */
 import { renderHook } from '@testing-library/react';
 
-// jest.setup.jsのモックを解除
-jest.unmock('@/hooks/useAuth');
-jest.unmock('@/lib/hooks/useAuth');
+// モック解除は不要（存在しないパスのため）
 
 // next-auth/reactのモック - importの前にモックを設定
 const mockUseSession = jest.fn();
