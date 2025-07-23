@@ -152,15 +152,7 @@ jest.mock('@/hooks/useLocale', () => ({
   }),
 }))
 
-// Mock useAuth hook - both paths
-jest.mock('@/hooks/useAuth', () => ({
-  useAuth: () => ({
-    isLoggedIn: false,
-    user: null,
-    unreadCount: 0,
-    loading: false,
-  }),
-}))
+// Mock useAuth hook - correct path
 
 jest.mock('@/lib/hooks/useAuth', () => ({
   useAuth: () => ({
